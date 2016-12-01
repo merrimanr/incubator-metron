@@ -15,7 +15,13 @@
 #  limitations under the License.
 #
 ---
-- include: mysql.yml
-- include: mysql-password.yml
-- include: geoip.yml
-- include: metron-rest.yml
+- name: Copy DDL
+  copy:
+    src: metron_rest_ddl.sql
+    dest: /tmp/metron_rest_ddl.sql
+
+- name: Import metronconfig DDL
+  mysql_db:
+    name: all
+    state: import
+    target: /tmp/metron_rest_ddl.sql
