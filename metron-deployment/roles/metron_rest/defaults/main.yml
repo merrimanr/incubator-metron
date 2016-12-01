@@ -1,0 +1,32 @@
+#
+#  Licensed to the Apache Software Foundation (ASF) under one or more
+#  contributor license agreements.  See the NOTICE file distributed with
+#  this work for additional information regarding copyright ownership.
+#  The ASF licenses this file to You under the Apache License, Version 2.0
+#  (the "License"); you may not use this file except in compliance with
+#  the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+---
+metron_directory: /usr/metron/{{ metron_version }}
+metron_rest_jar_name: metron-rest-{{ metron_version }}.jar
+
+# bundle names
+metron_rest_bundle_name: metron-rest-{{ metron_version }}-archive.tar.gz
+
+# bundle paths
+metron_rest_bundle_path: "{{ playbook_dir }}/../../metron-interface/metron-rest/target/{{ metron_rest_bundle_name }}"
+
+
+# configuration paths
+config_path: "{{ metron_directory }}/config"
+
+metron_rest_home: "{{metron_directory}}/bin"
+metron_rest_start: "{{metron_rest_home}}/start_metron_rest.sh"
