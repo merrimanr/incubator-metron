@@ -223,10 +223,10 @@ export class SensorParserConfigComponent implements OnInit {
       this.sensorStellar.onSave();
     }
   }
-  
+
   onSave() {
     this.saveOpenPanes();
-    
+
     let sensorParserConfigSave: SensorParserConfig = new SensorParserConfig();
     sensorParserConfigSave.parserConfig = {};
     sensorParserConfigSave.sensorTopic = this.sensorParserConfig.sensorTopic;
