@@ -12,10 +12,10 @@
   the specific language governing permissions and limitations under the License.
   -->
 <metron-config-metron-modal>
-    <metron-config-sensor-grok [hidden]="!showGrokValidator" [showGrok]="showGrokValidator"
-                               [(sensorEnrichmentConfig)]="sensorEnrichmentConfig"
-                               [(sensorParserConfig)]="sensorParserConfig"
-                               (hideGrok)="hidePane(pane.GROK)"></metron-config-sensor-grok>
+      <metron-config-sensor-grok [hidden]="!showGrokValidator" [showGrok]="showGrokValidator"
+                                 [(sensorEnrichmentConfig)]="sensorEnrichmentConfig"
+                                 [(sensorParserConfig)]="sensorParserConfig"
+                                 (hideGrok)="hideGrokPaneUpdateDisableTransformsConfig()"></metron-config-sensor-grok>
 
     <metron-config-sensor-stellar [hidden]="!showStellar" [showStellar]="showStellar"
                                   [(sensorEnrichmentConfig)]="sensorEnrichmentConfig"
@@ -45,7 +45,7 @@
 
                 <div class="form-group">
                     <label attr.for="parserClassName">PARSER TYPE * </label>
-                    <select  class="form-control" formControlName="parserClassName" (ngModelChange)="onParserTypeChange($event)" [(ngModel)]="sensorParserConfig.parserClassName">
+                    <select  class="form-control" formControlName="parserClassName"  [(ngModel)]="sensorParserConfig.parserClassName" (ngModelChange)="canConfigureTransformConfig()">
                         <option *ngFor="let parserName of availableParserNames" [value]="availableParsers[parserName]">{{parserName}}</option>
                     </select>
                 </div>
@@ -65,7 +65,7 @@
 
                 <div class="form-group">
                     <label attr.for="fieldSchema">SCHEMA</label>
-                    <div  class="input-group">
+                    <div  class="input-group" [attr.disabled]="disableTransformsConfig">
                         <div  class="form-control" style="height: 80px; resize: none;" readonly>
                             <table cellspacing="10">
                                 <tr> <td class="p-l-1">TRANSFORMATIONS </td> <td class="p-l-1">&nbsp;&nbsp;</td><td class="p-1-1">{{getTransformationCount()}}</td> </tr>
@@ -84,7 +84,7 @@
 
                 <div class="form-group">
                     <label attr.for="stellar">JSON</label>
-                    <div  class="input-group">
+                    <div  class="input-group" [attr.disabled]="disableTransformsConfig">
                         <input type="text" class="form-control" formControlName="stellar"  [ngModel]="''" readonly>
                         <span class="input-group-btn">
                             <button class="btn btn-default" type="button" (click)="showPane(pane.STELLAR)" readonly>
@@ -117,7 +117,7 @@
             <br> <br> <br> <br>
 
             <div class="metron-button-bar">
-                <div class="row mx-0 py-1">
+          <div class="row mx-0 py-1">
                     <button type="submit" class="btn form-enable-disable-button"  [disabled]="!sensorConfigForm.valid" (click)="onSave()">SAVE</button>
                     <button class="btn form-enable-disable-button" (click)="goBack()" >CANCEL</button>
                     <span class="advanced" [hidden]="showAdvancedParserConfiguration"><a class="advanced-link" (click)="showAdvancedParserConfiguration = true">Advanced</a></span>

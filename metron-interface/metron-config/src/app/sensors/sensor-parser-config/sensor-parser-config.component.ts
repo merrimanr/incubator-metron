@@ -28,6 +28,7 @@ import {SensorFieldSchemaComponent} from '../sensor-field-schema/sensor-field-sc
 import {SensorStellarComponent} from '../sensor-stellar/sensor-stellar.component';
 import {HttpUtil} from '../../util/httpUtil';
 import {KafkaService} from '../../service/kafka.service';
+import {SensorGrokComponent} from '../sensor-grok/sensor-grok.component';
 
 export enum Pane {
   GROK, STELLAR, FIELDSCHEMA
@@ -73,6 +74,9 @@ export class SensorParserConfigComponent implements OnInit {
   kafkaStatus = KafkaStatus;
   currentKafkaStatus = null;
 
+  disableTransformsConfig: boolean = true;
+
+  @ViewChild(SensorGrokComponent) sensorGrokComponent: SensorGrokComponent;
   @ViewChild(SensorFieldSchemaComponent) sensorFieldSchema: SensorFieldSchemaComponent;
   @ViewChild(SensorStellarComponent) sensorStellar: SensorStellarComponent;
 
@@ -90,6 +94,7 @@ export class SensorParserConfigComponent implements OnInit {
       this.sensorParserConfigService.get(id).subscribe((results: SensorParserConfig) => {
         this.sensorParserConfig = results;
         this.getKafkaStatus();
+        this.canConfigureTransformConfig();
         if (Object.keys(this.sensorParserConfig.parserConfig).length > 0) {
           this.showAdvancedParserConfiguration = true;
         }
@@ -166,12 +171,7 @@ export class SensorParserConfigComponent implements OnInit {
       this.sensorEnrichmentConfig.index = this.sensorParserConfig.sensorTopic;
     }
     this.getKafkaStatus();
-  }
-
-  onParserTypeChange(parserClassName: string): void {
-    if (parserClassName === 'org.apache.metron.parsers.GrokParser' && this.sensorParserConfig.parserConfig['patternLabel'] === null) {
-      this.sensorParserConfig.parserConfig['patternLabel'] = this.sensorParserConfig.sensorTopic.toUpperCase();
-    }
+    this.canConfigureTransformConfig();
   }
 
   getKafkaStatus() {
@@ -210,7 +210,23 @@ export class SensorParserConfigComponent implements OnInit {
     this.router.navigateByUrl('/sensors');
   }
 
+  saveOpenPanes() {
+    if (this.showGrokValidator) {
+      this.sensorGrokComponent.onSaveGrok();
+    }
+
+    if (this.showFieldSchema) {
+      this.sensorFieldSchema.onSave();
+    }
+
+    if (this.showStellar) {
+      this.sensorStellar.onSave();
+    }
+  }
+
   onSave() {
+    this.saveOpenPanes();
+
     let sensorParserConfigSave: SensorParserConfig = new SensorParserConfig();
     sensorParserConfigSave.parserConfig = {};
     sensorParserConfigSave.sensorTopic = this.sensorParserConfig.sensorTopic;
@@ -285,6 +301,11 @@ export class SensorParserConfigComponent implements OnInit {
     this.setPaneVisibility(pane, true);
   }
 
+  hideGrokPaneUpdateDisableTransformsConfig() {
+    this.hidePane(Pane.GROK);
+    this.canConfigureTransformConfig();
+  }
+
   hidePane(pane: Pane) {
     this.setPaneVisibility(pane, false);
   }
@@ -307,16 +328,18 @@ export class SensorParserConfigComponent implements OnInit {
     this.showAdvancedParserConfiguration = false;
   }
 
-  disableSchemaConfig(): boolean {
-    if ( this.sensorParserConfig.sensorTopic === undefined || this.sensorParserConfig.sensorTopic.length === 0 ) {
-      return true;
+  validParserConfig(): boolean {
+    if (this.isGrokParser()) {
+      return (this.sensorParserConfig.parserConfig['grokStatement'] !== undefined &&
+              this.sensorParserConfig.parserConfig['grokStatement'].length > 0);
     }
 
-    if (this.isGrokParser() && (!this.sensorParserConfig.parserConfig['grokStatement'] ||
-        this.sensorParserConfig.parserConfig['grokStatement'].length === 0)) {
-      return true;
-    }
+    return (this.sensorParserConfig.parserClassName !== undefined && this.sensorParserConfig.parserClassName.length > 0);
+  }
 
-    return !(this.sensorParserConfig.parserClassName && this.sensorParserConfig.parserClassName.length > 0);
+  canConfigureTransformConfig() {
+    this.disableTransformsConfig = !((this.sensorParserConfig.sensorTopic !== undefined &&
+                                      this.sensorParserConfig.sensorTopic.length > 0) &&
+                                        this.validParserConfig());
   }
 }

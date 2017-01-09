@@ -333,7 +333,17 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
     fieldSchemaRow.preview = fieldSchemaRow.transformConfigured.length === 0 ? '' : this.createTransformFunction(fieldSchemaRow);
   }
 
+  saveOpenPanes() {
+    for (let fieldSchemaRow of this.fieldSchemaRows) {
+      if (fieldSchemaRow.showConfig) {
+        this.onSaveChange(fieldSchemaRow);
+      }
+    }
+  }
+
   onSave() {
+    this.saveOpenPanes();
+
     let removeTransformations: string[] = [];
 
     // Remove all STELLAR functions and retain only the REMOVE objects
