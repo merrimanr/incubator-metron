@@ -1,0 +1,9 @@
+#foreach( $function in $functions )
+Blockly.JavaScript['stellar_$function.getName()'] = function(block) {
+#foreach( $param in $function.getParams() )
+    var value_$param.split('-')[0].split(' ')[0].trim().replaceAll("[\+\*\[\]\?]", "") = Blockly.JavaScript.valueToCode(block, '$param.split('-')[0].split(' ')[0].trim().replaceAll("[\+\*\[\]\?]", "").toUpperCase()', Blockly.JavaScript.ORDER_ADDITION);
+#end
+    var code = '$function.getName()('#foreach( $param in $function.getParams() ) + value_$param.split('-')[0].split(' ')[0].trim().replaceAll("[\+\*\[\]\?]", "") + #if($foreach.hasNext)','#end#end')';
+    return [code, Blockly.JavaScript.ORDER_ADDITION];
+};
+#end

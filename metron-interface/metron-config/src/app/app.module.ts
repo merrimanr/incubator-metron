@@ -42,6 +42,8 @@ import {GlobalConfigService} from './service/global-config.service';
 import {APP_CONFIG, METRON_REST_CONFIG} from './app.config';
 import {StormService} from './service/storm.service';
 import {SensorParserConfigHistoryService} from './service/sensor-parser-config-history.service';
+import {SensorRuleBlocklyModule} from "./sensors/sensor-threat-triage/rule-blockly/sensor-rule-blockly.module";
+import {BlocklyService} from "./service/blockly.service";
 
 
 @NgModule({
@@ -51,7 +53,8 @@ import {SensorParserConfigHistoryService} from './service/sensor-parser-config-h
   providers: [  AuthenticationService, AuthGuard, LoginGuard, SensorParserConfigService,
     SensorParserConfigHistoryService, SensorEnrichmentConfigService,
     StormService, KafkaService, GrokValidationService, TransformationValidationService,
-    GlobalConfigService, MetronAlerts, MetronDialogBox, appRoutingProviders, { provide: APP_CONFIG, useValue: METRON_REST_CONFIG }],
+    GlobalConfigService, MetronAlerts, MetronDialogBox, BlocklyService,
+    appRoutingProviders, { provide: APP_CONFIG, useValue: METRON_REST_CONFIG }],
   bootstrap:    [ AppComponent ]
 })
 export class AppModule { }

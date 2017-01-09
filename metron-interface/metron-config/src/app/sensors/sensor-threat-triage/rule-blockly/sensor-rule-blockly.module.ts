@@ -15,9 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../../../_variables.scss";
 
-textarea
-{
-  height: auto;
-}
+import {NgModule, NO_ERRORS_SCHEMA} from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import {CommonModule} from '@angular/common';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {SensorRuleBlocklyComponent} from "./sensor-rule-blockly.component";
+import {NumberSpinnerComponent} from "../../../shared/number-spinner/number-spinner.component";
+
+@NgModule ({
+  imports: [ BrowserModule, CommonModule, FormsModule, ReactiveFormsModule ],
+  exports: [ SensorRuleBlocklyComponent ],
+  declarations: [ SensorRuleBlocklyComponent ],
+  schemas: [ NO_ERRORS_SCHEMA ]
+})
+export class SensorRuleBlocklyModule {}

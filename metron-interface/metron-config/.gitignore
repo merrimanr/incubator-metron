@@ -31,3 +31,9 @@ testem.log
 #System Files
 .DS_Store
 Thumbs.db
+
+/src/assets/blockly/media
+/src/assets/blockly/msg
+/src/assets/blockly/blockly_compressed.js
+/src/assets/blockly/blocks_compressed.js
+/src/assets/blockly/javascript_compressed.js

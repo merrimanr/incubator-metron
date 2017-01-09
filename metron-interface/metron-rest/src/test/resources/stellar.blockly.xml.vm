@@ -1,0 +1,20 @@
+<xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">
+<category name="Functions">
+#foreach( $category in $categories.get('Functions').keySet() )
+    <category name="$category">
+        #foreach( $function in $categories.get('Functions').get($category))
+        <block type="stellar_$function.getName()"></block>
+        #end
+    </category>
+#end
+</category>
+<category name="Validation">
+    #foreach( $category in $categories.get('Validation').keySet() )
+        <category name="$category">
+            #foreach( $function in $categories.get('Validation').get($category))
+                <block type="stellar_$function.getName()"></block>
+            #end
+        </category>
+    #end
+</category>
+</xml>

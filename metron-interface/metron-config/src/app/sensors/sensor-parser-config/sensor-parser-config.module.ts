@@ -31,11 +31,13 @@ import {MultipleInputComponent} from '../../shared/multiple-input/multiple-input
 import {SensorGrokComponent} from '../sensor-grok/sensor-grok.component';
 import {SensorThreatTriageComponent} from "../sensor-threat-triage/sensor-threat-triage.component";
 import {SensorRuleEditorComponent} from "../sensor-threat-triage/rule-editor/sensor-rule-editor.component";
+import {SensorRuleBlocklyComponent} from "../sensor-threat-triage/rule-blockly/sensor-rule-blockly.component";
+import {SensorRuleBlocklyModule} from "../sensor-threat-triage/rule-blockly/sensor-rule-blockly.module";
 
 @NgModule ({
   imports: [ CommonModule, routing, FormsModule, ReactiveFormsModule, SharedModule ],
   declarations: [ SensorParserConfigComponent, SensorGrokComponent, SensorFieldSchemaComponent, AdvancedConfigFormComponent,
-    SampleDataComponent, AutocompleteComponent, SensorStellarComponent, SensorThreatTriageComponent, SensorRuleEditorComponent, MultipleInputComponent,
-    NumberSpinnerComponent ]
+    SampleDataComponent, AutocompleteComponent, SensorStellarComponent, SensorThreatTriageComponent,
+    SensorRuleEditorComponent, MultipleInputComponent, NumberSpinnerComponent, SensorRuleBlocklyComponent ]
 })
 export class SensorParserConfigModule { }

@@ -1,0 +1,17 @@
+#foreach( $function in $functions )
+Blockly.Blocks['stellar_$function.getName()'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("$function.getName()");
+#foreach( $param in $function.getParams() )
+        this.appendValueInput("$param.split('-')[0].split(' ')[0].trim().replaceAll("[\+\*\[\]\?]", "").toUpperCase()")
+            .setCheck(null)
+            .appendField("$param.split('-')[0].split(' ')[0].trim().replaceAll("[\+\*\[\]\?]", "")");
+#end
+        this.setOutput(true, null);
+        this.setColour(160);
+        this.setTooltip('');
+        this.setHelpUrl('http://www.example.com/');
+    }
+};
+#end

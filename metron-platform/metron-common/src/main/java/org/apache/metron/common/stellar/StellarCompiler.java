@@ -45,7 +45,7 @@ import static java.lang.String.format;
 public class StellarCompiler extends StellarBaseListener {
 
   private Context context = null;
-  private Stack<Token> tokenStack = new Stack<>();
+  protected Stack<Token> tokenStack = new Stack<>();
   private FunctionResolver functionResolver;
   private VariableResolver variableResolver;
   private Throwable actualException = null;
