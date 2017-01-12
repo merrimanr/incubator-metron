@@ -33,6 +33,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.util.Properties;
+import java.util.Stack;
 
 import static org.apache.metron.common.dsl.Context.Capabilities.STELLAR_CONFIG;
 
@@ -40,7 +41,9 @@ import static org.apache.metron.common.dsl.Context.Capabilities.STELLAR_CONFIG;
 public class BlocklyService {
 
   public static void main(String[] args) throws JAXBException {
-    String statement = "IS_EMAIL(sensor_type) && sensor_type == 'yaf'";
+    //String statement = "IS_EMAIL(sensor_type) && sensor_type == 'yaf'";
+    //String statement = "foo in [ TO_LOWER('CASEY'), 'david' ]";
+    String statement = "";
     BlocklyService blocklyService = new BlocklyService();
     System.out.println(blocklyService.statementToXml(statement));
   }
@@ -58,7 +61,7 @@ public class BlocklyService {
     Context.Builder contextBuilder = new Context.Builder()
             .with(STELLAR_CONFIG, () -> properties);
     StellarFunctions.initialize(contextBuilder.build());
-    BlocklyCompiler blocklyCompiler = new BlocklyCompiler(null, StellarFunctions.FUNCTION_RESOLVER(), Context.EMPTY_CONTEXT());
+    BlocklyCompiler blocklyCompiler = new BlocklyCompiler(null, StellarFunctions.FUNCTION_RESOLVER(), Context.EMPTY_CONTEXT(), new Stack<>());
     parser.addParseListener(blocklyCompiler);
     parser.removeErrorListeners();
     parser.addErrorListener(new ErrorListener());

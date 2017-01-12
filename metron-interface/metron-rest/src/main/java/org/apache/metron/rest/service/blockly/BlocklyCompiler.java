@@ -24,20 +24,26 @@ import org.apache.metron.common.dsl.Token;
 import org.apache.metron.common.dsl.VariableResolver;
 import org.apache.metron.common.dsl.functions.resolver.FunctionResolver;
 import org.apache.metron.common.stellar.StellarCompiler;
+import org.apache.metron.common.stellar.evaluators.ArithmeticEvaluator;
+import org.apache.metron.common.stellar.evaluators.NumberLiteralEvaluator;
 import org.apache.metron.common.stellar.generated.StellarParser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 public class BlocklyCompiler extends StellarCompiler {
 
   private Xml xml = new Xml();
-  final private Map<String, String[]> functionParamMap = new HashMap<>();
+  private Map<String, String[]> functionParamMap = new HashMap<>();
+  private Stack<Token<?>> tokenStack;
 
-  public BlocklyCompiler(VariableResolver variableResolver, FunctionResolver functionResolver, Context context) {
-    super(variableResolver, functionResolver, context);
+  public BlocklyCompiler(VariableResolver variableResolver, FunctionResolver functionResolver, Context context, Stack<Token<?>> tokenStack) {
+    super(variableResolver, functionResolver, context, tokenStack, ArithmeticEvaluator.INSTANCE, NumberLiteralEvaluator.INSTANCE);
+    this.tokenStack = tokenStack;
     functionResolver.getFunctionInfo().forEach(stellarFunctionInfo -> functionParamMap.put(stellarFunctionInfo.getName(), stellarFunctionInfo.getParams()));
   }
 
@@ -83,6 +89,16 @@ public class BlocklyCompiler extends StellarCompiler {
             .addValue(new Value().withName("A").addBlock((Block) left.getValue()))
             .addValue(new Value().withName("B").addBlock((Block) right.getValue()));
     tokenStack.push(new Token<>(mulBlock, Block.class));
+  }
+
+  @Override
+  public void exitInExpression(StellarParser.InExpressionContext ctx) {
+    Token<?> right = popStack();
+    Token<?> left = popStack();
+    Block inBlock = new Block().withType("stellar_in")
+            .addValue(new Value().withName("INPUT").addBlock((Block) left.getValue()))
+            .addValue(new Value().withName("LIST").addBlock((Block) right.getValue()));
+    tokenStack.push(new Token<>(inBlock, Block.class));
   }
 
   @Override
@@ -144,6 +160,25 @@ public class BlocklyCompiler extends StellarCompiler {
       }
     }
     tokenStack.push(new Token<>(args, List.class));
+  }
+
+  @Override
+  public void exitList_entity(StellarParser.List_entityContext ctx) {
+    List<Block> items = new ArrayList<>();
+    Block listBlock = new Block().withType("lists_create_with");
+    while (true) {
+      Token<?> token = popStack();
+      if (token.getUnderlyingType().equals(FunctionMarker.class)) {
+        break;
+      } else {
+        items.add(0, (Block) token.getValue());
+      }
+    }
+    listBlock.withMutation(new Mutation().withItems(items.size()));
+    for(int i = 0; i < items.size(); i++) {
+      listBlock.addValue(new Value().withName("ADD" + i).addBlock(items.get(i)));
+    }
+    tokenStack.push(new Token<>(listBlock, Block.class));
   }
 
   @Override

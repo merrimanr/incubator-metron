@@ -17,7 +17,7 @@
  */
 
 import {async, TestBed, ComponentFixture} from '@angular/core/testing';
-import {SensorRuleEditorComponent} from './sensor-rule-editor.component';
+import {SensorRuleBlocklyComponent} from './sensor-rule-blockly.component';
 import {SharedModule} from '../../../shared/shared.module';
 import {SimpleChanges, SimpleChange} from '@angular/core';
 import {SensorParserConfig} from '../../../model/sensor-parser-config';
@@ -25,8 +25,8 @@ import {SensorEnrichmentConfig, EnrichmentConfig, ThreatIntelConfig} from '../..
 
 describe('Component: SensorStellarComponent', () => {
 
-    let fixture: ComponentFixture<SensorRuleEditorComponent>;
-    let component: SensorRuleEditorComponent;
+    let fixture: ComponentFixture<SensorRuleBlocklyComponent>;
+    let component: SensorRuleBlocklyComponent;
     let sensorParserConfig: SensorParserConfig = new SensorParserConfig();
     sensorParserConfig.sensorTopic = 'bro';
     sensorParserConfig.parserClassName = 'org.apache.metron.parsers.bro.BasicBroParser';
@@ -60,13 +60,13 @@ describe('Component: SensorStellarComponent', () => {
         TestBed.configureTestingModule({
             imports: [SharedModule
             ],
-            declarations: [ SensorRuleEditorComponent ],
+            declarations: [ SensorRuleBlocklyComponent ],
             providers: [
-              SensorRuleEditorComponent
+              SensorRuleBlocklyComponent
             ]
         });
 
-        fixture = TestBed.createComponent(SensorRuleEditorComponent);
+        fixture = TestBed.createComponent(SensorRuleBlocklyComponent);
         component = fixture.componentInstance;
     }));
 

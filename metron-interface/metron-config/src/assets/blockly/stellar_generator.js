@@ -416,3 +416,9 @@ Blockly.JavaScript['stellar_and'] = function(block) {
         return [arguments.join(' && '), Blockly.JavaScript.ORDER_LOGICAL_AND];
     }
 };
+Blockly.JavaScript['stellar_in'] = function(block) {
+    var value_input = Blockly.JavaScript.valueToCode(block, 'INPUT', Blockly.JavaScript.ORDER_ADDITION);
+    var value_list = Blockly.JavaScript.valueToCode(block, 'LIST', Blockly.JavaScript.ORDER_ADDITION);
+    var code = value_input + ' in ' + value_list;
+    return [code, Blockly.JavaScript.ORDER_ADDITION];
+};

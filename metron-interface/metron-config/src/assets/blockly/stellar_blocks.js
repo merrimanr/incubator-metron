@@ -1155,3 +1155,25 @@ Blockly.Blocks['stellar_arithmetic'] = {
         });
     }
 };
+Blockly.Blocks['stellar_in'] = {
+    /**
+     * Block for finding an item in the list.
+     * @this Blockly.Block
+     */
+    init: function() {
+        this.setHelpUrl(Blockly.Msg.LISTS_INDEX_OF_HELPURL);
+        this.setColour(Blockly.Blocks.lists.HUE);
+        this.setOutput(true, 'Boolean');
+        this.appendValueInput('INPUT');
+        this.appendValueInput('LIST')
+            .appendField("in")
+            .setCheck('Array');
+        this.setInputsInline(true);
+        // Assign 'this' to a variable for use in the tooltip closure below.
+        var thisBlock = this;
+        this.setTooltip(function() {
+            return Blockly.Msg.LISTS_INDEX_OF_TOOLTIP.replace('%1',
+                this.workspace.options.oneBasedIndex ? '0' : '-1');
+        });
+    }
+};

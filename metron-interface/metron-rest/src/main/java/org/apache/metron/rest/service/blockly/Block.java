@@ -30,6 +30,9 @@ public class Block {
   @XmlAttribute
   private String type;
 
+  @XmlElement(name="mutation")
+  private Mutation mutation;
+
   @XmlElement(name="field")
   private List<Field> fields;
 
@@ -52,6 +55,19 @@ public class Block {
 
   public Block withType(String type) {
     this.type = type;
+    return this;
+  }
+
+  public Mutation getMutation() {
+    return this.mutation;
+  }
+
+  public void setMutation(Mutation mutation) {
+    this.mutation = mutation;
+  }
+
+  public Block withMutation(Mutation mutation) {
+    this.mutation = mutation;
     return this;
   }
 
