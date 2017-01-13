@@ -1085,17 +1085,6 @@ Blockly.Blocks['stellar_PROFILE_GET'] = {
     }
 };
 
-// Blockly.Blocks['available_fields'] = {
-//     init: function() {
-//         this.appendDummyInput()
-//             .appendField(new Blockly.FieldDropdown([["sensor_type", "sensor_type"], ["ip_src_addr", "ip_src_addr"], ["ip_dst_addr", "ip_dst_addr"]]), "FIELD_NAME");
-//         this.setOutput(true, "String");
-//         this.setTooltip('These are the available fields');
-//         this.setHelpUrl('http://www.example.com/');
-//         this.setColour(270);
-//     }
-// };
-
 Blockly.Blocks['stellar_and'] = {
     init: function() {
         var OPERATORS =
@@ -1188,7 +1177,7 @@ Blockly.Blocks['stellar_in'] = {
         this.setOutput(true, 'Boolean');
         this.appendValueInput('INPUT');
         this.appendValueInput('LIST')
-            .appendField("in")
+            .appendField(new Blockly.FieldDropdown([["in", "in"],["not in", "not in"]]), 'OP')
             .setCheck('Array');
         this.setInputsInline(true);
         // Assign 'this' to a variable for use in the tooltip closure below.
@@ -1341,5 +1330,41 @@ Blockly.Blocks['stellar_key_value'] = {
             return Blockly.Msg.LISTS_INDEX_OF_TOOLTIP.replace('%1',
                 this.workspace.options.oneBasedIndex ? '0' : '-1');
         });
+    }
+};
+
+Blockly.Blocks['stellar_negate'] = {
+    /**
+     * Block for negation.
+     * @this Blockly.Block
+     */
+    init: function() {
+        this.jsonInit({
+            "message0": Blockly.Msg.LOGIC_NEGATE_TITLE,
+            "args0": [
+                {
+                    "type": "input_value",
+                    "name": "BOOL",
+                    "check": "Boolean"
+                }
+            ],
+            "output": "Boolean",
+            "colour": Blockly.Blocks.logic.HUE,
+            "tooltip": Blockly.Msg.LOGIC_NEGATE_TOOLTIP,
+            "helpUrl": Blockly.Msg.LOGIC_NEGATE_HELPURL
+        });
+    }
+};
+Blockly.Blocks['stellar_EXISTS'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("EXISTS");
+        this.appendValueInput("INPUT")
+            .setCheck(null)
+            .appendField("input");
+        this.setOutput(true, null);
+        this.setColour(160);
+        this.setTooltip('');
+        this.setHelpUrl('http://www.example.com/');
     }
 };

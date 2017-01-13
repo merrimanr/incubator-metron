@@ -23,6 +23,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.metron.common.configuration.enrichment.SensorEnrichmentConfig;
+import org.apache.metron.common.configuration.enrichment.threatintel.ThreatTriageConfig;
 import org.apache.metron.common.dsl.Context;
 import org.apache.metron.common.dsl.ErrorListener;
 import org.apache.metron.common.dsl.StellarFunctions;
@@ -56,7 +58,12 @@ public class BlocklyService {
     //String statement = "IS_EMAIL(sensor_type) && sensor_type == 'yaf'";
     //String statement = "foo in [ TO_LOWER('CASEY'), 'david' ]";
     //String statement = "STATS_PERCENTILE( STATS_MERGE( PROFILE_GET('host-in-degree', ip_src_addr, 1, 'HOURS')), 95)";
-    String statement = "not(ENDS_WITH(domain_without_subdomains, '.com') or ENDS_WITH(domain_without_subdomains, '.net'))";
+    //String statement = "not(ENDS_WITH(domain_without_subdomains, '.com') or ENDS_WITH(domain_without_subdomains, '.net'))";
+    //String statement = "(1.1 < 2.2 ? 'one' : 'two') == 'two'";
+    //String statement = "sensor_type == null or true";
+    //String statement = "EXISTS(sensor_type)";
+    //String statement = "application not in ['test1', 'test2', 'test3']";
+    String statement = "MAP_EXISTS('test',{'test' : application, 'field' : 'value'})";
     BlocklyService blocklyService = new BlocklyService();
     System.out.println(blocklyService.statementToXml(statement));
   }

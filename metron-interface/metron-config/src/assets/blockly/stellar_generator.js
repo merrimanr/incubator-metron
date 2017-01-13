@@ -419,7 +419,8 @@ Blockly.JavaScript['stellar_and'] = function(block) {
 Blockly.JavaScript['stellar_in'] = function(block) {
     var value_input = Blockly.JavaScript.valueToCode(block, 'INPUT', Blockly.JavaScript.ORDER_ADDITION);
     var value_list = Blockly.JavaScript.valueToCode(block, 'LIST', Blockly.JavaScript.ORDER_ADDITION);
-    var code = value_input + ' in ' + value_list;
+    var field_op = block.getFieldValue('OP');
+    var code = value_input + ' ' + field_op + ' ' + value_list;
     return [code, Blockly.JavaScript.ORDER_ADDITION];
 };
 Blockly.JavaScript['stellar_map_create'] = function(block) {
@@ -436,5 +437,18 @@ Blockly.JavaScript['stellar_key_value'] = function(block) {
     var value_key = Blockly.JavaScript.valueToCode(block, 'KEY', Blockly.JavaScript.ORDER_ADDITION);
     var value_value = Blockly.JavaScript.valueToCode(block, 'VALUE', Blockly.JavaScript.ORDER_ADDITION);
     var code = value_key + " : " + value_value;
+    return [code, Blockly.JavaScript.ORDER_ADDITION];
+};
+Blockly.JavaScript['stellar_negate'] = function(block) {
+    // Negation.
+    var order = Blockly.JavaScript.ORDER_LOGICAL_NOT;
+    var argument0 = Blockly.JavaScript.valueToCode(block, 'BOOL', order) ||
+        'true';
+    var code = 'not' + argument0;
+    return [code, order];
+};
+Blockly.JavaScript['stellar_EXISTS'] = function(block) {
+    var value_input = Blockly.JavaScript.valueToCode(block, 'INPUT', Blockly.JavaScript.ORDER_ADDITION);
+    var code = 'EXISTS(' + value_input + ')';
     return [code, Blockly.JavaScript.ORDER_ADDITION];
 };

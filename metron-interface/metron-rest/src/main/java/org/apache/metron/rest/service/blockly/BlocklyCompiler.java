@@ -48,6 +48,12 @@ public class BlocklyCompiler extends StellarCompiler {
   }
 
   @Override
+  public void exitNullConst(StellarParser.NullConstContext ctx) {
+    Block nullBlock = new Block().withType("logic_null");
+    tokenStack.push(new Token<>(nullBlock, Block.class));
+  }
+
+  @Override
   public void exitArithExpr_plus(StellarParser.ArithExpr_plusContext ctx) {
     Token<?> right = popStack();
     Token<?> left = popStack();
@@ -91,19 +97,74 @@ public class BlocklyCompiler extends StellarCompiler {
     tokenStack.push(new Token<>(mulBlock, Block.class));
   }
 
+  private void handleConditional() {
+    Token<?> elseExpr = popStack();
+    Token<?> thenExpr = popStack();
+    Token<?> ifExpr = popStack();
+    Block ternaryBlock = new Block().withType("logic_ternary")
+            .addValue(new Value().withName("IF").addBlock((Block) ifExpr.getValue()))
+            .addValue(new Value().withName("THEN").addBlock((Block) thenExpr.getValue()))
+            .addValue(new Value().withName("ELSE").addBlock((Block) elseExpr.getValue()));
+    tokenStack.push(new Token<>(ternaryBlock, Block.class));
+  }
+
   @Override
-  public void exitInExpression(StellarParser.InExpressionContext ctx) {
+  public void exitTernaryFuncWithoutIf(StellarParser.TernaryFuncWithoutIfContext ctx) {
+    handleConditional();
+  }
+
+  @Override
+  public void exitTernaryFuncWithIf(StellarParser.TernaryFuncWithIfContext ctx) {
+    handleConditional();
+  }
+
+  private void handleIn() {
+    handleInNotIn(true);
+  }
+
+  private void handleNotIn() {
+    handleInNotIn(false);
+  }
+
+  private void handleInNotIn(boolean in) {
     Token<?> right = popStack();
     Token<?> left = popStack();
-    Block inBlock = new Block().withType("stellar_in")
+    Block inNotInBlock = new Block().withType("stellar_in")
             .addValue(new Value().withName("INPUT").addBlock((Block) left.getValue()))
             .addValue(new Value().withName("LIST").addBlock((Block) right.getValue()));
-    tokenStack.push(new Token<>(inBlock, Block.class));
+    if (in) {
+      inNotInBlock.addField(new Field().withName("OP").withValue("in"));
+    } else {
+      inNotInBlock.addField(new Field().withName("OP").withValue("not in"));
+    }
+    tokenStack.push(new Token<>(inNotInBlock, Block.class));
+  }
+
+  @Override
+  public void exitInExpression(StellarParser.InExpressionContext ctx) {
+    handleIn();
+  }
+
+  @Override
+  public void exitNInExpression(StellarParser.NInExpressionContext ctx) {
+    handleNotIn();
+  }
+
+  @Override
+  public void exitNotFunc(StellarParser.NotFuncContext ctx) {
+    Token<?> arg = popStack();
+    Block notBlock = new Block().withType("stellar_negate")
+            .addValue(new Value().withName("BOOL").addBlock((Block) arg.getValue()));
+    tokenStack.push(new Token<>(notBlock, Block.class));
+  }
+
+  private Block getAvailableFieldsBlock(String fieldName) {
+    return new Block().withType("available_fields").addField(new Field().withName("FIELD_NAME").withValue(fieldName));
   }
 
   @Override
   public void exitVariable(StellarParser.VariableContext ctx) {
-    Block availableFieldsBlock = new Block().withType("available_fields").addField(new Field().withName("FIELD_NAME").withValue(ctx.getText()));
+    Block availableFieldsBlock = getAvailableFieldsBlock(ctx.getText());
     tokenStack.push(new Token<>(availableFieldsBlock, Block.class));
   }
 
@@ -114,11 +175,30 @@ public class BlocklyCompiler extends StellarCompiler {
     tokenStack.push(new Token<>(textBlock, Block.class));
   }
 
+  private void handleNumber(String numberText) {
+    Block numBlock = new Block().withType("math_number")
+            .addField(new Field().withName("NUM").withValue(numberText));
+    tokenStack.push(new Token<>(numBlock, Block.class));
+  }
+
   @Override
   public void exitIntLiteral(StellarParser.IntLiteralContext ctx) {
-    Block numBlock = new Block().withType("math_number")
-            .addField(new Field().withName("NUM").withValue(ctx.getText()));
-    tokenStack.push(new Token<>(numBlock, Block.class));
+    handleNumber(ctx.getText());
+  }
+
+  @Override
+  public void exitDoubleLiteral(StellarParser.DoubleLiteralContext ctx) {
+    handleNumber(ctx.getText());
+  }
+
+  @Override
+  public void exitFloatLiteral(StellarParser.FloatLiteralContext ctx) {
+    handleNumber(ctx.getText());
+  }
+
+  @Override
+  public void exitLongLiteral(StellarParser.LongLiteralContext ctx) {
+    handleNumber(ctx.getText());
   }
 
   @Override
@@ -130,6 +210,24 @@ public class BlocklyCompiler extends StellarCompiler {
             .addValue(new Value().withName("A").addBlock((Block) left.getValue()))
             .addValue(new Value().withName("B").addBlock((Block) right.getValue()));
     tokenStack.push(new Token<>(andBlock, Block.class));
+  }
+
+  @Override
+  public void exitLogicalExpressionOr(StellarParser.LogicalExpressionOrContext ctx) {
+    Token<?> right = popStack();
+    Token<?> left = popStack();
+    Block orBlock = new Block().withType("logic_operation")
+            .addField(new Field().withName("OP").withValue("OR"))
+            .addValue(new Value().withName("A").addBlock((Block) left.getValue()))
+            .addValue(new Value().withName("B").addBlock((Block) right.getValue()));
+    tokenStack.push(new Token<>(orBlock, Block.class));
+  }
+
+  @Override
+  public void exitLogicalConst(StellarParser.LogicalConstContext ctx) {
+    Block booleanBlock = new Block().withType("logic_boolean")
+            .addField(new Field().withName("BOOL").withValue(ctx.getText().toUpperCase()));
+    tokenStack.push(new Token<>(booleanBlock, Block.class));
   }
 
   @Override
@@ -156,6 +254,14 @@ public class BlocklyCompiler extends StellarCompiler {
   }
 
   @Override
+  public void exitExistsFunc(StellarParser.ExistsFuncContext ctx) {
+    Block availableFieldsBlock = getAvailableFieldsBlock(ctx.getChild(2).getText());
+    Block existsBlock = new Block().withType("stellar_EXISTS")
+            .addValue(new Value().withName("INPUT").addBlock(availableFieldsBlock));
+    tokenStack.push(new Token<>(existsBlock, Block.class));
+  }
+
+  @Override
   public void exitFunc_args(StellarParser.Func_argsContext ctx) {
     LinkedList<Object> args = new LinkedList<>();
     while (true) {
@@ -167,6 +273,32 @@ public class BlocklyCompiler extends StellarCompiler {
       }
     }
     tokenStack.push(new Token<>(args, List.class));
+  }
+
+  @Override
+  public void exitMap_entity(StellarParser.Map_entityContext ctx) {
+    List<Block> items = new ArrayList<>();
+    Block mapBlock = new Block().withType("stellar_map_create");
+    Block keyValueBlock = new Block().withType("stellar_key_value");
+    for (int i = 0; true; i++) {
+      Token<?> token = popStack();
+      if (token.getUnderlyingType().equals(FunctionMarker.class)) {
+        break;
+      } else {
+        if (i % 2 == 0) {
+          keyValueBlock.addValue(new Value().withName("VALUE").addBlock((Block) token.getValue()));
+        } else {
+          keyValueBlock.addValue(new Value().withName("KEY").addBlock((Block) token.getValue()));
+          items.add(0, keyValueBlock);
+          keyValueBlock = new Block().withType("stellar_key_value");
+        }
+      }
+    }
+    mapBlock.withMutation(new Mutation().withItems(items.size()));
+    for(int i = 0; i < items.size(); i++) {
+      mapBlock.addValue(new Value().withName("ADD" + i).addBlock(items.get(i)));
+    }
+    tokenStack.push(new Token<>(mapBlock, Block.class));
   }
 
   @Override
