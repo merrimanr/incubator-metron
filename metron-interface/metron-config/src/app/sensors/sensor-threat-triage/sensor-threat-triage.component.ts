@@ -41,6 +41,9 @@ export class SensorThreatTriageComponent implements OnInit, OnChanges {
 
   rules = [];
 
+  lowAlerts = 0;
+  highAlerts = 0;
+
   constructor() { }
 
   ngOnInit() {
@@ -55,9 +58,12 @@ export class SensorThreatTriageComponent implements OnInit, OnChanges {
 
   init(): void {
     this.rules = Object.keys(this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules);
+    this.updateBuckets();
   }
 
   onClose(): void {
+    this.showRuleEditor = false;
+    this.showRuleBlockly = false;
     this.hideThreatTriage.emit(true);
   }
 
@@ -89,7 +95,7 @@ export class SensorThreatTriageComponent implements OnInit, OnChanges {
   onNewRule(): void {
     this.ruleValue = '';
     this.ruleScore = 0;
-    this.showRuleEditor = true;
+    this.showRuleBlockly = true;
   }
 
   onSubmitRuleBlockly(rule: {}): void {
@@ -109,6 +115,18 @@ export class SensorThreatTriageComponent implements OnInit, OnChanges {
     this.ruleScore = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[rule];
     this.showRuleEditor = false;
     this.showRuleBlockly = true;
+  }
+
+  updateBuckets() {
+    this.lowAlerts = 0;
+    this.highAlerts = 0;
+    for(let rule of this.rules) {
+      if (this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[rule] < 6) {
+        this.lowAlerts++;
+      } else {
+        this.highAlerts++;
+      }
+    }
   }
 
 }

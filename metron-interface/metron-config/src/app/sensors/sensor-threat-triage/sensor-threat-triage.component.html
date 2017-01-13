@@ -38,14 +38,14 @@
             </div>
 
             <div class="row mx-0 py-1">
-                <div class="btn rule-count"><i aria-hidden="true" class="fa fa-circle" style="color: red"></i> 0</div>
-                <div class="btn rule-count"><i aria-hidden="true" class="fa fa-circle" style="color: orange"></i> 1
+                <div class="btn rule-count"><i aria-hidden="true" class="fa fa-circle" style="color: red"></i> {{highAlerts}}</div>
+                <div class="btn rule-count"><i aria-hidden="true" class="fa fa-circle" style="color: orange"></i> 0
                 </div>
-                <div class="btn rule-count"><i aria-hidden="true" class="fa fa-circle" style="color: khaki"></i> 2</div>
+                <div class="btn rule-count"><i aria-hidden="true" class="fa fa-circle" style="color: khaki"></i> {{lowAlerts}}</div>
             </div>
             <div *ngFor="let rule of rules">
                 <div class="row mx-0 py-0">
-                    <div class="rule-row" style="color: khaki; font-size: 30px; margin-top: -7px">
+                    <div class="rule-row" style="font-size: 30px; margin-top: -7px" [style.color]="sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[rule] < 6 ? 'khaki' : 'red'">
                         <b>I</b>
                     </div>
                     <div class="rule-row" style="font-size: small; width: 8%">

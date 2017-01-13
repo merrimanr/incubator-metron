@@ -17,33 +17,46 @@
  */
 package org.apache.metron.rest.service.blockly;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.metron.common.dsl.Context;
 import org.apache.metron.common.dsl.ErrorListener;
 import org.apache.metron.common.dsl.StellarFunctions;
 import org.apache.metron.common.dsl.functions.resolver.ClasspathFunctionResolver;
 import org.apache.metron.common.stellar.generated.StellarLexer;
 import org.apache.metron.common.stellar.generated.StellarParser;
+import org.apache.metron.common.utils.JSONUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import java.io.ByteArrayInputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Stack;
 
+import static org.apache.metron.common.configuration.ConfigurationsUtils.readGlobalConfigBytesFromZookeeper;
+import static org.apache.metron.common.dsl.Context.Capabilities.GLOBAL_CONFIG;
 import static org.apache.metron.common.dsl.Context.Capabilities.STELLAR_CONFIG;
 
 @Service
 public class BlocklyService {
 
+  @Autowired
+  private CuratorFramework client;
+
   public static void main(String[] args) throws JAXBException {
     //String statement = "IS_EMAIL(sensor_type) && sensor_type == 'yaf'";
     //String statement = "foo in [ TO_LOWER('CASEY'), 'david' ]";
-    String statement = "";
+    //String statement = "STATS_PERCENTILE( STATS_MERGE( PROFILE_GET('host-in-degree', ip_src_addr, 1, 'HOURS')), 95)";
+    String statement = "not(ENDS_WITH(domain_without_subdomains, '.com') or ENDS_WITH(domain_without_subdomains, '.net'))";
     BlocklyService blocklyService = new BlocklyService();
     System.out.println(blocklyService.statementToXml(statement));
   }
@@ -59,7 +72,17 @@ public class BlocklyService {
     Properties properties = new Properties();
     properties.put(ClasspathFunctionResolver.STELLAR_SEARCH_INCLUDES_KEY, "org.apache.metron.*");
     Context.Builder contextBuilder = new Context.Builder()
-            .with(STELLAR_CONFIG, () -> properties);
+            .with(STELLAR_CONFIG, () -> properties)
+            .with(GLOBAL_CONFIG, () -> {
+              Map<String, Object> global = new HashMap<>();
+              try {
+                return JSONUtils.INSTANCE.load(
+                        new ByteArrayInputStream(readGlobalConfigBytesFromZookeeper(client)),
+                        new TypeReference<Map<String, Object>>() {});
+              } catch (Exception e) {
+                return global;
+              }
+            });
     StellarFunctions.initialize(contextBuilder.build());
     BlocklyCompiler blocklyCompiler = new BlocklyCompiler(null, StellarFunctions.FUNCTION_RESOLVER(), Context.EMPTY_CONTEXT(), new Stack<>());
     parser.addParseListener(blocklyCompiler);

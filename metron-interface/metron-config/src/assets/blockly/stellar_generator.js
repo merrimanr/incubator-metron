@@ -422,3 +422,19 @@ Blockly.JavaScript['stellar_in'] = function(block) {
     var code = value_input + ' in ' + value_list;
     return [code, Blockly.JavaScript.ORDER_ADDITION];
 };
+Blockly.JavaScript['stellar_map_create'] = function(block) {
+    // Create a list with any number of elements of any type.
+    var elements = new Array(block.itemCount_);
+    for (var i = 0; i < block.itemCount_; i++) {
+        elements[i] = Blockly.JavaScript.valueToCode(block, 'ADD' + i,
+                Blockly.JavaScript.ORDER_COMMA) || 'null';
+    }
+    var code = '{' + elements.join(', ') + '}';
+    return [code, Blockly.JavaScript.ORDER_ATOMIC];
+};
+Blockly.JavaScript['stellar_key_value'] = function(block) {
+    var value_key = Blockly.JavaScript.valueToCode(block, 'KEY', Blockly.JavaScript.ORDER_ADDITION);
+    var value_value = Blockly.JavaScript.valueToCode(block, 'VALUE', Blockly.JavaScript.ORDER_ADDITION);
+    var code = value_key + " : " + value_value;
+    return [code, Blockly.JavaScript.ORDER_ADDITION];
+};

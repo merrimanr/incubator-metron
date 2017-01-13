@@ -115,6 +115,13 @@ public class BlocklyCompiler extends StellarCompiler {
   }
 
   @Override
+  public void exitIntLiteral(StellarParser.IntLiteralContext ctx) {
+    Block numBlock = new Block().withType("math_number")
+            .addField(new Field().withName("NUM").withValue(ctx.getText()));
+    tokenStack.push(new Token<>(numBlock, Block.class));
+  }
+
+  @Override
   public void exitLogicalExpressionAnd(StellarParser.LogicalExpressionAndContext ctx) {
     Token<?> right = popStack();
     Token<?> left = popStack();
