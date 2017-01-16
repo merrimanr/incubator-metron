@@ -23,12 +23,14 @@ public class StellarFunctionDescription {
     private String description;
     private String[] params;
     private String returns;
+    private String category;
 
-    public StellarFunctionDescription(String name, String description, String[] params, String returns) {
+    public StellarFunctionDescription(String name, String description, String[] params, String returns, String category) {
         this.name = name;
         this.description = description;
         this.params = params;
         this.returns = returns;
+        this.category = category;
     }
 
     public String getName() {
@@ -46,4 +48,8 @@ public class StellarFunctionDescription {
     public String getReturns() {
         return returns;
     }
+
+    public String getCategory() {
+    return category;
+  }
 }

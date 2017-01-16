@@ -17,25 +17,44 @@
  */
 package org.apache.metron.rest.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.metron.common.dsl.Context;
 import org.apache.metron.common.dsl.ParseException;
 import org.apache.metron.common.dsl.StellarFunctionInfo;
+import org.apache.metron.common.dsl.StellarFunctions;
+import org.apache.metron.common.dsl.functions.resolver.ClasspathFunctionResolver;
 import org.apache.metron.common.dsl.functions.resolver.SingletonFunctionResolver;
 import org.apache.metron.common.field.transformation.FieldTransformations;
 import org.apache.metron.common.stellar.StellarProcessor;
+import org.apache.metron.common.utils.JSONUtils;
 import org.apache.metron.rest.model.StellarFunctionDescription;
 import org.apache.metron.rest.model.TransformationValidation;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
+
+import static org.apache.metron.common.configuration.ConfigurationsUtils.readGlobalConfigBytesFromZookeeper;
+import static org.apache.metron.common.dsl.Context.Capabilities.GLOBAL_CONFIG;
+import static org.apache.metron.common.dsl.Context.Capabilities.STELLAR_CONFIG;
 
 @Service
 public class TransformationService {
+
+    @Autowired
+    private GlobalConfigService globalConfigService;
+
+    private List<StellarFunctionDescription> simpleStellarFunctions;
+    private List<StellarFunctionDescription> stellarFunctions;
+    private Map<String, List<StellarFunctionDescription>> stellarFunctionsByCategory;
 
     public Map<String, Boolean> validateRules(List<String> rules) {
         Map<String, Boolean> results = new HashMap<>();
@@ -64,23 +83,76 @@ public class TransformationService {
         return FieldTransformations.values();
     }
 
+    public Iterable<StellarFunctionInfo> getStellarFunctionInfo() {
+      Properties properties = new Properties();
+      properties.put(ClasspathFunctionResolver.STELLAR_SEARCH_INCLUDES_KEY, "org.apache.metron.*");
+      Context.Builder contextBuilder = new Context.Builder()
+              .with(STELLAR_CONFIG, () -> properties)
+              .with(GLOBAL_CONFIG, () -> {
+                Map<String, Object> globalConfig = new HashMap<>();
+                try {
+                  return globalConfigService.get();
+                } catch (Exception e) {
+                  e.printStackTrace();
+                }
+                return globalConfig;
+              });
+      StellarFunctions.initialize(contextBuilder.build());
+      return SingletonFunctionResolver.getInstance().getFunctionInfo();
+    }
+
     public List<StellarFunctionDescription> getStellarFunctions() {
-        List<StellarFunctionDescription> stellarFunctionDescriptions = new ArrayList<>();
-        Iterable<StellarFunctionInfo> stellarFunctionsInfo = SingletonFunctionResolver.getInstance().getFunctionInfo();
-        stellarFunctionsInfo.forEach(stellarFunctionInfo -> {
-            stellarFunctionDescriptions.add(new StellarFunctionDescription(
+        if (stellarFunctions == null) {
+          stellarFunctions = new ArrayList<>();
+          Iterable<StellarFunctionInfo> stellarFunctionsInfo = getStellarFunctionInfo();
+          stellarFunctionsInfo.forEach(stellarFunctionInfo -> {
+            String categoryName;
+            if (stellarFunctionInfo.getFunction().getClass().getEnclosingClass() != null) {
+              categoryName = stellarFunctionInfo.getFunction().getClass().getEnclosingClass().getSimpleName();
+            } else {
+              Class superClass = (Class) stellarFunctionInfo.getFunction().getClass().getGenericSuperclass();
+              categoryName = superClass.getSimpleName();
+            }
+            boolean isValidation = categoryName.contains("Validation");
+            if (isValidation) {
+              categoryName = categoryName.replaceFirst("Validation", "");
+            } else {
+              categoryName = categoryName.replaceFirst("Functions", "");
+            }
+            stellarFunctions.add(new StellarFunctionDescription(
                     stellarFunctionInfo.getName(),
                     stellarFunctionInfo.getDescription(),
                     stellarFunctionInfo.getParams(),
-                    stellarFunctionInfo.getReturns()));
-        });
-        return stellarFunctionDescriptions;
+                    stellarFunctionInfo.getReturns(),
+                    categoryName));
+          });
+        }
+        return stellarFunctions;
     }
 
     public List<StellarFunctionDescription> getSimpleStellarFunctions() {
-      List<StellarFunctionDescription> stellarFunctionDescriptions = getStellarFunctions();
-      return stellarFunctionDescriptions.stream().filter(stellarFunctionDescription ->
-              stellarFunctionDescription.getParams().length == 1).sorted((o1, o2) -> o1.getName().compareTo(o2.getName())).collect(Collectors.toList());
+      if (simpleStellarFunctions == null) {
+        List<StellarFunctionDescription> stellarFunctionDescriptions = getStellarFunctions();
+        simpleStellarFunctions = stellarFunctionDescriptions.stream().filter(stellarFunctionDescription ->
+                stellarFunctionDescription.getParams().length == 1).sorted((o1, o2) -> o1.getName().compareTo(o2.getName())).collect(Collectors.toList());
+      }
+      return simpleStellarFunctions;
+    }
+
+    public Map<String, List<StellarFunctionDescription>> getStellarFunctionsByCategory() {
+      if (stellarFunctionsByCategory == null) {
+        stellarFunctionsByCategory = new HashMap<>();
+        List<StellarFunctionDescription> stellarFunctions = getStellarFunctions();
+        stellarFunctions.forEach(stellarFunctionDescription -> {
+          String category = stellarFunctionDescription.getCategory();
+          stellarFunctionsByCategory.putIfAbsent(category, new ArrayList<>());
+          stellarFunctionsByCategory.get(category).add(stellarFunctionDescription);
+        });
+        for(String key: stellarFunctionsByCategory.keySet()) {
+          Collections.sort(stellarFunctionsByCategory.get(key), (o1, o2) -> o1.getName().compareTo(o2.getName()));
+        }
+      }
+      return stellarFunctionsByCategory;
     }
 
 }
