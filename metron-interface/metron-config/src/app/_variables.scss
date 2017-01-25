@@ -22,7 +22,7 @@ $text-color-white:  #999999;
 $nav-active-color: #32abe2;
 $nav-active-text-color: #ffffff;
 $table-cell-text-color: #a7a9ac;
-$form-label: #737373;
+$form-label: #999999;
 $field-background: #2e2e2e;
 $form-field-text-color: #bdbdbd;
 $field-button-color: #27aae1;
@@ -38,10 +38,12 @@ $login-label: #606060;
 $silver-color: #BDBDBD;
 $dusty-grey: #9b9a9a;
 $ocean-green: #3AA570;
-$evergreen: #083b44;
+$edit-child-background: #083b44;
+$edit-child-highlight: #07333a;
 
 $dialog-1x-width: 320px;
-$dialog-2x-width: 320px;
+$dialog-2x-width: 640px;
+$dialog-4x-width: 1380px;
 $slider-left-padding: 25px;
 
 @mixin transform($transforms) {
@@ -52,3 +54,12 @@ $slider-left-padding: 25px;
   transform: $transforms;
 }
 
+@mixin place-holder-text
+{
+  font-family: Roboto;
+  font-size: 12px;
+  color:#bdbdbd !important;
+  font-weight: 300 !important;
+  text-align: center !important;
+  font-style: italic !important;
+}

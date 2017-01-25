@@ -17,159 +17,28 @@
  */
 package org.apache.metron.rest.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.metron.common.configuration.ConfigurationType;
-import org.apache.metron.common.configuration.ConfigurationsUtils;
 import org.apache.metron.common.configuration.SensorParserConfig;
-import org.apache.metron.parsers.interfaces.MessageParser;
+import org.apache.metron.rest.RestException;
 import org.apache.metron.rest.model.ParseMessageRequest;
-import org.apache.metron.rest.model.SensorParserConfigVersion;
-import org.apache.metron.rest.repository.SensorParserConfigVersionRepository;
-import org.apache.zookeeper.KeeperException;
 import org.json.simple.JSONObject;
-import org.reflections.Reflections;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
-public class SensorParserConfigService {
+public interface SensorParserConfigService {
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  SensorParserConfig save(SensorParserConfig sensorParserConfig) throws RestException;
 
-  private CuratorFramework client;
+  SensorParserConfig findOne(String name) throws RestException;
 
-  @Autowired
-  public void setClient(CuratorFramework client) {
-    this.client = client;
-  }
+  Iterable<SensorParserConfig> getAll() throws RestException;
 
-  @Autowired
-  private GrokService grokService;
+  boolean delete(String name) throws RestException;
 
-  @Autowired
-  private SensorParserConfigVersionRepository sensorParserRepository;
+  Map<String, String> getAvailableParsers();
 
-  private Map<String, String> availableParsers;
+  Map<String, String> reloadAvailableParsers();
 
-  public SensorParserConfig save(SensorParserConfig sensorParserConfig) throws Exception {
-    String serializedConfig;
-    if (grokService.isGrokConfig(sensorParserConfig)) {
-      grokService.addGrokPathToConfig(sensorParserConfig);
-      sensorParserConfig.getParserConfig().putIfAbsent(GrokService.GROK_PATTERN_LABEL_KEY, sensorParserConfig.getSensorTopic().toUpperCase());
-      String statement = (String) sensorParserConfig.getParserConfig().remove(GrokService.GROK_STATEMENT_KEY);
-      serializedConfig = objectMapper.writeValueAsString(sensorParserConfig);
-      ConfigurationsUtils.writeSensorParserConfigToZookeeper(sensorParserConfig.getSensorTopic(), serializedConfig.getBytes(), client);
-      sensorParserConfig.getParserConfig().put(GrokService.GROK_STATEMENT_KEY, statement);
-      grokService.saveGrokStatement(sensorParserConfig);
-    } else {
-      serializedConfig = objectMapper.writeValueAsString(sensorParserConfig);
-      ConfigurationsUtils.writeSensorParserConfigToZookeeper(sensorParserConfig.getSensorTopic(), serializedConfig.getBytes(), client);
-    }
-    saveVersion(sensorParserConfig.getSensorTopic(), serializedConfig);
-    return sensorParserConfig;
-  }
-
-  private void saveVersion(String name, String config) {
-    SensorParserConfigVersion sensorParser = new SensorParserConfigVersion();
-    sensorParser.setName(name);
-    sensorParser.setConfig(config);
-    sensorParserRepository.save(sensorParser);
-  }
-
-  public SensorParserConfig findOne(String name) throws Exception{
-    SensorParserConfig sensorParserConfig = null;
-    try {
-      sensorParserConfig = ConfigurationsUtils.readSensorParserConfigFromZookeeper(name, client);
-      if (grokService.isGrokConfig(sensorParserConfig)) {
-        grokService.addGrokStatementToConfig(sensorParserConfig);
-      }
-    } catch (KeeperException.NoNodeException e) {
-    }
-    return sensorParserConfig;
-  }
-
-  public Iterable<SensorParserConfig> getAll() throws Exception {
-    List<SensorParserConfig> sensorParserConfigs = new ArrayList<>();
-    List<String> sensorNames = getAllTypes();
-    for (String name : sensorNames) {
-      sensorParserConfigs.add(findOne(name));
-    }
-    return sensorParserConfigs;
-  }
-
-  public boolean delete(String name) throws Exception {
-    try {
-      client.delete().forPath(ConfigurationType.PARSER.getZookeeperRoot() + "/" + name);
-      sensorParserRepository.delete(name);
-    } catch (KeeperException.NoNodeException e) {
-      return false;
-    } catch (EmptyResultDataAccessException e) {
-      return true;
-    }
-    return true;
-  }
-
-  public List<String> getAllTypes() throws Exception {
-    List<String> types;
-    try {
-      types = client.getChildren().forPath(ConfigurationType.PARSER.getZookeeperRoot());
-    } catch (KeeperException.NoNodeException e) {
-      types = new ArrayList<>();
-    }
-    return types;
-  }
-
-  public Map<String, String> getAvailableParsers() {
-    if (availableParsers == null) {
-      availableParsers = new HashMap<>();
-      Set<Class<? extends MessageParser>> parserClasses = getParserClasses();
-      parserClasses.forEach(parserClass -> {
-        if (!"BasicParser".equals(parserClass.getSimpleName())) {
-          availableParsers.put(parserClass.getSimpleName().replaceAll("Basic|Parser", ""), parserClass.getName());
-        }
-      });
-    }
-    return availableParsers;
-  }
-
-  public Map<String, String> reloadAvailableParsers() {
-    availableParsers = null;
-    return getAvailableParsers();
-  }
-
-  private Set<Class<? extends MessageParser>> getParserClasses() {
-    Reflections reflections = new Reflections("org.apache.metron.parsers");
-    return reflections.getSubTypesOf(MessageParser.class);
-  }
-
-  public JSONObject parseMessage(ParseMessageRequest parseMessageRequest) throws Exception {
-    SensorParserConfig sensorParserConfig = parseMessageRequest.getSensorParserConfig();
-    if (sensorParserConfig == null) {
-      throw new Exception("Could not find parser config");
-    } else if (sensorParserConfig.getParserClassName() == null) {
-      throw new Exception("Could not find parser class name");
-    } else {
-      MessageParser<JSONObject> parser = (MessageParser<JSONObject>) Class.forName(sensorParserConfig.getParserClassName()).newInstance();
-      if (grokService.isGrokConfig(sensorParserConfig)) {
-        grokService.saveTemporaryGrokStatement(sensorParserConfig);
-        sensorParserConfig.getParserConfig().put(GrokService.GROK_PATH_KEY, new File(grokService.getTemporaryGrokRootPath(), sensorParserConfig.getSensorTopic()).toString());
-      }
-      parser.configure(sensorParserConfig.getParserConfig());
-      JSONObject results = parser.parse(parseMessageRequest.getSampleData().getBytes()).get(0);
-      if (grokService.isGrokConfig(sensorParserConfig)) {
-        grokService.deleteTemporaryGrokStatement(sensorParserConfig);
-      }
-      return results;
-    }
-  }
+  JSONObject parseMessage(ParseMessageRequest parseMessageRequest) throws RestException;
 }

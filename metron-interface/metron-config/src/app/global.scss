@@ -182,18 +182,18 @@ input:-webkit-autofill {
   width :640px
 }
 
-.metron-slider-pane-edit
-{
-  @extend .metron-slider-pane;
-  background: $edit-background;
-  border: 1px solid $edit-background-border;
-}
-
-.metron-slider-pane-edit-child
-{
-  @extend .metron-slider-pane-edit;
-  background-color: #083b44;
-}
+//.metron-slider-pane-edit
+//{
+//  @extend .metron-slider-pane;
+//  background: $edit-background;
+//  border: 1px solid $edit-background-border;
+//}
+//
+//.metron-slider-pane-edit-child
+//{
+//  @extend .metron-slider-pane-edit;
+//  background-color: #083b44;
+//}
 
 form
 {
@@ -201,7 +201,7 @@ form
   {
     font-family: Roboto-Medium;
     font-size: 12px;
-    letter-spacing: -0.8px;
+    //letter-spacing: -0.8px;
     color: $form-label;
   }
 

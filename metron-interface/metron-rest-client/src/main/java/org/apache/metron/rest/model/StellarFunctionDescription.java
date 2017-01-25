@@ -42,6 +42,9 @@ public class StellarFunctionDescription {
     }
 
     public String[] getParams() {
+        if (params == null) {
+            return new String[0];
+        }
         return params;
     }
 

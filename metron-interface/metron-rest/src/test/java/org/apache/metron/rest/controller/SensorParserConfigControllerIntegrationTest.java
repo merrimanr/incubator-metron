@@ -19,14 +19,12 @@ package org.apache.metron.rest.controller;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.io.FileUtils;
-import org.apache.metron.rest.service.GrokService;
-import org.apache.metron.rest.service.SensorParserConfigService;
+import org.apache.metron.rest.MetronRestConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -38,6 +36,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.io.File;
 import java.io.IOException;
 
+import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -50,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@ActiveProfiles(TEST_PROFILE)
 public class SensorParserConfigControllerIntegrationTest {
 
   /**
@@ -76,6 +75,19 @@ public class SensorParserConfigControllerIntegrationTest {
    */
   @Multiline
   public static String squidJson;
+
+  /**
+   {
+   "parserClassName": "org.apache.metron.parsers.GrokParser",
+   "sensorTopic": "squidTest",
+   "parserConfig": {
+   "patternLabel": "SQUIDTEST",
+   "timestampField": "timestamp"
+   }
+   }
+   */
+  @Multiline
+  public static String missingGrokJson;
 
   /**
    {
@@ -105,6 +117,52 @@ public class SensorParserConfigControllerIntegrationTest {
    */
   @Multiline
   public static String parseRequest;
+
+  /**
+   {
+   "sensorParserConfig": null,
+   "sampleData":"1467011157.401 415 127.0.0.1 TCP_MISS/200 337891 GET http://www.aliexpress.com/af/shoes.html? - DIRECT/207.109.73.154 text/html"
+   }
+   */
+  @Multiline
+  public static String missingConfigParseRequest;
+
+  /**
+   {
+   "sensorParserConfig":
+   {
+   "sensorTopic": "squidTest",
+   "parserConfig": {
+   "grokStatement": "%{NUMBER:timestamp} %{INT:elapsed} %{IPV4:ip_src_addr} %{WORD:action}/%{NUMBER:code} %{NUMBER:bytes} %{WORD:method} %{NOTSPACE:url} - %{WORD:UNWANTED}\/%{IPV4:ip_dst_addr} %{WORD:UNWANTED}\/%{WORD:UNWANTED}",
+   "patternLabel": "SQUIDTEST",
+   "grokPath":"./squidTest",
+   "timestampField": "timestamp"
+   }
+   },
+   "sampleData":"1467011157.401 415 127.0.0.1 TCP_MISS/200 337891 GET http://www.aliexpress.com/af/shoes.html? - DIRECT/207.109.73.154 text/html"
+   }
+   */
+  @Multiline
+  public static String missingClassParseRequest;
+
+  /**
+   {
+   "sensorParserConfig":
+   {
+   "parserClassName": "badClass",
+   "sensorTopic": "squidTest",
+   "parserConfig": {
+   "grokStatement": "%{NUMBER:timestamp} %{INT:elapsed} %{IPV4:ip_src_addr} %{WORD:action}/%{NUMBER:code} %{NUMBER:bytes} %{WORD:method} %{NOTSPACE:url} - %{WORD:UNWANTED}\/%{IPV4:ip_dst_addr} %{WORD:UNWANTED}\/%{WORD:UNWANTED}",
+   "patternLabel": "SQUIDTEST",
+   "grokPath":"./squidTest",
+   "timestampField": "timestamp"
+   }
+   },
+   "sampleData":"1467011157.401 415 127.0.0.1 TCP_MISS/200 337891 GET http://www.aliexpress.com/af/shoes.html? - DIRECT/207.109.73.154 text/html"
+   }
+   */
+  @Multiline
+  public static String badClassParseRequest;
 
   @Autowired
   private Environment environment;
@@ -157,6 +215,12 @@ public class SensorParserConfigControllerIntegrationTest {
             .andExpect(jsonPath("$.fieldTransformations[0].config.full_hostname").value("URL_TO_HOST(url)"))
             .andExpect(jsonPath("$.fieldTransformations[0].config.domain_without_subdomains").value("DOMAIN_REMOVE_SUBDOMAINS(full_hostname)"));
 
+    this.mockMvc.perform(post(sensorParserConfigUrl).with(httpBasic(user, password)).with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(missingGrokJson))
+            .andExpect(status().isInternalServerError())
+            .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(jsonPath("$.responseCode").value(500))
+            .andExpect(jsonPath("$.message").value("A grokStatement must be provided"));
+
     this.mockMvc.perform(get(sensorParserConfigUrl + "/squidTest").with(httpBasic(user,password)))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
@@ -188,6 +252,13 @@ public class SensorParserConfigControllerIntegrationTest {
 
     this.mockMvc.perform(post(sensorParserConfigUrl).with(httpBasic(user, password)).with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(broJson))
             .andExpect(status().isCreated())
+            .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(jsonPath("$.parserClassName").value("org.apache.metron.parsers.bro.BasicBroParser"))
+            .andExpect(jsonPath("$.sensorTopic").value("broTest"))
+            .andExpect(jsonPath("$.parserConfig").isEmpty());
+
+    this.mockMvc.perform(post(sensorParserConfigUrl).with(httpBasic(user, password)).with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(broJson))
+            .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
             .andExpect(jsonPath("$.parserClassName").value("org.apache.metron.parsers.bro.BasicBroParser"))
             .andExpect(jsonPath("$.sensorTopic").value("broTest"))
@@ -260,15 +331,34 @@ public class SensorParserConfigControllerIntegrationTest {
             .andExpect(jsonPath("$.ip_src_addr").value("127.0.0.1"))
             .andExpect(jsonPath("$.url").value("http://www.aliexpress.com/af/shoes.html?"))
             .andExpect(jsonPath("$.timestamp").value(1467011157401L));
+
+    this.mockMvc.perform(post(sensorParserConfigUrl + "/parseMessage").with(httpBasic(user, password)).with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(missingConfigParseRequest))
+            .andExpect(status().isInternalServerError())
+            .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(jsonPath("$.responseCode").value(500))
+            .andExpect(jsonPath("$.message").value("SensorParserConfig is missing from ParseMessageRequest"));
+
+    this.mockMvc.perform(post(sensorParserConfigUrl + "/parseMessage").with(httpBasic(user, password)).with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(missingClassParseRequest))
+            .andExpect(status().isInternalServerError())
+            .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(jsonPath("$.responseCode").value(500))
+            .andExpect(jsonPath("$.message").value("SensorParserConfig must have a parserClassName"));
+
+    this.mockMvc.perform(post(sensorParserConfigUrl + "/parseMessage").with(httpBasic(user, password)).with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(badClassParseRequest))
+            .andExpect(status().isInternalServerError())
+            .andExpect(content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(jsonPath("$.responseCode").value(500))
+            .andExpect(jsonPath("$.message").value("java.lang.ClassNotFoundException: badClass"));
+
   }
 
   private void cleanFileSystem() throws IOException {
-    File grokTempPath = new File(environment.getProperty(GrokService.GROK_TEMP_PATH_SPRING_PROPERTY));
+    File grokTempPath = new File(environment.getProperty(MetronRestConstants.GROK_TEMP_PATH_SPRING_PROPERTY));
     if (grokTempPath.exists()) {
       FileUtils.cleanDirectory(grokTempPath);
       FileUtils.deleteDirectory(grokTempPath);
     }
-    File grokPath = new File(environment.getProperty(GrokService.GROK_DEFAULT_PATH_SPRING_PROPERTY));
+    File grokPath = new File(environment.getProperty(MetronRestConstants.GROK_DEFAULT_PATH_SPRING_PROPERTY));
     if (grokPath.exists()) {
       FileUtils.cleanDirectory(grokPath);
       FileUtils.deleteDirectory(grokPath);

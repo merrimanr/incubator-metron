@@ -17,75 +17,26 @@
  */
 package org.apache.metron.rest.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.metron.common.configuration.ConfigurationType;
-import org.apache.metron.common.configuration.ConfigurationsUtils;
 import org.apache.metron.common.configuration.enrichment.SensorEnrichmentConfig;
-import org.apache.zookeeper.KeeperException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.metron.rest.RestException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
-public class SensorEnrichmentConfigService {
+public interface SensorEnrichmentConfigService {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    SensorEnrichmentConfig save(String name, SensorEnrichmentConfig sensorEnrichmentConfig) throws RestException;
 
-    @Autowired
-    private CuratorFramework client;
+    SensorEnrichmentConfig findOne(String name) throws RestException;
 
-    public SensorEnrichmentConfig save(String name, SensorEnrichmentConfig sensorEnrichmentConfig) throws Exception {
-        ConfigurationsUtils.writeSensorEnrichmentConfigToZookeeper(name, objectMapper.writeValueAsString(sensorEnrichmentConfig).getBytes(), client);
-        return sensorEnrichmentConfig;
-    }
+    Map<String, SensorEnrichmentConfig> getAll() throws RestException;
 
-    public SensorEnrichmentConfig findOne(String name) throws Exception {
-        SensorEnrichmentConfig sensorEnrichmentConfig = null;
-        try {
-            sensorEnrichmentConfig = ConfigurationsUtils.readSensorEnrichmentConfigFromZookeeper(name, client);
-        } catch (KeeperException.NoNodeException e) {
-        }
-        return sensorEnrichmentConfig;
-    }
+    List<String> getAllTypes() throws RestException;
 
-    public List<SensorEnrichmentConfig> getAll() throws Exception {
-        List<SensorEnrichmentConfig> sensorEnrichmentConfigs = new ArrayList<>();
-        List<String> sensorNames = getAllTypes();
-        for (String name : sensorNames) {
-            sensorEnrichmentConfigs.add(findOne(name));
-        }
-        return sensorEnrichmentConfigs;
-    }
+    boolean delete(String name) throws RestException;
 
-    public List<String> getAllTypes() throws Exception {
-        List<String> types;
-        try {
-            types = client.getChildren().forPath(ConfigurationType.ENRICHMENT.getZookeeperRoot());
-        } catch (KeeperException.NoNodeException e) {
-            types = new ArrayList<>();
-        }
-        return types;
-    }
-
-    public boolean delete(String name) throws Exception {
-        try {
-            client.delete().forPath(ConfigurationType.ENRICHMENT.getZookeeperRoot() + "/" + name);
-        } catch (KeeperException.NoNodeException e) {
-            return false;
-        }
-        return true;
-    }
-
-    public List<String> getAvailableEnrichments() {
-        return new ArrayList<String>() {{
-            add("geo");
-            add("host");
-            add("whois");
-        }};
-    }
+    List<String> getAvailableEnrichments();
 
 }
