@@ -71,7 +71,10 @@ public class KafkaServiceImpl implements KafkaService {
     public KafkaTopic getTopic(String name) {
         KafkaTopic kafkaTopic = null;
         if (listTopics().contains(name)) {
-            List<PartitionInfo> partitionInfos = kafkaConsumer.partitionsFor(name);
+            List<PartitionInfo> partitionInfos;
+            synchronized (this) {
+              partitionInfos = kafkaConsumer.partitionsFor(name);
+            }
             if (partitionInfos.size() > 0) {
                 PartitionInfo partitionInfo = partitionInfos.get(0);
                 kafkaTopic = new KafkaTopic();

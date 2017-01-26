@@ -29,6 +29,7 @@
                                        (hideFieldSchema)="hidePane(pane.FIELDSCHEMA)"></metron-config-sensor-field-schema>
 
     <metron-config-sensor-threat-triage [hidden]="!showThreatTriage" [showThreatTriage]="showThreatTriage"
+                                  [sensorParserConfig]="sensorParserConfig"
                                   [(sensorEnrichmentConfig)]="sensorEnrichmentConfig"
                                   (hideThreatTriage)="hidePane(pane.THREATTRIAGE)"></metron-config-sensor-threat-triage>
 

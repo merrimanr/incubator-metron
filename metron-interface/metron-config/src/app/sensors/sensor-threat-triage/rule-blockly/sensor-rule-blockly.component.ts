@@ -19,8 +19,9 @@ import {Component, OnInit, Input, EventEmitter, Output, AfterViewInit, ViewChild
 import {BlocklyService} from "../../../service/blockly.service";
 import {TransformationValidationService} from "../../../service/transformation-validation.service";
 import {StellarFunctionDescription} from "../../../model/stellar-function-description";
-
-declare var Blockly: any;
+import {ParseMessageRequest} from "../../../model/parse-message-request";
+import {SensorParserConfigService} from "../../../service/sensor-parser-config.service";
+import {SampleDataComponent} from "../../../shared/sample-data/sample-data.component";
 
 @Component({
   selector: 'metron-config-sensor-rule-blockly',
@@ -28,196 +29,62 @@ declare var Blockly: any;
   styleUrls: ['./sensor-rule-blockly.component.scss']
 })
 
-export class SensorRuleBlocklyComponent implements OnInit, AfterViewInit {
+export class SensorRuleBlocklyComponent implements AfterViewInit {
 
   @Input() value: string;
   @Input() score: number;
+  @Input() sensorParserConfig: string;
 
-  @Output() onCancelTextEditor: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() onSubmitTextEditor: EventEmitter<{}> = new EventEmitter<{}>();
+  @ViewChild(SampleDataComponent) sampleData: SampleDataComponent;
+  @Output() onCancelBlocklyEditor: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() onSubmitBlocklyEditor: EventEmitter<{}> = new EventEmitter<{}>();
 
-  xml: string;
+  private commonFields = ['ip_src_addr', 'ip_src_port', 'ip_dst_addr', 'ip_dst_port', 'protocol', 'timestamp', 'includes_reverse_traffic'];
 
-  @ViewChild('xmltemplate') xmltemplate: ElementRef;
-  statement: string;
-  workspace;
+  private statement: string;
+  private availableFields: string[] = this.commonFields;
 
-  constructor(private blocklyService: BlocklyService, private transformationValidationService: TransformationValidationService) { }
+  constructor(private sensorParserConfigService: SensorParserConfigService) { }
 
-  ngOnInit() {
-    // B'coz of https://github.com/google/blockly/issues/299
-    this.statement = this.value;
-    Blockly.WorkspaceSvg.prototype.preloadAudio_ = function() {};
+
+  ngAfterViewInit(): void {
+    this.sampleData.getNextSample();
   }
 
-  ngAfterViewInit() {
-    this.addAvailableFieldsBlock(this.availableFields);
-    this.transformationValidationService.listFunctionsByCategory().subscribe(stellarFunctionMap => {
-      this.generateBlocks(stellarFunctionMap);
-      this.generateToolbox(stellarFunctionMap);
-      this.injectBlockly();
-      this.loadCurrentStatement();
-    });
-  }
-
-  generateBlocks(stellarFunctionMap: {string: StellarFunctionDescription[]}) {
-    for(let category of Object.keys(stellarFunctionMap)) {
-      for (let stellarFunctionDescription of stellarFunctionMap[category]) {
-        Blockly.Blocks['stellar_' + stellarFunctionDescription.name] = {
-          init: function() {
-            this.appendDummyInput()
-                .appendField(stellarFunctionDescription.name);
-            for(let param of stellarFunctionDescription.params) {
-              let formattedParam = param.split('-')[0].trim();
-              this.appendValueInput(formattedParam.toUpperCase())
-                  .setCheck(null)
-                  .appendField(formattedParam);
-            }
-            this.setOutput(true, null);
-            this.setColour(160);
-            this.setTooltip('');
-            this.setHelpUrl('http://www.example.com/');
-          }
-        };
-        Blockly.JavaScript['stellar_' + stellarFunctionDescription.name] = function(block) {
-          let values = [];
-          for(let param of stellarFunctionDescription.params) {
-            let formattedParam = param.split('-')[0].trim();
-            values.push(Blockly.JavaScript.valueToCode(block, formattedParam.toUpperCase(), Blockly.JavaScript.ORDER_ADDITION));
-          }
-          var code = stellarFunctionDescription.name + '(' + values.join(',') + ')';
-          return [code, Blockly.JavaScript.ORDER_ADDITION];
-        };
-      }
-    }
-  }
-
-  generateToolbox(stellarFunctionMap: {string: StellarFunctionDescription[]}) {
-    let xml = '<xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">';
-
-    //Stellar functions
-    xml += '<category name="Stellar">';
-    for(let category of Object.keys(stellarFunctionMap).sort()) {
-      xml += '<category name="' + category + '">';
-      for (let stellarFunctionDescription of stellarFunctionMap[category]) {
-        xml += '<block type="stellar_' + stellarFunctionDescription.name + '"></block>';
-      }
-      xml += '</category>';
-    }
-    xml += '</category>';
-
-    //Collection functions
-    xml += '<category name="Collection">';
-    xml += '<block type="stellar_in"></block>';
-    xml += '<block type="lists_create_with"></block>';
-    xml += '<block type="stellar_map_create"></block>';
-    xml += '<block type="stellar_key_value"><value name="KEY"><block type="text"></value></block>';
-    xml += '</category>';
-
-    //Boolean functions
-    xml += '<category name="Boolean">';
-    xml += '<block type="logic_compare"></block>';
-    xml += '<block type="logic_operation"></block>';
-    xml += '<block type="stellar_negate"></block>';
-    xml += '<block type="logic_ternary"></block>';
-    xml += '<block type="stellar_EXISTS"></block>';
-    xml += '</category>';
-
-    //Math functions
-    xml += '<category name="Math">';
-    xml += '<block type="stellar_arithmetic"></block>';
-    xml += '</category>';
-
-    //Fields
-    xml += '<category name="Fields">';
-    xml += '<block type="available_fields"></block>';
-    xml += '</category>';
-
-    //Constants
-    xml += '<category name="Constants">';
-    xml += '<block type="text"><field name="TEXT"></field></block>';
-    xml += '<block type="logic_boolean"><field name="BOOL">TRUE</field></block>';
-    xml += '<block type="math_number"></block>';
-    xml += '<block type="logic_null"></block>';
-    xml += '</category>';
-
-    xml += '</xml>';
-    this.xml = xml;
-  }
-
-  injectBlockly() {
-    this.xmltemplate.nativeElement.outerHTML = this.xml;
-    this.workspace = Blockly.inject('blocklyDiv',
-        {media: 'assets/blockly/media/',
-          css: false,
-          grid:
-          {spacing: 15,
-            length: 15,
-            colour: '#4d4d4d',
-            snap: true},
-          toolbox: document.getElementById('toolbox')});
-
-    this.workspace.addChangeListener(event => {
-      this.statement = Blockly.JavaScript.workspaceToCode(this.workspace).replace(';', '');
-    });
-  }
-
-  loadCurrentStatement() {
-    if (this.statement) {
-      this.blocklyService.statementToXml(this.statement).subscribe(xml => {
-        let dom = Blockly.Xml.textToDom(xml);
-        Blockly.Xml.domToWorkspace(dom, this.workspace);
-      });
-    }
-  }
-  
-  availableFields = ["sensor_type","ip_src_addr","ip_dst_addr","isAlert","host","method","protocol","application","enrichments.hbaseEnrichment.url.whois.home_country"];
-
-  addAvailableFieldsBlock(fields) {
-    fields.sort();
-    let fieldArray = [];
-    for(let field of fields) {
-      fieldArray.push([field, field]);
-    }
-    Blockly.Blocks['available_fields'] = {
-      init: function() {
-        this.appendDummyInput()
-            .appendField(new Blockly.FieldDropdown(fieldArray), "FIELD_NAME");
-        this.setOutput(true, "String");
-        this.setTooltip('These are the available fields');
-        this.setHelpUrl('http://www.example.com/');
-        this.setColour(270);
-      }
-    };
+  onStatementChange(statement: string): void {
+    this.statement = statement;
   }
 
   onSave(): void {
     let rule = {};
     rule[this.statement] = this.score;
-    this.onSubmitTextEditor.emit(rule);
+    this.onSubmitBlocklyEditor.emit(rule);
   }
 
   onCancel(): void {
-    this.onCancelTextEditor.emit(true);
+    this.onCancelBlocklyEditor.emit(true);
   }
 
-  count = 0;
+  onSampleDataChanged(sampleData: string) {
+    let parseMessageRequest = new ParseMessageRequest();
+    parseMessageRequest.sensorParserConfig = JSON.parse(JSON.stringify(this.sensorParserConfig));
+    parseMessageRequest.sampleData = sampleData;
+    if (parseMessageRequest.sensorParserConfig.parserConfig['patternLabel'] == null) {
+      parseMessageRequest.sensorParserConfig.parserConfig['patternLabel'] = parseMessageRequest.sensorParserConfig.sensorTopic.toUpperCase();
+    }
+    parseMessageRequest.sensorParserConfig.parserConfig['grokPath'] = './' + parseMessageRequest.sensorParserConfig.sensorTopic;
 
-  onAdd(): void {
-    this.count = this.count + 1;
-    let fieldName = 'field' + this.count;
-    this.availableFields.push(fieldName);
-    this.addAvailableFieldsBlock(this.availableFields);
+    this.sensorParserConfigService.parseMessage(parseMessageRequest).subscribe(
+        parserResult => {
+          this.availableFields = Object.keys(parserResult);
+        },
+        error => {
+          this.onSampleDataNotAvailable();
+        });
   }
 
-  onRemove(): void {
-    this.count = this.count - 1;
-    this.availableFields.pop();
-    this.addAvailableFieldsBlock(this.availableFields);
-  }
-
-  onPrint() {
-    console.log(Blockly.Xml.workspaceToDom(this.workspace));
+  onSampleDataNotAvailable() {
+    this.availableFields = this.commonFields;
   }
 
 }

@@ -166,3 +166,19 @@ select
   padding-left: 25px;
   padding-right: 20px;
 }
+
+.builder-link
+{
+  text-align: right;
+  font-size:  15px;
+  padding-top: 2px;
+  color: #33a6dd;
+  cursor: pointer;
+}
+
+.builder-link-disabled
+{
+  cursor: not-allowed;
+  opacity: .65;
+}
+

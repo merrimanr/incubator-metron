@@ -18,6 +18,7 @@
 /* tslint:disable:triple-equals */
 import {Component, Input, EventEmitter, Output, OnChanges, SimpleChanges} from '@angular/core';
 import {SensorEnrichmentConfig } from '../../model/sensor-enrichment-config';
+import {SensorParserConfig} from "../../model/sensor-parser-config";
 
 export enum SortOrderOption {
   LOWEST_SCORE, HIGHEST_SCORE, LOWEST_NAME, HIGHEST_NAME
@@ -36,15 +37,16 @@ export enum ThreatTriageFilter {
 export class SensorThreatTriageComponent implements OnChanges {
 
   @Input() showThreatTriage: boolean;
+  @Input() sensorParserConfig: SensorParserConfig;
   @Input() sensorEnrichmentConfig: SensorEnrichmentConfig;
 
   @Output() hideThreatTriage: EventEmitter<boolean> = new EventEmitter<boolean>();
   availableAggregators = ['MAX', 'MIN', 'SUM', 'MEAN', 'POSITIVE_MEAN'];
 
-  showTextEditor = false;
-  currentValue: string;
-  textEditorValue: string;
-  textEditorScore: number;
+  showRuleEditor = false;
+  showRuleBlockly = false;
+  ruleValue: string;
+  ruleScore: number;
 
   rules = [];
 
@@ -79,23 +81,41 @@ export class SensorThreatTriageComponent implements OnChanges {
     this.hideThreatTriage.emit(true);
   }
 
-
-  onSubmitTextEditor(rule: {}): void {
+  onSubmitRuleEditor(rule: {}): void {
     let ruleValue = Object.keys(rule)[0];
-    delete this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[this.textEditorValue];
+    delete this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[this.ruleValue];
     this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[ruleValue] = rule[ruleValue];
-    this.showTextEditor = false;
+    this.showRuleEditor = false;
     this.init();
   }
 
-  onCancelTextEditor(): void {
-    this.showTextEditor = false;
+  onCancelRuleEditor(): void {
+    this.showRuleEditor = false;
   }
 
-  onEditRule(rule: string) {
-    this.textEditorValue = rule;
-    this.textEditorScore = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[rule];
-    this.showTextEditor = true;
+  onOpenRuleEditor(rule: string) {
+    this.ruleValue = rule;
+    this.ruleScore = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[rule];
+    this.showRuleEditor = true;
+  }
+
+  onSubmitRuleBlockly(rule: {}): void {
+    let ruleValue = Object.keys(rule)[0];
+    delete this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[this.ruleValue];
+    this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[ruleValue] = rule[ruleValue];
+    this.showRuleBlockly = false;
+    this.init();
+  }
+
+  onCancelRuleBlockly(): void {
+    this.showRuleBlockly = false;
+  }
+
+  onOpenRuleBlockly(rule: string) {
+    this.ruleValue = rule;
+    this.ruleScore = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[rule];
+    this.showRuleEditor = false;
+    this.showRuleBlockly = true;
   }
 
   onDeleteRule(rule: string) {
@@ -104,9 +124,9 @@ export class SensorThreatTriageComponent implements OnChanges {
   }
 
   onNewRule(): void {
-    this.textEditorValue = '';
-    this.textEditorScore = 0;
-    this.showTextEditor = true;
+    this.ruleValue = '';
+    this.ruleScore = 0;
+    this.showRuleBlockly = true;
   }
 
   updateBuckets() {

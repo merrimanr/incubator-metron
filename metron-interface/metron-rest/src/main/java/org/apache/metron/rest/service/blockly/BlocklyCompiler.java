@@ -25,6 +25,7 @@ import org.apache.metron.common.dsl.VariableResolver;
 import org.apache.metron.common.dsl.functions.resolver.FunctionResolver;
 import org.apache.metron.common.stellar.StellarCompiler;
 import org.apache.metron.common.stellar.evaluators.ArithmeticEvaluator;
+import org.apache.metron.common.stellar.evaluators.ComparisonExpressionWithOperatorEvaluator;
 import org.apache.metron.common.stellar.evaluators.NumberLiteralEvaluator;
 import org.apache.metron.common.stellar.generated.StellarParser;
 
@@ -42,7 +43,7 @@ public class BlocklyCompiler extends StellarCompiler {
   private Stack<Token<?>> tokenStack;
 
   public BlocklyCompiler(VariableResolver variableResolver, FunctionResolver functionResolver, Context context, Stack<Token<?>> tokenStack) {
-    super(variableResolver, functionResolver, context, tokenStack, ArithmeticEvaluator.INSTANCE, NumberLiteralEvaluator.INSTANCE);
+    super(variableResolver, functionResolver, context, tokenStack, ArithmeticEvaluator.INSTANCE, NumberLiteralEvaluator.INSTANCE, ComparisonExpressionWithOperatorEvaluator.INSTANCE);
     this.tokenStack = tokenStack;
     functionResolver.getFunctionInfo().forEach(stellarFunctionInfo -> functionParamMap.put(stellarFunctionInfo.getName(), stellarFunctionInfo.getParams()));
   }
@@ -349,5 +350,12 @@ public class BlocklyCompiler extends StellarCompiler {
   public Xml getXml() {
     xml.addBlock((Block) popStack().getValue());
     return this.xml;
+  }
+
+  private Token<?> popStack() {
+    if (tokenStack.empty()) {
+      throw new ParseException("Unable to pop an empty stack");
+    }
+    return tokenStack.pop();
   }
 }

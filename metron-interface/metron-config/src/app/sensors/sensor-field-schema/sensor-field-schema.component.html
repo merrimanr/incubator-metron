@@ -31,16 +31,16 @@
             A data sample is need to view/configure the complete schema.
           </div>
 
-          <div class="row mx-0" *ngIf="fieldSchemaRows.length>0">
-            <div class="col-md-3 title text-grey"> Field </div>
-            <div class="col-md-9 title text-grey"> Changes </div>
+          <div class="row mx-0" *ngIf="fieldSchemaRows.length>0" style="padding-bottom: 0.5rem !important;">
+            <div class="col-md-4 title text-grey"> Field </div>
+            <div class="col-md-8 title text-grey"> Changes </div>
           </div>
 
           <div *ngFor="let fieldSchemaRow of fieldSchemaRows" class="row pb-1 mx-0">
               <!-- Readonly Field Schema Row -->
               <div class="field-schema-row" *ngIf="!fieldSchemaRow.showConfig" [class.field-suppressed]="fieldSchemaRow.isRemoved">
-                <div class="col-md-3 field-schema-cell-title"> {{ fieldSchemaRow.outputFieldName }} </div>
-                <div class="col-md-7 field-schema-cell-value" [innerHtml]="getChanges(fieldSchemaRow)"> </div>
+                <div class="col-md-4 field-schema-cell-title"> {{ fieldSchemaRow.outputFieldName }} </div>
+                <div class="col-md-6 field-schema-cell-value" [innerHtml]="getChanges(fieldSchemaRow)"> </div>
                 <div class="col-md-2 field-schema-cell icon-blue" style="font-size: 16px">
                   <i *ngIf="!fieldSchemaRow.isParserGenerated" class="fa fa-trash pull-right" aria-hidden="true" (click)="onDelete(fieldSchemaRow)"></i>
                   <i class="fa fa-pencil pull-right" aria-hidden="true" (click)="fieldSchemaRow.showConfig=true"></i>
@@ -61,26 +61,48 @@
                   </div>
                 </div>
 
-                <!--Input Field Name-->
-                <div class="form-group  px-1 col-md-10" *ngIf="fieldSchemaRow.isNew">
-                  <label>INPUT FIELD</label>
-                  <select [(ngModel)]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}" (ngModelChange)="fieldSchemaRow.outputFieldName=fieldSchemaRow.inputFieldName+'_copy'">
-                    <option [disabled] [selected]>  </option>
-                    <option *ngFor="let fieldSchemaRow of fieldSchemaRows" [attr.hidden]="fieldSchemaRow.isNew"> {{ fieldSchemaRow.inputFieldName }} </option>
-                  </select>
-                </div>
-
                 <!-- Output Field Name-->
-                <div class="form-group  px-1 col-md-10" *ngIf="fieldSchemaRow.isNew  || !fieldSchemaRow.isParserGenerated">
-                  <label [attr.for]="fieldSchemaRow.fieldName">NAME</label>
-                  <input type="text" class="form-control" [name]="fieldSchemaRow.outputFieldName" [(ngModel)]="fieldSchemaRow.outputFieldName" [ngModelOptions]="{standalone: true}">
+                <div class="form-group  px-1 col-md-12" *ngIf="fieldSchemaRow.isNew  || !fieldSchemaRow.isParserGenerated">
+                    <label [attr.for]="fieldSchemaRow.fieldName">NAME</label>
+                    <input type="text" class="form-control" [name]="fieldSchemaRow.outputFieldName" [(ngModel)]="fieldSchemaRow.outputFieldName" [ngModelOptions]="{standalone: true}">
                 </div>
 
-                <!-- Transforms -->
+                <div *ngIf="!fieldSchemaRow.showBlocklyEditor && fieldSchemaRow.isSimple">
+                  <!--Input Field Name-->
+                  <div class="form-group  px-1 col-md-12">
+                    <div class="container">
+                      <div class="row">
+                        <div class="px-0 col-md-9"><label>INPUT FIELD</label></div>
+                        <div class="px-0 col-md-3 builder-link" (click)="onShowBuilder(fieldSchemaRow)"><i class="fa fa-puzzle-piece" aria-hidden="true" style="cursor: pointer;" ></i> Builder Mode</div>
+                      </div>
+                    </div>
+                    <select [(ngModel)]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}">
+                      <option [disabled] [selected]>  </option>
+                      <option *ngFor="let fieldSchemaRow of fieldSchemaRows" [attr.hidden]="fieldSchemaRow.isNew"> {{ fieldSchemaRow.inputFieldName }} </option>
+                    </select>
+                  </div>
+
+                  <!-- Transforms -->
+                  <div class="form-group  px-1 col-md-12">
+                    <label attr.for="fieldName">TRANSFORMATIONS</label>
+                    <metron-config-multiple-input [type]="'select'" [availableItems]="transformOptions" [(configuredItems)]="fieldSchemaRow.transformConfigured" (onConfigChange)="onTransformsChange(fieldSchemaRow)"> </metron-config-multiple-input>
+                    <input [ngModel]="fieldSchemaRow.preview"  name="statement" class="form-control" type="text" readonly>
+                  </div>
+                </div>
+
+                <!-- Blockly Editor -->
+                <div class="form-group  px-1 col-md-12" *ngIf="fieldSchemaRow.showBlocklyEditor || !fieldSchemaRow.isSimple">
+                  <div class="row">
+                    <div class="px-1 col-md-9"><label>BLOCKLY</label></div>
+                    <div class="px-1 col-md-3 builder-link" [ngClass]="{'builder-link-disabled': !fieldSchemaRow.isSimple}" (click)="onShowSimple(fieldSchemaRow)">Simple Mode</div>
+                  </div>
+                  <metron-config-blockly-editor [value]="fieldSchemaRow.preview" [availableFields]="parsedFields"
+                                                (onStatementChange)="onStatementChange($event, fieldSchemaRow)"></metron-config-blockly-editor>
+                </div>
+
+                <!-- Transformation Summary -->
                 <div class="form-group  px-1 col-md-12">
-                  <label attr.for="fieldName">TRANSFORMATIONS</label>
-                  <metron-config-multiple-input [type]="'select'" [availableItems]="transformOptions" [(configuredItems)]="fieldSchemaRow.transformConfigured" (onConfigChange)="onTransformsChange(fieldSchemaRow)"> </metron-config-multiple-input>
-                  <div class="edit-pane-readonly rounded col-md-10"> {{ fieldSchemaRow.preview }} </div>
+                  <div class="edit-pane-readonly rounded col-md-12"> {{ fieldSchemaRow.value }} </div>
                 </div>
 
                 <!-- Enrichmnets -->

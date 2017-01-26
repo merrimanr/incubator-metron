@@ -38,4 +38,6 @@ public interface TransformationService {
 
     List<StellarFunctionDescription> getSimpleStellarFunctions();
 
+    Map<String, List<StellarFunctionDescription>> getStellarFunctionsByCategory();
+
 }

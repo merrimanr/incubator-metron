@@ -17,9 +17,9 @@
                                   (onCancelTextEditor)="onCancelRuleEditor()"
                                   (onSubmitTextEditor)="onSubmitRuleEditor($event)"></metron-config-sensor-rule-editor>
 
-<metron-config-sensor-rule-blockly *ngIf="showRuleBlockly" [value]="ruleValue" [score]="ruleScore"
-                                  (onCancelTextEditor)="onCancelRuleBlockly()"
-                                  (onSubmitTextEditor)="onSubmitRuleBlockly($event)"></metron-config-sensor-rule-blockly>
+<metron-config-sensor-rule-blockly *ngIf="showRuleBlockly" [value]="ruleValue" [score]="ruleScore" [sensorParserConfig]="sensorParserConfig"
+                                  (onCancelBlocklyEditor)="onCancelRuleBlockly()"
+                                  (onSubmitBlocklyEditor)="onSubmitRuleBlockly($event)"></metron-config-sensor-rule-blockly>
 
 <div class="metron-slider-pane-edit fill load-left-to-right dialog1x">
 
@@ -72,7 +72,10 @@
                         {{ rule }}
                     </div>
                     <div class="threat-triage-rule-row" style=""><i class="fa fa-i-cursor" aria-hidden="true"
-                                                                        style="cursor: pointer;" (click)="onEditRule(rule)"></i></div>
+                                                                        style="cursor: pointer;" (click)="onOpenRuleEditor(rule)"></i></div>
+
+                    <div class="threat-triage-rule-row" style=""><i class="fa fa-puzzle-piece" aria-hidden="true"
+                                                      style="cursor: pointer;" (click)="onOpenRuleBlockly(rule)"></i></div>
 
                     <div class="threat-triage-rule-row" style=""><i  class="fa fa-trash-o" aria-hidden="true" (click)="onDeleteRule(rule)" style="cursor: pointer"></i></div>
                 </div>

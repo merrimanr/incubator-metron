@@ -18,17 +18,27 @@
 import {Injectable, Inject} from '@angular/core';
 import {Http, Headers, RequestOptions} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
+import {Subject}    from 'rxjs/Subject';
 import {KafkaTopic} from '../model/kafka-topic';
 import {HttpUtil} from '../util/httpUtil';
 import {IAppConfig} from '../app.config.interface';
 import {APP_CONFIG} from '../app.config';
+import {SensorParserConfigService} from "./sensor-parser-config.service";
+import {SensorParserConfig} from "../model/sensor-parser-config";
+import {ParseMessageRequest} from "../model/parse-message-request";
 
 @Injectable()
 export class KafkaService {
   url = this.config.apiEndpoint + '/kafka/topic';
   defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
 
-  constructor(private http: Http, @Inject(APP_CONFIG) private config: IAppConfig) {
+  messageBuffers = {};
+
+  private messageBufferSource = new Subject<{}>();
+
+  messageBuffer$ = this.messageBufferSource.asObservable();
+
+  constructor(private http: Http, private sensorParserConfigService: SensorParserConfigService, @Inject(APP_CONFIG) private config: IAppConfig) {
 
   }
 
@@ -55,5 +65,34 @@ export class KafkaService {
       .map(HttpUtil.extractString)
       .catch(HttpUtil.handleError);
   }
+
+  public getNextParsedMessage(sensorParserConfig: SensorParserConfig) {
+    this.sample(sensorParserConfig.sensorTopic).subscribe(sampleData => {
+      let parseMessageRequest = new ParseMessageRequest();
+      parseMessageRequest.sensorParserConfig = JSON.parse(JSON.stringify(sensorParserConfig));
+      parseMessageRequest.sampleData = sampleData;
+      if (parseMessageRequest.sensorParserConfig.parserConfig['patternLabel'] == null) {
+        parseMessageRequest.sensorParserConfig.parserConfig['patternLabel'] = parseMessageRequest.sensorParserConfig.sensorTopic.toUpperCase();
+      }
+      parseMessageRequest.sensorParserConfig.parserConfig['grokPath'] = './' + parseMessageRequest.sensorParserConfig.sensorTopic;
+      this.sensorParserConfigService.parseMessage(parseMessageRequest).subscribe(
+          parserResult => {
+            this.messageBuffers[sensorParserConfig.sensorTopic].next(parserResult);
+          },
+          error => {
+            console.log("data not available")
+          });
+    });
+
+  }
+
+  public subscribeToBuffer(name: string): Observable<{}> {
+    if (!this.messageBuffers[name]) {
+      this.messageBuffers[name] = new Subject<{}>();
+    }
+    return this.messageBuffers[name].asObservable();
+  }
+
+
 
 }

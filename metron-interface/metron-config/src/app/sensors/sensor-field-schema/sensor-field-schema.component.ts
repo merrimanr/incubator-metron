@@ -28,12 +28,15 @@ import {FieldTransformer} from '../../model/field-transformer';
 import {SampleDataComponent} from '../../shared/sample-data/sample-data.component';
 import {MetronAlerts} from '../../shared/metron-alerts';
 import {SensorEnrichmentConfigService} from '../../service/sensor-enrichment-config.service';
+import {TransformationValidation} from "../../model/transformation-validation";
 
 export class FieldSchemaRow {
   inputFieldName: string;
   outputFieldName: string;
   preview: string;
+  value: string;
   showConfig: boolean;
+  showBlocklyEditor: boolean;
   isRemoved: boolean;
   isSimple: boolean;
   isNew: boolean;
@@ -49,9 +52,10 @@ export class FieldSchemaRow {
     this.conditionalRemove = false;
     this.isParserGenerated = false;
     this.showConfig = false;
+    this.showBlocklyEditor = false;
     this.isSimple = true;
     this.isRemoved = false;
-    this.preview = '';
+    this.preview = fieldName;
   }
 }
 
@@ -66,7 +70,9 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
   @Input() sensorEnrichmentConfig: SensorEnrichmentConfig;
   @Input() showFieldSchema; boolean;
 
-  parserResult: any = {};
+  parsedMessage: any = {};
+  parsedFields: string[];
+  transformedMessage = {};
   fieldSchemaRows: FieldSchemaRow[] = [];
   savedFieldSchemaRows: FieldSchemaRow[] = [];
 
@@ -128,7 +134,11 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
   }
 
-  isSimpleFunction(configuredFunctions: string[]) {
+  isSimpleFunction(inputFieldName: string, configuredFunctions: string[]) {
+    let operators = ['==', '!=', '&&', '||'];
+    if (operators.filter(operator => inputFieldName.includes(operator)).length > 0) {
+      return false;
+    }
     for (let configuredFunction of configuredFunctions) {
       if (this.transformFunctions.filter(stellarFunctionDescription => stellarFunctionDescription.name === configuredFunction).length === 0) {
         return false;
@@ -150,6 +160,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
     this.fieldSchemaRows = [];
     this.savedFieldSchemaRows = [];
     let fieldSchemaRowsCreated = {};
+    //let parsedFields = Object.keys(this.parserResult);
 
     // Update rows with Stellar transformations
     let stellarTransformations = this.sensorParserConfig.fieldTransformations.filter(fieldTransformer => fieldTransformer.transformation === 'STELLAR');
@@ -165,12 +176,13 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
           }
           fieldSchemaRowsCreated[inputFieldName].outputFieldName = outputFieldName;
           fieldSchemaRowsCreated[inputFieldName].preview = stellarFunctionStatement;
-          fieldSchemaRowsCreated[inputFieldName].isSimple = this.isSimpleFunction(configuredFunctions);
+          fieldSchemaRowsCreated[inputFieldName].isSimple = this.isSimpleFunction(inputFieldName, configuredFunctions);
           if (fieldSchemaRowsCreated[inputFieldName].isSimple) {
             for (let configuredFunction of configuredFunctions) {
               fieldSchemaRowsCreated[inputFieldName].transformConfigured.push(new AutocompleteOption(configuredFunction));
             }
           }
+          fieldSchemaRowsCreated[inputFieldName].isParserGenerated = this.parsedFields.indexOf(outputFieldName) !== -1;
         }
       }
     }
@@ -193,6 +205,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
         fieldSchemaRowsCreated[fieldName].isRemoved = true;
         fieldSchemaRowsCreated[fieldName].conditionalRemove = true;
+        fieldSchemaRowsCreated[fieldName].isParserGenerated = this.parsedFields.indexOf(fieldName) !== -1;
       }
     }
 
@@ -206,6 +219,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
               fieldSchemaRowsCreated[fieldName] = new FieldSchemaRow(fieldName);
             }
             fieldSchemaRowsCreated[fieldName].enrichmentConfigured.push(new AutocompleteOption(enrichment));
+            fieldSchemaRowsCreated[fieldName].isParserGenerated = this.parsedFields.indexOf(fieldName) !== -1;
           }
         }
       }
@@ -221,6 +235,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
         for (let enrichment of enrichments) {
           fieldSchemaRowsCreated[fieldName].enrichmentConfigured.push(new AutocompleteOption(enrichment));
         }
+        fieldSchemaRowsCreated[fieldName].isParserGenerated = this.parsedFields.indexOf(fieldName) !== -1;
       }
     }
 
@@ -236,6 +251,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
         for (let threatIntel of threatIntels) {
           fieldSchemaRowsCreated[fieldName].threatIntelConfigured.push(new AutocompleteOption(threatIntel));
         }
+        fieldSchemaRowsCreated[fieldName].isParserGenerated = this.parsedFields.indexOf(fieldName) !== -1;
       }
     }
 
@@ -243,7 +259,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
     // Adds rows from parseResult with no transformations/enrichments/threatIntels
     let fieldSchemaRowsCreatedKeys = Object.keys(fieldSchemaRowsCreated);
-    for (let fieldName of Object.keys(this.parserResult).filter(fieldName => fieldSchemaRowsCreatedKeys.indexOf(fieldName) === -1)) {
+    for (let fieldName of this.parsedFields.filter(fieldName => fieldSchemaRowsCreatedKeys.indexOf(fieldName) === -1)) {
         let field = new FieldSchemaRow(fieldName);
         field.isParserGenerated = true;
         this.fieldSchemaRows.push(field);
@@ -261,7 +277,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
       return 'Disabled';
     }
 
-    let transformFunction = fieldSchemaRow.transformConfigured.length > 0 ? this.createTransformFunction(fieldSchemaRow) : '';
+    let transformFunction = fieldSchemaRow.inputFieldName !== fieldSchemaRow.outputFieldName ? fieldSchemaRow.preview : '';
     let enrichments = fieldSchemaRow.enrichmentConfigured.map(autocomplete => autocomplete.name).join(', ');
     let threatIntel = fieldSchemaRow.threatIntelConfigured.map(autocomplete => autocomplete.name).join(', ');
 
@@ -284,9 +300,11 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
     parseMessageRequest.sensorParserConfig.parserConfig['grokPath'] = './' + parseMessageRequest.sensorParserConfig.sensorTopic;
 
     this.sensorParserConfigService.parseMessage(parseMessageRequest).subscribe(
-        parserResult => {
-          this.parserResult = parserResult;
+        parsedMessage => {
+          this.parsedMessage = parsedMessage;
+          this.parsedFields = Object.keys(parsedMessage);
           this.createFieldSchemaRows();
+          this.transformMessage();
         },
         error => {
           this.onSampleDataNotAvailable();
@@ -319,10 +337,15 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
   onSaveChange(savedFieldSchemaRow: FieldSchemaRow) {
     savedFieldSchemaRow.showConfig = false;
     savedFieldSchemaRow.isNew = false;
-    let initialSchemaRow = this.savedFieldSchemaRows.filter(fieldSchemaRow => fieldSchemaRow.inputFieldName === savedFieldSchemaRow.inputFieldName)[0];
-    Object.assign(initialSchemaRow, JSON.parse(JSON.stringify(savedFieldSchemaRow)));
-
+    let fieldSchemaRow = JSON.parse(JSON.stringify(savedFieldSchemaRow));
+    let initialSchemaRow = this.savedFieldSchemaRows.filter(fieldSchemaRow => fieldSchemaRow.outputFieldName === savedFieldSchemaRow.outputFieldName)[0];
+    if (initialSchemaRow) {
+      Object.assign(initialSchemaRow, fieldSchemaRow);
+    } else {
+      this.savedFieldSchemaRows.push(fieldSchemaRow);
+    }
     this.onSave();
+    this.transformMessage();
   }
 
   onCancelChange(cancelledFieldSchemaRow: FieldSchemaRow) {
@@ -380,9 +403,9 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
 
     for (let fieldSchemaRow of this.savedFieldSchemaRows) {
-      if (fieldSchemaRow.transformConfigured.length > 0) {
+      if (fieldSchemaRow.preview.length > 0 && fieldSchemaRow.inputFieldName !== fieldSchemaRow.outputFieldName) {
         transformConfigObject.output.push(fieldSchemaRow.outputFieldName);
-        transformConfigObject.config[fieldSchemaRow.outputFieldName] = this.createTransformFunction(fieldSchemaRow);
+        transformConfigObject.config[fieldSchemaRow.outputFieldName] = fieldSchemaRow.preview;
       }
       if (fieldSchemaRow.isRemoved && !fieldSchemaRow.conditionalRemove) {
         removeTransformations.push(fieldSchemaRow.inputFieldName);
@@ -433,5 +456,43 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
     this.sensorEnrichmentConfig.enrichment = enrichmentConfigObject;
     this.sensorEnrichmentConfig.threatIntel = threatIntelConfigObject;
+  }
+
+  onShowSimple(fieldSchemaRow: FieldSchemaRow) {
+    fieldSchemaRow.showBlocklyEditor = false;
+  }
+  
+  onShowBuilder(fieldSchemaRow: FieldSchemaRow) {
+    fieldSchemaRow.showBlocklyEditor = true;
+  }
+
+  onCancelBlockly(fieldSchemaRow: FieldSchemaRow) {
+    fieldSchemaRow.isSimple = true;
+  }
+
+  onStatementChange(statement: string, fieldSchemaRow: FieldSchemaRow) {
+    fieldSchemaRow.preview = statement;
+    let configuredFunctions = statement.split('(');
+    let inputFieldName = configuredFunctions.splice(-1, 1)[0].replace(new RegExp('\\)', 'g'), '');
+    fieldSchemaRow.isSimple = this.isSimpleFunction(inputFieldName, configuredFunctions);
+    if (fieldSchemaRow.isSimple) {
+      fieldSchemaRow.inputFieldName = inputFieldName;
+      fieldSchemaRow.transformConfigured = [];
+      for (let configuredFunction of configuredFunctions) {
+        fieldSchemaRow.transformConfigured.push(new AutocompleteOption(configuredFunction));
+      }
+    }
+  }
+
+  transformMessage() {
+    let transformationValidation = new TransformationValidation();
+    transformationValidation.sampleData = this.parsedMessage;
+    transformationValidation.sensorParserConfig = this.sensorParserConfig;
+    this.transformationValidationService.validate(transformationValidation).subscribe(transformedMessage => {
+      //this.transformedMessage = transformedMessage;
+      for (let fieldSchemaRow of this.fieldSchemaRows) {
+        fieldSchemaRow.value = transformedMessage[fieldSchemaRow.outputFieldName];
+      }
+    });
   }
 }

@@ -32,17 +32,14 @@ import {SensorGrokComponent} from '../sensor-grok/sensor-grok.component';
 import {AceEditorModule} from '../../shared/ace-editor/ace-editor.module';
 import {SensorThreatTriageComponent} from '../sensor-threat-triage/sensor-threat-triage.component';
 import {SensorRuleEditorComponent} from '../sensor-threat-triage/rule-editor/sensor-rule-editor.component';
-import {SensorThreatTriageComponent} from "../sensor-threat-triage/sensor-threat-triage.component";
-import {SensorRuleEditorComponent} from "../sensor-threat-triage/rule-editor/sensor-rule-editor.component";
 import {SensorRuleBlocklyComponent} from "../sensor-threat-triage/rule-blockly/sensor-rule-blockly.component";
-import {SensorRuleBlocklyModule} from "../sensor-threat-triage/rule-blockly/sensor-rule-blockly.module";
+import {BlocklyEditorComponent} from "../../shared/blockly-editor/blockly-editor.component";
 
 @NgModule ({
   imports: [ CommonModule, routing, FormsModule, ReactiveFormsModule, SharedModule, AceEditorModule ],
   declarations: [ SensorParserConfigComponent, SensorGrokComponent, SensorFieldSchemaComponent, AdvancedConfigFormComponent,
-    SampleDataComponent, AutocompleteComponent, SensorStellarComponent, SensorThreatTriageComponent,
-    SensorRuleEditorComponent, MultipleInputComponent, NumberSpinnerComponent, SensorRuleBlocklyComponent ]
     SampleDataComponent, AutocompleteComponent, SensorRawJsonComponent, SensorThreatTriageComponent,
-    SensorRuleEditorComponent, MultipleInputComponent, NumberSpinnerComponent ]
+    SensorRuleEditorComponent, MultipleInputComponent, NumberSpinnerComponent, SensorRuleBlocklyComponent,
+    BlocklyEditorComponent]
 })
 export class SensorParserConfigModule { }
