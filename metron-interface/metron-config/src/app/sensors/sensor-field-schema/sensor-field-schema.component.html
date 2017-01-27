@@ -78,7 +78,7 @@
                     </div>
                     <select [(ngModel)]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}" *ngIf="!fieldSchemaRow.isParserGenerated">
                       <option [disabled] [selected]>  </option>
-                      <option *ngFor="let fieldSchemaRow of fieldSchemaRows" [attr.hidden]="fieldSchemaRow.isNew"> {{ fieldSchemaRow.outputFieldName }} </option>
+                      <option *ngFor="let fieldSchemaRow of fieldSchemaRows"> {{ fieldSchemaRow.outputFieldName }} </option>
                     </select>
                     <input type="text" class="form-control" [ngModel]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}" readonly *ngIf="fieldSchemaRow.isParserGenerated">
                   </div>
