@@ -54,20 +54,6 @@ public class BlocklyService {
   @Autowired
   private CuratorFramework client;
 
-  public static void main(String[] args) throws JAXBException {
-    //String statement = "IS_EMAIL(sensor_type) && sensor_type == 'yaf'";
-    //String statement = "foo in [ TO_LOWER('CASEY'), 'david' ]";
-    //String statement = "STATS_PERCENTILE( STATS_MERGE( PROFILE_GET('host-in-degree', ip_src_addr, 1, 'HOURS')), 95)";
-    //String statement = "not(ENDS_WITH(domain_without_subdomains, '.com') or ENDS_WITH(domain_without_subdomains, '.net'))";
-    //String statement = "(1.1 < 2.2 ? 'one' : 'two') == 'two'";
-    //String statement = "sensor_type == null or true";
-    //String statement = "EXISTS(sensor_type)";
-    //String statement = "application not in ['test1', 'test2', 'test3']";
-    String statement = "MAP_EXISTS('test',{'test' : application, 'field' : 'value'})";
-    BlocklyService blocklyService = new BlocklyService();
-    System.out.println(blocklyService.statementToXml(statement));
-  }
-
   public String statementToXml(String statement) throws JAXBException {
     ANTLRInputStream input = new ANTLRInputStream(statement);
     StellarLexer lexer = new StellarLexer(input);

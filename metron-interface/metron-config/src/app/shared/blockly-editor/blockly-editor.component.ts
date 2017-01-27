@@ -50,16 +50,17 @@ export class BlocklyEditorComponent implements OnInit, AfterViewInit, OnChanges 
   }
 
   ngAfterViewInit() {
-    this.updateAvailableFieldsBlock(this.availableFields);
     this.transformationValidationService.listFunctionsByCategory().subscribe(stellarFunctionMap => {
       this.generateBlocks(stellarFunctionMap);
       this.generateToolbox(stellarFunctionMap);
       this.injectBlockly();
-      this.loadCurrentStatement();
     });
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    if (changes['value'] && changes['value'].currentValue) {
+      this.statement = this.value;
+    }
     if (changes['availableFields'] && changes['availableFields'].currentValue) {
       this.updateAvailableFieldsBlock(this.availableFields);
       this.loadCurrentStatement();
@@ -81,7 +82,7 @@ export class BlocklyEditorComponent implements OnInit, AfterViewInit, OnChanges 
             }
             this.setOutput(true, null);
             this.setColour(160);
-            this.setTooltip('');
+            this.setTooltip(stellarFunctionDescription.description);
             this.setHelpUrl('http://www.example.com/');
           }
         };
@@ -179,6 +180,9 @@ export class BlocklyEditorComponent implements OnInit, AfterViewInit, OnChanges 
   }
 
   updateAvailableFieldsBlock(fields) {
+    if (fields.length == 0) {
+      fields = ['ip_src_addr', 'ip_src_port', 'ip_dst_addr', 'ip_dst_port', 'protocol', 'timestamp', 'includes_reverse_traffic'];
+    }
     fields.sort();
     let fieldArray = [];
     for(let field of fields) {

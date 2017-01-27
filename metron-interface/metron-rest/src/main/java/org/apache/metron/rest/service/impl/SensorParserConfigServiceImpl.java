@@ -39,14 +39,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.metron.rest.MetronRestConstants.GROK_CLASS_NAME;
 import static org.apache.metron.rest.MetronRestConstants.GROK_DEFAULT_PATH_SPRING_PROPERTY;
@@ -217,9 +221,13 @@ public class SensorParserConfigServiceImpl implements SensorParserConfigService 
     String grokStatement = "";
     String grokPath = (String) sensorParserConfig.getParserConfig().get(GROK_PATH_KEY);
     if (grokPath != null) {
-      String fullGrokStatement = getGrokStatement(grokPath);
-      String patternLabel = (String) sensorParserConfig.getParserConfig().get(GROK_PATTERN_LABEL_KEY);
-      grokStatement = fullGrokStatement.replaceFirst(patternLabel + " ", "");
+      try {
+        String fullGrokStatement = getGrokStatement(grokPath);
+        String patternLabel = (String) sensorParserConfig.getParserConfig().get(GROK_PATTERN_LABEL_KEY);
+        grokStatement = fullGrokStatement.replaceFirst(patternLabel + " ", "");
+      } catch (RestException e) {
+        grokStatement = e.getMessage();
+      }
     }
     sensorParserConfig.getParserConfig().put(GROK_STATEMENT_KEY, grokStatement);
   }
@@ -238,7 +246,12 @@ public class SensorParserConfigServiceImpl implements SensorParserConfigService 
     try {
       return new String(hdfsService.read(new Path(path)));
     } catch (IOException e) {
-      throw new RestException(e);
+      InputStream inputStream = getClass().getResourceAsStream(path);
+      if (inputStream != null) {
+        return new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+      } else {
+        throw new RestException(e);
+      }
     }
   }
 

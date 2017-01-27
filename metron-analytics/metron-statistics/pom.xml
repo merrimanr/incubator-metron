@@ -73,6 +73,10 @@
                                     <pattern>com.tdunning</pattern>
                                     <shadedPattern>org.apache.metron.tdunning</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>com.google.common</pattern>
+                                    <shadedPattern>org.apache.metron.guava</shadedPattern>
+                                </relocation>
                             </relocations>
                             <artifactSet>
                                 <excludes>

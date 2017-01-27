@@ -39,10 +39,8 @@ export class SensorRuleBlocklyComponent implements AfterViewInit {
   @Output() onCancelBlocklyEditor: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() onSubmitBlocklyEditor: EventEmitter<{}> = new EventEmitter<{}>();
 
-  private commonFields = ['ip_src_addr', 'ip_src_port', 'ip_dst_addr', 'ip_dst_port', 'protocol', 'timestamp', 'includes_reverse_traffic'];
-
   private statement: string;
-  private availableFields: string[] = this.commonFields;
+  private availableFields: string[];
 
   constructor(private sensorParserConfigService: SensorParserConfigService) { }
 
@@ -84,7 +82,7 @@ export class SensorRuleBlocklyComponent implements AfterViewInit {
   }
 
   onSampleDataNotAvailable() {
-    this.availableFields = this.commonFields;
+    this.availableFields = [];
   }
 
 }

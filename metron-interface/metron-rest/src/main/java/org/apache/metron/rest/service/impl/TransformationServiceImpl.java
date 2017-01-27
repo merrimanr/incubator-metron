@@ -84,7 +84,8 @@ public class TransformationServiceImpl implements TransformationService {
         return FieldTransformations.values();
     }
 
-    public Iterable<StellarFunctionInfo> getStellarFunctionInfo() {
+
+    private Iterable<StellarFunctionInfo> getStellarFunctionInfo() {
       Properties properties = new Properties();
       properties.put(ClasspathFunctionResolver.STELLAR_SEARCH_INCLUDES_KEY, "org.apache.metron.*");
       Context.Builder contextBuilder = new Context.Builder()

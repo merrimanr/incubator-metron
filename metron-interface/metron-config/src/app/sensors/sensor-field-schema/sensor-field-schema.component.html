@@ -78,7 +78,7 @@
                     </div>
                     <select [(ngModel)]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}">
                       <option [disabled] [selected]>  </option>
-                      <option *ngFor="let fieldSchemaRow of fieldSchemaRows" [attr.hidden]="fieldSchemaRow.isNew"> {{ fieldSchemaRow.inputFieldName }} </option>
+                      <option *ngFor="let fieldSchemaRow of fieldSchemaRows" [attr.hidden]="fieldSchemaRow.isNew"> {{ fieldSchemaRow.outputFieldName }} </option>
                     </select>
                   </div>
 
@@ -102,7 +102,7 @@
 
                 <!-- Transformation Summary -->
                 <div class="form-group  px-1 col-md-12">
-                  <div class="edit-pane-readonly rounded col-md-12"> {{ fieldSchemaRow.value }} </div>
+                  <div class="edit-pane-readonly rounded col-md-12"> {{ fieldSchemaRow.displayValue }} </div>
                 </div>
 
                 <!-- Enrichmnets -->

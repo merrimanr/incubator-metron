@@ -54,19 +54,4 @@ public class Xml {
     return this;
   }
 
-  private static String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><xml>test</xml>";
-
-  public static void main(String[] args) throws JAXBException {
-    JAXBContext context = JAXBContext.newInstance(Xml.class);
-//    Unmarshaller unmarshaller = context.createUnmarshaller();
-//    Xml xmlObject = (Xml) unmarshaller.unmarshal(new File("/Users/rmerriman/Projects/Metron/code/forks/merrimanr/incubator-metron/test.xml"));
-//    //Xml xmlObject = (Xml) unmarshaller.unmarshal(new ByteArrayInputStream(xml.getBytes()));
-//    System.out.print(xmlObject);
-
-
-    Xml xmlObject = new Xml().addBlock(new Block().withType("stellar_and").addField(new Field().withName("OP").withValue("AND")));
-    Marshaller marshaller = context.createMarshaller();
-    //marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-    marshaller.marshal(xmlObject, System.out);
-  }
 }

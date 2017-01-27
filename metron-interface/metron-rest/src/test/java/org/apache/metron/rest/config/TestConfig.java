@@ -40,6 +40,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Nullable;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 
@@ -55,14 +56,7 @@ public class TestConfig {
   @Bean
   public ZKServerComponent zkServerComponent(Properties zkProperties) {
     return new ZKServerComponent()
-            .withPostStartCallback(new Function<ZKServerComponent, Void>() {
-              @Nullable
-              @Override
-              public Void apply(@Nullable ZKServerComponent zkComponent) {
-                zkProperties.setProperty(ZKServerComponent.ZOOKEEPER_PROPERTY, zkComponent.getConnectionString());
-                return null;
-              }
-            });
+            .withPostStartCallback((zkComponent) -> zkProperties.setProperty(ZKServerComponent.ZOOKEEPER_PROPERTY, zkComponent.getConnectionString()));
   }
 
   @Bean
