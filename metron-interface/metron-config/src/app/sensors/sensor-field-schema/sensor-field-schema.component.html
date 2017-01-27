@@ -76,10 +76,11 @@
                         <div class="px-0 col-md-3 builder-link" (click)="onShowBuilder(fieldSchemaRow)"><i class="fa fa-puzzle-piece" aria-hidden="true" style="cursor: pointer;" ></i> Builder Mode</div>
                       </div>
                     </div>
-                    <select [(ngModel)]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}">
+                    <select [(ngModel)]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}" *ngIf="!fieldSchemaRow.isParserGenerated">
                       <option [disabled] [selected]>  </option>
                       <option *ngFor="let fieldSchemaRow of fieldSchemaRows" [attr.hidden]="fieldSchemaRow.isNew"> {{ fieldSchemaRow.outputFieldName }} </option>
                     </select>
+                    <input type="text" class="form-control" [ngModel]="fieldSchemaRow.inputFieldName" [ngModelOptions]="{standalone: true}" readonly *ngIf="fieldSchemaRow.isParserGenerated">
                   </div>
 
                   <!-- Transforms -->

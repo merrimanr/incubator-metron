@@ -54,6 +54,7 @@ export class BlocklyEditorComponent implements OnInit, AfterViewInit, OnChanges 
       this.generateBlocks(stellarFunctionMap);
       this.generateToolbox(stellarFunctionMap);
       this.injectBlockly();
+      this.loadCurrentStatement();
     });
   }
 
@@ -171,7 +172,7 @@ export class BlocklyEditorComponent implements OnInit, AfterViewInit, OnChanges 
   }
 
   loadCurrentStatement() {
-    if (this.statement) {
+    if (this.statement && this.workspace) {
       this.blocklyService.statementToXml(this.statement).subscribe(xml => {
         let dom = Blockly.Xml.textToDom(xml);
         Blockly.Xml.domToWorkspace(dom, this.workspace);

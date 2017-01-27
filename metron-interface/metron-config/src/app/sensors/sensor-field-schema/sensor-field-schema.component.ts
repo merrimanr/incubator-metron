@@ -72,7 +72,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
   @Input() showFieldSchema; boolean;
 
   parsedMessage: any = {};
-  parsedFields: string[];
+  parsedFields: string[] = [];
   fieldSchemaRows: FieldSchemaRow[] = [];
   savedFieldSchemaRows: FieldSchemaRow[] = [];
 
@@ -107,7 +107,6 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
   getTransformFunctions() {
     this.transformOptions = [];
-
     this.transformationValidationService.listSimpleFunctions().subscribe((result: StellarFunctionDescription[]) => {
       this.transformFunctions = result;
       for (let fun of result) {
@@ -118,7 +117,6 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
   getEnrichmentFunctions() {
     this.enrichmentOptions = [];
-
     this.sensorEnrichmentConfigService.getAvailable().subscribe((result: string[]) => {
       for (let fun of result) {
         this.enrichmentOptions.push(new AutocompleteOption(fun));
@@ -160,7 +158,6 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
     this.fieldSchemaRows = [];
     this.savedFieldSchemaRows = [];
     let fieldSchemaRowsCreated = {};
-    //let parsedFields = Object.keys(this.parserResult);
 
     // Update rows with Stellar transformations
     let stellarTransformations = this.sensorParserConfig.fieldTransformations.filter(fieldTransformer => fieldTransformer.transformation === 'STELLAR');
@@ -366,7 +363,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
     let initialSchemaRow = this.savedFieldSchemaRows.filter(fieldSchemaRow => fieldSchemaRow.outputFieldName === cancelledFieldSchemaRow.outputFieldName)[0];
     if (initialSchemaRow) {
       Object.assign(cancelledFieldSchemaRow, JSON.parse(JSON.stringify(initialSchemaRow)));
-      this.transformMessage(this.buildTestConfig(cancelledFieldSchemaRow));
+      this.transformMessage(this.buildTransformationConfig(cancelledFieldSchemaRow));
     }
   }
 
@@ -386,7 +383,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
   onTransformsChange(fieldSchemaRow: FieldSchemaRow): void {
     fieldSchemaRow.preview = fieldSchemaRow.transformConfigured.length === 0 ? '' : this.createTransformFunction(fieldSchemaRow);
-    this.transformMessage(this.buildTestConfig(fieldSchemaRow));
+    this.transformMessage(this.buildTransformationConfig(fieldSchemaRow));
   }
 
   addNewRule() {
@@ -421,7 +418,7 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
 
 
     for (let fieldSchemaRow of this.savedFieldSchemaRows) {
-      if (fieldSchemaRow.preview !== fieldSchemaRow.outputFieldName) {
+      if (fieldSchemaRow.preview.length > 0 && fieldSchemaRow.preview !== fieldSchemaRow.outputFieldName) {
         transformConfigObject.output.push(fieldSchemaRow.outputFieldName);
         transformConfigObject.config[fieldSchemaRow.outputFieldName] = fieldSchemaRow.preview;
       }
@@ -488,14 +485,18 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
     fieldSchemaRow.isSimple = true;
   }
 
-  buildTestConfig(fieldSchemaRow: FieldSchemaRow): SensorParserConfig {
+  buildTransformationConfig(fieldSchemaRow: FieldSchemaRow): SensorParserConfig {
     let sensorParserConfig = new SensorParserConfig();
-    Object.assign(sensorParserConfig, this.sensorParserConfig);
-    let stellarTransformer: FieldTransformer = sensorParserConfig.fieldTransformations.filter((fieldTransformer: FieldTransformer) => fieldTransformer.transformation === 'STELLAR')[0];
-    if (!stellarTransformer) {
-      stellarTransformer = new FieldTransformer();
-      stellarTransformer.transformation = 'STELLAR';
-      sensorParserConfig.fieldTransformations.push(stellarTransformer);
+    sensorParserConfig.sensorTopic = this.sensorParserConfig.sensorTopic;
+    let stellarTransformer = new FieldTransformer();
+    stellarTransformer.transformation = 'STELLAR';
+    sensorParserConfig.fieldTransformations.push(stellarTransformer);
+    if (this.sensorParserConfig.fieldTransformations) {
+      let savedStellarTransformer = this.sensorParserConfig.fieldTransformations.filter(fieldTransformer => fieldTransformer.transformation === 'STELLAR');
+      if (savedStellarTransformer.length > 0) {
+        Object.assign(stellarTransformer.output, savedStellarTransformer[0].output);
+        Object.assign(stellarTransformer.config, savedStellarTransformer[0].config);
+      }
     }
     if (stellarTransformer.output.indexOf(fieldSchemaRow.outputFieldName) === -1) {
       stellarTransformer.output.push(fieldSchemaRow.outputFieldName);
@@ -516,13 +517,13 @@ export class SensorFieldSchemaComponent implements OnInit, OnChanges {
         fieldSchemaRow.transformConfigured.push(new AutocompleteOption(configuredFunction));
       }
     }
-    this.transformMessage(this.buildTestConfig(fieldSchemaRow));
+    this.transformMessage(this.buildTransformationConfig(fieldSchemaRow));
   }
 
   transformMessage(sensorParserConfig: SensorParserConfig) {
     let transformationValidation = new TransformationValidation();
     transformationValidation.sampleData = this.parsedMessage;
-    transformationValidation.sensorParserConfig = this.sensorParserConfig;
+    transformationValidation.sensorParserConfig = sensorParserConfig;
     this.transformationValidationService.validate(transformationValidation).subscribe(transformedMessage => {
       for (let fieldSchemaRow of this.fieldSchemaRows) {
         fieldSchemaRow.transformedValue = transformedMessage[fieldSchemaRow.outputFieldName];

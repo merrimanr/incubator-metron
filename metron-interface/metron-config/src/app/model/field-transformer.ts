@@ -17,8 +17,8 @@
  */
 export class FieldTransformer {
   input: string[];
-  output: string[];
+  output: string[] = [];
   transformation: string;
-  config: {};
+  config = {};
   initialized: boolean;
 }
