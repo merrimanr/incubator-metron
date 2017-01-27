@@ -21,7 +21,7 @@ import {SensorEnrichmentConfig } from '../../model/sensor-enrichment-config';
 import {SensorParserConfig} from "../../model/sensor-parser-config";
 
 export enum SortOrderOption {
-  LOWEST_SCORE, HIGHEST_SCORE, LOWEST_NAME, HIGHEST_NAME
+  Lowest_Score, Highest_Score, Lowest_Name, Highest_Name
 }
 
 export enum ThreatTriageFilter {
@@ -55,7 +55,7 @@ export class SensorThreatTriageComponent implements OnChanges {
   highAlerts = 0;
 
   sortOrderOption = SortOrderOption;
-  sortOrder = SortOrderOption.HIGHEST_SCORE;
+  sortOrder = SortOrderOption.Highest_Score;
   threatTriageFilter = ThreatTriageFilter;
   filter: ThreatTriageFilter = ThreatTriageFilter.NONE;
 
@@ -74,7 +74,7 @@ export class SensorThreatTriageComponent implements OnChanges {
   init(): void {
     this.rules = Object.keys(this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules);
     this.updateBuckets();
-    this.onSortOrderChange();
+    this.onSortOrderChange(null);
   }
 
   onClose(): void {
@@ -156,21 +156,25 @@ export class SensorThreatTriageComponent implements OnChanges {
     return color;
   }
 
-  onSortOrderChange() {
+  onSortOrderChange(sortOrder: any) {
+    if (sortOrder !== null) {
+      this.sortOrder = sortOrder;
+    }
+
     // all comparisons with enums must be == and not ===
-    if (this.sortOrder == this.sortOrderOption.HIGHEST_SCORE) {
+    if (this.sortOrder == this.sortOrderOption.Highest_Score) {
       this.rules.sort((a, b) => {
         let scoreA = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[a];
         let scoreB = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[b];
         return scoreB - scoreA;
       });
-    } else if (this.sortOrder == SortOrderOption.LOWEST_SCORE) {
+    } else if (this.sortOrder == SortOrderOption.Lowest_Score) {
       this.rules.sort((a, b) => {
         let scoreA = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[a];
         let scoreB = this.sensorEnrichmentConfig.threatIntel.triageConfig.riskLevelRules[b];
         return scoreA - scoreB;
       });
-    } else if (this.sortOrder == SortOrderOption.LOWEST_NAME) {
+    } else if (this.sortOrder == SortOrderOption.Lowest_Name) {
       this.rules.sort((a, b) => {
         if (a.toLowerCase() >= b.toLowerCase()) {
           return 1;
@@ -209,7 +213,7 @@ export class SensorThreatTriageComponent implements OnChanges {
         }
       }
     });
-    this.onSortOrderChange();
+    this.onSortOrderChange(null);
   }
 
 }
