@@ -165,10 +165,12 @@ export class BlocklyEditorComponent implements OnInit, AfterViewInit, OnChanges 
             snap: true},
           toolbox: document.getElementById('toolbox')});
 
-    this.workspace.addChangeListener(event => {
-      this.statement = Blockly.JavaScript.workspaceToCode(this.workspace).replace(/[;\n]/g, '');
-      this.onStatementChange.emit(this.statement);
-    });
+    this.workspace.addChangeListener(this.updateStatement);
+  }
+
+  updateStatement(event) {
+    this.statement = Blockly.JavaScript.workspaceToCode(this.workspace).replace(/[;\n]/g, '');
+    this.onStatementChange.emit(this.statement);
   }
 
   loadCurrentStatement() {
