@@ -122,9 +122,9 @@ describe('Component: SensorRawJsonComponent', () => {
         component.sensorEnrichmentConfig = sensorEnrichmentConfig;
         component.sensorIndexingConfig = sensorIndexingConfig;
         component.init();
-        expect(component.newSensorParserConfig).toEqual(JSON.stringify(sensorParserConfig, null, '\t'));
-        expect(component.newSensorEnrichmentConfig).toEqual(JSON.stringify(sensorEnrichmentConfig, null, '\t'));
-        expect(component.newSensorIndexingConfig).toEqual(JSON.stringify(sensorIndexingConfig, null, '\t'));
+        expect(component.newSensorParserConfig).toEqual(JSON.stringify(sensorParserConfig));
+        expect(component.newSensorEnrichmentConfig).toEqual(JSON.stringify(sensorEnrichmentConfig));
+        expect(component.newSensorIndexingConfig).toEqual(JSON.stringify(sensorIndexingConfig));
 
         fixture.destroy();
     });

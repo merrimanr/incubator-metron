@@ -50,15 +50,15 @@ export class SensorRawJsonComponent implements OnChanges {
 
   init(): void {
     if (this.sensorParserConfig) {
-      this.newSensorParserConfig = JSON.stringify(this.sensorParserConfig, null, '\t');
+      this.newSensorParserConfig = JSON.stringify(this.sensorParserConfig);
     }
 
     if (this.sensorEnrichmentConfig) {
-      this.newSensorEnrichmentConfig = JSON.stringify(this.sensorEnrichmentConfig, null, '\t');
+      this.newSensorEnrichmentConfig = JSON.stringify(this.sensorEnrichmentConfig);
     }
 
     if (this.sensorIndexingConfig) {
-      this.newSensorIndexingConfig = JSON.stringify(this.sensorIndexingConfig, null, '\t');
+      this.newSensorIndexingConfig = JSON.stringify(this.sensorIndexingConfig);
     }
   }
 
