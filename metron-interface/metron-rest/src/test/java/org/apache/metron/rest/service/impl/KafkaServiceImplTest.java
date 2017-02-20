@@ -17,9 +17,6 @@
  */
 package org.apache.metron.rest.service.impl;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import kafka.admin.AdminOperationException;
 import kafka.admin.AdminUtils$;
 import kafka.admin.RackAwareMode;
@@ -43,11 +40,15 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -100,7 +101,7 @@ public class KafkaServiceImplTest {
 
     final Set<String> listedTopics = kafkaService.listTopics();
 
-    assertEquals(Sets.newHashSet(), listedTopics);
+    assertEquals(Collections.EMPTY_SET, listedTopics);
 
     verifyZeroInteractions(zkUtils);
     verify(kafkaConsumer).listTopics();
@@ -115,7 +116,7 @@ public class KafkaServiceImplTest {
 
     final Set<String> listedTopics = kafkaService.listTopics();
 
-    assertEquals(Sets.newHashSet(), listedTopics);
+    assertEquals(Collections.EMPTY_SET, listedTopics);
 
     verifyZeroInteractions(zkUtils);
     verify(kafkaConsumer).listTopics();
@@ -125,15 +126,15 @@ public class KafkaServiceImplTest {
   @Test
   public void listTopicsHappyPath() throws Exception {
     final Map<String, List<PartitionInfo>> topics = new HashMap<>();
-    topics.put("topic1", Lists.newArrayList());
-    topics.put("topic2", Lists.newArrayList());
-    topics.put("topic3", Lists.newArrayList());
+    topics.put("topic1", Collections.EMPTY_LIST);
+    topics.put("topic2", Collections.EMPTY_LIST);
+    topics.put("topic3", Collections.EMPTY_LIST);
 
     when(kafkaConsumer.listTopics()).thenReturn(topics);
 
     final Set<String> listedTopics = kafkaService.listTopics();
 
-    assertEquals(Sets.newHashSet("topic1", "topic2", "topic3"), listedTopics);
+    assertEquals(Stream.of("topic1", "topic2", "topic3").collect(Collectors.toSet()), listedTopics);
 
     verifyZeroInteractions(zkUtils);
     verify(kafkaConsumer).listTopics();
@@ -143,16 +144,16 @@ public class KafkaServiceImplTest {
   @Test
   public void listTopicsShouldProperlyRemoveOffsetTopic() throws Exception {
     final Map<String, List<PartitionInfo>> topics = new HashMap<>();
-    topics.put("topic1", Lists.newArrayList());
-    topics.put("topic2", Lists.newArrayList());
-    topics.put("topic3", Lists.newArrayList());
-    topics.put("__consumer_offsets", Lists.newArrayList());
+    topics.put("topic1", Collections.EMPTY_LIST);
+    topics.put("topic2", Collections.EMPTY_LIST);
+    topics.put("topic3", Collections.EMPTY_LIST);
+    topics.put("__consumer_offsets", Collections.EMPTY_LIST);
 
     when(kafkaConsumer.listTopics()).thenReturn(topics);
 
     final Set<String> listedTopics = kafkaService.listTopics();
 
-    assertEquals(Sets.newHashSet("topic1", "topic2", "topic3"), listedTopics);
+    assertEquals(Stream.of("topic1", "topic2", "topic3").collect(Collectors.toSet()), listedTopics);
 
     verifyZeroInteractions(zkUtils);
     verify(kafkaConsumer).listTopics();
@@ -161,7 +162,7 @@ public class KafkaServiceImplTest {
 
   @Test
   public void deletingTopicThatDoesNotExistShouldReturnFalse() throws Exception {
-    when(kafkaConsumer.listTopics()).thenReturn(Maps.newHashMap());
+    when(kafkaConsumer.listTopics()).thenReturn(Collections.EMPTY_MAP);
 
     assertFalse(kafkaService.deleteTopic("non_existent_topic"));
 
@@ -173,7 +174,7 @@ public class KafkaServiceImplTest {
   @Test
   public void deletingTopicThatExistShouldReturnTrue() throws Exception {
     final Map<String, List<PartitionInfo>> topics = new HashMap<>();
-    topics.put("non_existent_topic", Lists.newArrayList());
+    topics.put("non_existent_topic", Collections.EMPTY_LIST);
 
     when(kafkaConsumer.listTopics()).thenReturn(topics);
 
@@ -202,8 +203,8 @@ public class KafkaServiceImplTest {
     when(partitionInfo.replicas()).thenReturn(new Node[] {new Node(1, "host", 8080)});
 
     final Map<String, List<PartitionInfo>> topics = new HashMap<>();
-    topics.put("t", Lists.newArrayList(partitionInfo));
-    topics.put("t1", Lists.newArrayList());
+    topics.put("t", Collections.singletonList(partitionInfo));
+    topics.put("t1", Collections.EMPTY_LIST);
 
     final KafkaTopic expected = new KafkaTopic();
     expected.setName("t");
@@ -211,7 +212,7 @@ public class KafkaServiceImplTest {
     expected.setReplicationFactor(1);
 
     when(kafkaConsumer.listTopics()).thenReturn(topics);
-    when(kafkaConsumer.partitionsFor("t")).thenReturn(Lists.newArrayList(partitionInfo));
+    when(kafkaConsumer.partitionsFor("t")).thenReturn(Collections.singletonList(partitionInfo));
 
     KafkaTopic actual = kafkaService.getTopic("t");
     assertEquals(expected, actual);
@@ -221,10 +222,10 @@ public class KafkaServiceImplTest {
   @Test
   public void getTopicShouldProperlyHandleTopicsThatDontExist() throws Exception {
     final Map<String, List<PartitionInfo>> topics = new HashMap<>();
-    topics.put("t1", Lists.newArrayList());
+    topics.put("t1", Collections.EMPTY_LIST);
 
     when(kafkaConsumer.listTopics()).thenReturn(topics);
-    when(kafkaConsumer.partitionsFor("t")).thenReturn(Lists.newArrayList());
+    when(kafkaConsumer.partitionsFor("t")).thenReturn(Collections.EMPTY_LIST);
 
     assertEquals(null, kafkaService.getTopic("t"));
 
@@ -266,15 +267,15 @@ public class KafkaServiceImplTest {
     final String topicName = "t";
     final Node host = new Node(1, "host", 8080);
     final Node[] replicas = {host};
-    final List<PartitionInfo> partitionInfo = Lists.newArrayList(new PartitionInfo(topicName, 1, host, replicas, replicas));
+    final List<PartitionInfo> partitionInfo = Collections.singletonList(new PartitionInfo(topicName, 1, host, replicas, replicas));
     final TopicPartition topicPartition = new TopicPartition(topicName, 1);
-    final List<TopicPartition> topicPartitions = Lists.newArrayList(topicPartition);
-    final Set<TopicPartition> topicPartitionsSet = Sets.newHashSet(topicPartitions);
+    final List<TopicPartition> topicPartitions = Collections.singletonList(topicPartition);
+    final Set<TopicPartition> topicPartitionsSet = new HashSet<>(topicPartitions);
     final ConsumerRecords<String, String> records = new ConsumerRecords<>(new HashMap<TopicPartition, List<ConsumerRecord<String, String>>>() {{
-      put(topicPartition, Lists.newArrayList(new ConsumerRecord<>(topicName, 1, 1, "k", "message")));
+      put(topicPartition, Collections.singletonList(new ConsumerRecord<>(topicName, 1, 1, "k", "message")));
     }});
 
-    when(kafkaConsumer.listTopics()).thenReturn(new HashMap<String, List<PartitionInfo>>() {{ put(topicName, Lists.newArrayList()); }});
+    when(kafkaConsumer.listTopics()).thenReturn(new HashMap<String, List<PartitionInfo>>() {{ put(topicName, Collections.EMPTY_LIST); }});
     when(kafkaConsumer.partitionsFor(eq(topicName))).thenReturn(partitionInfo);
     when(kafkaConsumer.assignment()).thenReturn(topicPartitionsSet);
     when(kafkaConsumer.position(topicPartition)).thenReturn(1L);
