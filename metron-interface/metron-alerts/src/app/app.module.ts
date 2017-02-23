@@ -8,6 +8,7 @@ import {MetronAlertsRoutingModule} from './app-routing.module';
 import {AlertsListModule} from './alerts-list/alerts-list.module';
 import { AlertDetailsComponent } from './alert-details/alert-details.component';
 import {AlertDetailsModule} from './alert-details/alerts-details.module';
+import {APP_CONFIG, METRON_REST_CONFIG} from "./app.config";
 
 @NgModule({
   declarations: [
@@ -21,7 +22,7 @@ import {AlertDetailsModule} from './alert-details/alerts-details.module';
     AlertsListModule,
     AlertDetailsModule
   ],
-  providers: [],
+  providers: [{ provide: APP_CONFIG, useValue: METRON_REST_CONFIG }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -2,8 +2,8 @@
     <div class="mrow">
         <div class="col-md-12">
             <div class="input-group search">
-                <input type="text" class="form-control" placeholder="Search Alerts" aria-describedby="basic-addon2">
-                <span class="input-group-addon" id="basic-addon2"></span>
+                <input type="text" class="form-control" placeholder="Search Alerts" aria-describedby="basic-addon2" [(ngModel)]="searchRequest.query.query_string.query">
+                <span class="input-group-addon" id="basic-addon2" (click)="search()"></span>
             </div>
         </div>
     </div>
