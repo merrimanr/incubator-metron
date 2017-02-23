@@ -4,6 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
+import {MetronAlertsRoutingModule} from './app-routing.module';
+import {AlertsListModule} from './alerts-list/alerts-list.module';
+import { AlertDetailsComponent } from './alert-details/alert-details.component';
+import {AlertDetailsModule} from './alert-details/alerts-details.module';
 
 @NgModule({
   declarations: [
@@ -12,7 +16,10 @@ import { AppComponent } from './app.component';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+    MetronAlertsRoutingModule,
+    AlertsListModule,
+    AlertDetailsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

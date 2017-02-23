@@ -15,9 +15,16 @@
       "prefix": "app",
       "mobile": false,
       "styles": [
-        "styles.css"
+        "../node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+        "../node_modules/font-awesome/css/font-awesome.css",
+        "vendor.scss",
+        "styles.scss"
       ],
-      "scripts": [],
+      "scripts": [
+        "../node_modules/jquery/dist/jquery.js",
+        "../node_modules/tether/dist/js/tether.js",
+        "../node_modules/bootstrap/dist/js/bootstrap.js"
+      ],
       "environments": {
         "source": "environments/environment.ts",
         "dev": "environments/environment.ts",
@@ -38,7 +45,7 @@
     }
   },
   "defaults": {
-    "styleExt": "css",
+    "styleExt": "scss",
     "prefixInterfaces": false
   }
 }

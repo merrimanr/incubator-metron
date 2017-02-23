@@ -1,0 +1,49 @@
+@import "../../vendor.scss";
+@import "../../styles.scss";
+
+.container-fluid
+{
+  padding: 0px;
+}
+
+.mrow {
+  @extend .my-4;
+}
+
+.search {
+  .form-control {
+    @extend .input;
+    border-right: none;
+  }
+
+  &:focus {
+    @extend .input;
+  }
+
+  .form-control + .input-group-addon {
+    cursor: pointer;
+    border: 1px solid $blue-chill !important;
+    background: $icon-button-background;
+
+    &::before {
+      font-family: "FontAwesome";
+      content: '\f002';
+      color: $piction-blue;
+    }
+  }
+}
+
+.high {
+  border-left: 4px solid $high-color;
+  padding-left: 10px;
+}
+
+.medium {
+  border-left: 4px solid  $medium-color;
+  padding-left: 10px;
+}
+
+.low {
+  border-left: 4px solid $low-color;
+  padding-left: 10px;
+}
