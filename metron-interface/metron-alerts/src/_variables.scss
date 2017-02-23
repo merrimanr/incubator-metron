@@ -1,0 +1,40 @@
+//Bootstrap overrides
+$body-bg: #232323;
+$body-color: #999999;
+$btn-primary-bg: #006EA0;
+$btn-primary-border: #006EA0;
+$dropdown-bg: #262626;
+$dropdown-border-color: #4D4D4D;
+$dropdown-link-color: #999999;
+$dropdown-min-width: 8rem;
+$dropdown-link-hover-color: #999999;
+$dropdown-link-hover-bg: #333333;
+$table-border-color: #404040;
+
+
+//Metron variables
+$mine-shaft: #2E2E2E;
+$mine-shaft-1: #2D2D2D;
+$mine-shaft-2: #333333;
+$tundora: #4D4D4D;
+$blue-chill: #0F6F9E;
+$piction-blue: #32ABDF;
+$dove-grey: #6B6B6B;
+$checkbox-checked-color: #32abe2;
+$high-color: #D60A15;
+$medium-color: #D6711D;
+$low-color: #AC9B5A;
+
+$nav-bar-bg: $mine-shaft;
+$input-background: $mine-shaft-1;
+$input-border-color: $tundora;
+$icon-button-background: $mine-shaft-2;
+$placeholder-color: $dove-grey;
+
+
+@mixin placeholder {
+  ::-webkit-input-placeholder {@content}
+  :-moz-placeholder           {@content}
+  ::-moz-placeholder          {@content}
+  :-ms-input-placeholder      {@content}
+}

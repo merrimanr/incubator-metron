@@ -1,0 +1,62 @@
+/* You can add global styles to this file, and also import other style files */
+@import "vendor.scss";
+
+body,
+button {
+    font-family: Roboto-Regular;
+}
+
+.mrow {
+    @extend .row;
+    @extend .mx-0;
+}
+
+.input {
+    background: $input-background;
+    border: 1px solid $input-border-color;
+    color: $body-color;
+}
+
+.table {
+    thead tr th {
+        font-size: 13px;
+        border-top: none;
+    }
+    tbody tr td {
+        font-size: 14px;
+        cursor: pointer;
+    }
+}
+
+@include placeholder {
+    color: $placeholder-color;
+    font-style: italic;
+}
+
+.fontawesome-checkbox
+{
+    display: none;
+}
+
+.fontawesome-checkbox ~label
+{
+    margin: 0px;
+    display: inline-block;
+    height: 13px;
+    line-height: 13px;
+    border: 1px solid $tundora;
+    border-radius: 2px;
+}
+
+.fontawesome-checkbox ~label:before {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-size: 12px;
+    content: '\f0c8';
+    color: $mine-shaft-2;
+}
+
+.fontawesome-checkbox:checked ~ label:before {
+    content: '\f14a';
+    color: $checkbox-checked-color;
+}
