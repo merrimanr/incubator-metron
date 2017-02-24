@@ -1,5 +1,6 @@
 @import "../../vendor.scss";
 @import "../../styles.scss";
+@import "../../variables.scss";
 
 .container-fluid
 {
@@ -33,17 +34,6 @@
   }
 }
 
-.high {
-  border-left: 4px solid $high-color;
-  padding-left: 10px;
-}
-
-.medium {
-  border-left: 4px solid  $medium-color;
-  padding-left: 10px;
-}
-
-.low {
-  border-left: 4px solid $low-color;
-  padding-left: 10px;
+.selected {
+  background: $mine-shaft-2;
 }

@@ -9,6 +9,7 @@ import {AlertsListModule} from './alerts-list/alerts-list.module';
 import { AlertDetailsComponent } from './alert-details/alert-details.component';
 import {AlertDetailsModule} from './alert-details/alerts-details.module';
 import {APP_CONFIG, METRON_REST_CONFIG} from "./app.config";
+import {AlertSeverityDirective} from './shared/alert-severity.directive';
 
 @NgModule({
   declarations: [

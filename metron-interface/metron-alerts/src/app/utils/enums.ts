@@ -15,25 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule }            from '@angular/core';
-import { CommonModule }        from '@angular/common';
-import { FormsModule }         from '@angular/forms';
-import {AlertSeverityDirective} from './alert-severity.directive';
-import {MetronTableDirective} from './metron-table/metron-table.directive';
-
-@NgModule({
-  imports:  [
-    CommonModule
-  ],
-  declarations: [
-    AlertSeverityDirective,
-    MetronTableDirective
-  ],
-  exports:  [
-    CommonModule,
-    FormsModule,
-    AlertSeverityDirective,
-    MetronTableDirective
-  ]
-})
-export class SharedModule { }
+export enum Sort {
+    ASC,
+    DSC
+}
