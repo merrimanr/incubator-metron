@@ -2,7 +2,7 @@
     <div class="mrow">
         <div class="col-md-12">
             <div class="input-group search">
-                <input type="text" class="form-control" placeholder="Search Alerts" aria-describedby="basic-addon2" [(ngModel)]="searchRequest.query.query_string.query">
+                <input type="text" class="form-control" placeholder="Search Alerts" aria-describedby="basic-addon2" [(ngModel)]="searchRequest.query.query_string.query" (keyup)="onKeyUp($event)">
                 <span class="input-group-addon" id="basic-addon2" (click)="search()"></span>
             </div>
         </div>
@@ -15,30 +15,26 @@
                     ACTIONS
                 </button>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-                    <span class="dropdown-item" href="#">Open</span>
-                    <span class="dropdown-item" href="#">Dismiss</span>
-                    <span class="dropdown-item" href="#">Escalate</span>
-                    <span class="dropdown-item" href="#">Resolve</span>
+                    <span class="dropdown-item" [class.disabled]="selectedIds.length == 0" (click)="processOpen()">Open</span>
+                    <span class="dropdown-item" [class.disabled]="selectedIds.length == 0" (click)="processDismiss()">Dismiss</span>
+                    <span class="dropdown-item" [class.disabled]="selectedIds.length == 0" (click)="processEscalate()">Escalate</span>
+                    <span class="dropdown-item" [class.disabled]="selectedIds.length == 0" (click)="processResolve()">Resolve</span>
                 </div>
             </div>
         </div>
     </div>
     <div class="mrow">
         <div class="col-md-12">
-            <table class="table">
+            <table class="table" metron-config-table [data]="alerts">
                 <thead>
                 <tr>
-                    <th *ngFor="let name of alertsColumnNames"> {{ name }} </th>
-                    <th style="width:50px"><input id="select-deselect-all" class="fontawesome-checkbox" type="checkbox"><label for="select-deselect-all"></label></th>
+                    <th *ngFor="let column of alertsColumnNames" > <metron-config-sorter [type]="column.type" [sortBy]="column.key"> {{ column.display }}</metron-config-sorter> </th>
+                    <th style="width:50px"><input id="select-deselect-all" class="fontawesome-checkbox" type="checkbox" (click)="selectAllRows($event)"><label for="select-deselect-all"></label></th>
                 </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let alert of alerts" (click)="showDetails(alert)">
-                        <td>
-                            <div [ngClass]="{ 'high': alert.score > 70, 'medium': (alert.score>40 && alert.score<71), 'low': (alert.score>0 && alert.score<41) }">
-                                {{ alert.score }}
-                            </div>
-                        </td>
+                    <tr *ngFor="let alert of alerts" (click)="showDetails($event, alert)" [ngClass]="{'selected' : selectedIds.indexOf(alert.alertId) != -1}">
+                        <td> <div [appAlertSeverity]="alert.score"> {{ alert.score }} </div> </td>
                         <td> {{ alert.description }} </td>
                         <td> {{ alert.alertId }} </td>
                         <td> {{ alert.age }} </td>
@@ -48,7 +44,7 @@
                         <td> {{ alert.destinationIP }} </td>
                         <td> {{ alert.designatedHost }} </td>
                         <td> {{ alert.status }} </td>
-                        <td><input id="{{ alert.alertId }}" class="fontawesome-checkbox" type="checkbox" name="{{alert.alertId}}" ><label attr.for="{{ alert.alertId }}"></label></td>
+                        <td><input id="{{ alert.alertId }}" class="fontawesome-checkbox" type="checkbox" name="{{alert.alertId}}" (click)="selectRow($event, alert)" [checked]="selectedIds.indexOf(alert.alertId) != -1"><label attr.for="{{ alert.alertId }}"></label></td>
                     </tr>
                 </tbody>
             </table>

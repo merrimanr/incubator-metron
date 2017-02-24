@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import {Router} from '@angular/router';
+import {Router, ActivatedRoute} from '@angular/router';
+import {AlertService} from '../service/alert.service';
+import {Alert} from '../model/alert';
 
 @Component({
   selector: 'app-alert-details',
@@ -8,14 +10,47 @@ import {Router} from '@angular/router';
 })
 export class AlertDetailsComponent implements OnInit {
 
-  constructor(private router: Router) { }
+  selectedAlertId: string = '';
+  alert: Alert = new Alert(-1, '', '', '', '', '', '', '', '', '');
+
+  constructor(private router: Router, private activatedRoute: ActivatedRoute, private alertsService: AlertService) { }
 
   goBack() {
     this.router.navigateByUrl('/alerts-list');
     return false;
   }
 
+  getData() {
+    this.alertsService.getAlert(this.selectedAlertId).subscribe(alert => {
+      this.alert = alert
+    });
+  }
+
   ngOnInit() {
+    this.activatedRoute.params.subscribe(params => {
+      this.selectedAlertId = params['id'];
+      this.getData();
+    });
+  }
+
+  processEscalate() {
+
+  }
+
+  processNew() {
+
+  }
+
+  processOpen() {
+
+  }
+
+  processDismiss() {
+
+  }
+
+  processResolve() {
+    
   }
 
 }

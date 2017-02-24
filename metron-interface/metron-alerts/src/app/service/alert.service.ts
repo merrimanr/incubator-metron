@@ -10,11 +10,11 @@ import {SearchRequest} from "../model/search-request";
 @Injectable()
 export class AlertService {
 
-  defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
-  types = ['bro_doc','snort_doc'];
+    defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
+    types = ['bro_doc','snort_doc'];
 
-  constructor(private http: Http, @Inject(APP_CONFIG) private config: IAppConfig) {
-  }
+    constructor(private http: Http, @Inject(APP_CONFIG) private config: IAppConfig) {
+    }
 
     public getAll(): Observable<Alert[]> {
         return Observable.create(observer => {
@@ -23,9 +23,16 @@ export class AlertService {
         });
     }
 
-  public search(request: SearchRequest): Observable<{}> {
+    public search(request: SearchRequest): Observable<{}> {
     return this.http.post('/_all/' + this.types.join(',') + '/_search', request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
       .map(HttpUtil.extractData)
       .catch(HttpUtil.handleError);
-  }
+    }
+
+    public getAlert(alertId: string): Observable<Alert> {
+        return Observable.create(observer => {
+            observer.next(Alert.getData().filter((alert) => alert.alertId === alertId)[0]);
+            observer.complete();
+        });
+    }
 }
