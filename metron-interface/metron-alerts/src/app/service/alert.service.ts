@@ -10,29 +10,38 @@ import {SearchRequest} from "../model/search-request";
 @Injectable()
 export class AlertService {
 
-    defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
-    types = ['bro_doc','snort_doc'];
+  defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
+  types = ['bro_doc', 'snort_doc'];
 
-    constructor(private http: Http, @Inject(APP_CONFIG) private config: IAppConfig) {
-    }
+  constructor(private http: Http, @Inject(APP_CONFIG) private config: IAppConfig) {
+  }
 
-    public getAll(): Observable<Alert[]> {
-        return Observable.create(observer => {
-            observer.next(Alert.getData());
-            observer.complete();
-        });
-    }
+  public getAll(): Observable<Alert[]> {
+    return Observable.create(observer => {
+      observer.next(Alert.getData());
+      observer.complete();
+    });
+  }
 
-    public search(request: SearchRequest): Observable<{}> {
-    return this.http.post('/_all/' + this.types.join(',') + '/_search', request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+  public search(request: SearchRequest): Observable<{}> {
+    return this.http.post('/search/_all/' + this.types.join(',') + '/_search', request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
       .map(HttpUtil.extractData)
       .catch(HttpUtil.handleError);
-    }
+  }
 
-    public getAlert(alertId: string): Observable<Alert> {
-        return Observable.create(observer => {
-            observer.next(Alert.getData().filter((alert) => alert.alertId === alertId)[0]);
-            observer.complete();
-        });
+  public getAlert(index: string, type: string, alertId: string): Observable<Alert> {
+    return this.http.get('/search/' + index + '/' + type + '/' + alertId, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+      .map(HttpUtil.extractData)
+      .catch(HttpUtil.handleError);
+  }
+
+  public updateAlertState(alerts: Alert[], state: string) {
+    let request = '';
+    for (let alert of alerts) {
+      request += '{ "update" : { "_index" : "' + alert._index + '", "_type" : "' + alert._type + '", "_id" : "' + alert._id + '" } }\n{ "doc": { "alert_status": "' + state + '" }}\n';
     }
+    return this.http.post('/search/_bulk', request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+      .map(HttpUtil.extractData)
+      .catch(HttpUtil.handleError);
+  }
 }

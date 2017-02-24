@@ -3,6 +3,10 @@ import {Router, ActivatedRoute} from '@angular/router';
 import {AlertService} from '../service/alert.service';
 import {Alert} from '../model/alert';
 
+export enum AlertState {
+  NEW, OPEN, ESCALATE, DISMISS, RESOLVE
+}
+
 @Component({
   selector: 'app-alert-details',
   templateUrl: './alert-details.component.html',
@@ -10,8 +14,13 @@ import {Alert} from '../model/alert';
 })
 export class AlertDetailsComponent implements OnInit {
 
-  selectedAlertId: string = '';
-  alert: Alert = new Alert(-1, '', '', '', '', '', '', '', '', '');
+  alertId: string = '';
+  alertIndex: string = '';
+  alertType: string = '';
+  alertState = AlertState;
+  selectedAlertState: AlertState = AlertState.NEW;
+  alert: Alert = new Alert(-1, '', '', '', '', '', '', '', '', '', '', '', {});
+  alertFields: string[] = [];
 
   constructor(private router: Router, private activatedRoute: ActivatedRoute, private alertsService: AlertService) { }
 
@@ -21,36 +30,61 @@ export class AlertDetailsComponent implements OnInit {
   }
 
   getData() {
-    this.alertsService.getAlert(this.selectedAlertId).subscribe(alert => {
-      this.alert = alert
+    this.alertsService.getAlert(this.alertIndex, this.alertType, this.alertId).subscribe(alert => {
+      this.alert = alert;
+      this.alertFields = Object.keys(alert._source).filter(field => !field.includes(':ts') && field !== 'original_string').sort();
     });
   }
 
   ngOnInit() {
     this.activatedRoute.params.subscribe(params => {
-      this.selectedAlertId = params['id'];
+      this.alertId = params['id'];
+      this.alertIndex = params['index'];
+      this.alertType = params['type'];
       this.getData();
     });
   }
 
   processEscalate() {
-
+    console.log('escalate');
+    this.selectedAlertState = AlertState.ESCALATE;
+    this.alertsService.updateAlertState([this.alert], 'ESCALATE').subscribe(results => {
+      this.getData()
+    });
   }
 
   processNew() {
-
+    console.log('new');
+    this.selectedAlertState = AlertState.NEW;
+    this.alertsService.updateAlertState([this.alert], 'NEW').subscribe(results => {
+      this.getData()
+    });
   }
 
   processOpen() {
-
+    console.log('open');
+    this.selectedAlertState = AlertState.OPEN;
+    this.alertsService.updateAlertState([this.alert], 'OPEN').subscribe(results => {
+      this.getData()
+    });
   }
 
   processDismiss() {
-
+    console.log('dismiss');
+    this.selectedAlertState = AlertState.DISMISS;
+    this.alertsService.updateAlertState([this.alert], 'DISMISS').subscribe(results => {
+      this.getData()
+    });
   }
 
   processResolve() {
-    
+    console.log('resolve');
+    this.selectedAlertState = AlertState.RESOLVE;
+    this.alertsService.updateAlertState([this.alert], 'RESOLVE').subscribe(results => {
+      this.getData()
+    });
   }
 
 }
+
+

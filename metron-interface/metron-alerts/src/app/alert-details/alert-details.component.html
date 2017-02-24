@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <div class="row mb-3">
             <div class="col-md-10">
-                <div class="form-title" [appAlertSeverity]="alert.score"> {{ alert.score }} {{ alert.description }}</div>
+                <div class="form-title" [appAlertSeverity]="alert.score"> {{ alert.score }} {{ alert._id }}</div>
             </div>
             <div class="col-md-2"><i class="fa fa-times pull-right close-button" aria-hidden="true" (click)="goBack()"></i></div>
         </div>
@@ -10,48 +10,25 @@
             <table>
                 <tr>
                     <td class="title"> Status</td>
-                    <td class="secondary" (click)="processEscalate()">ESCALATE</td>
+                    <td class="secondary" [ngClass]="{'primary': selectedAlertState === alertState.ESCALATE, 'secondary': selectedAlertState !== alertState.ESCALATE}" (click)="processEscalate()">ESCALATE</td>
                     <td></td>
                 </tr>
                 <tr>
-                    <td class="secondary" (click)="processNew()">NEW</td>
-                    <td class="primary" (click)="processOpen()">OPEN</td>
-                    <td class="secondary" (click)="processDismiss()">DISMISS</td>
+                    <td class="secondary" [ngClass]="{'primary': selectedAlertState === alertState.NEW, 'secondary': selectedAlertState !== alertState.NEW}" (click)="processNew()">NEW</td>
+                    <td class="primary" [ngClass]="{'primary': selectedAlertState === alertState.OPEN, 'secondary': selectedAlertState !== alertState.OPEN}" (click)="processOpen()">OPEN</td>
+                    <td class="secondary" [ngClass]="{'primary': selectedAlertState === alertState.DISMISS, 'secondary': selectedAlertState !== alertState.DISMISS}" (click)="processDismiss()">DISMISS</td>
                 </tr>
                 <tr>
                     <td></td>
-                    <td class="secondary" (click)="processResolve()">RESOLVE</td>
+                    <td class="secondary" [ngClass]="{'primary': selectedAlertState === alertState.RESOLVE, 'secondary': selectedAlertState !== alertState.RESOLVE}" (click)="processResolve()">RESOLVE</td>
                     <td></td>
                 </tr>
             </table>
         </div>
-        <div class="row ml-1 my-4 form">
-            <div class="col-6 mb-1 key"> ALERT ID        </div>   <div class="col-6"> {{ alert.alertId}}             </div>
-            <div class="col-6 mb-1 key"> AGE             </div>   <div class="col-6"> {{ alert.age}}                 </div>
-            <div class="col-6 mb-1 key"> SOURCE LOCATION </div>   <div class="col-6"> {{ alert.sourceLocation}}      </div>
-            <div class="col-6 mb-1 key"> SOURCE IP       </div>   <div class="col-6"> {{ alert.sourceIp}}            </div>
-            <div class="col-6 mb-1 key"> DEST. LOCATION  </div>   <div class="col-6"> {{ alert.destinationLocation}} </div>
-            <div class="col-6 mb-1 key"> DESTINATION IP  </div>   <div class="col-6"> {{ alert.destinationIp}}       </div>
-            <div class="col-6 mb-1 key"> IP_DST_PORT_S   </div>   <div class="col-6"> {{ alert.ip_dst_port_s}}       </div>
-            <div class="col-6 mb-1 key"> TCPWINDOW_S     </div>   <div class="col-6"> {{ alert.tcpwindow_s}}         </div>
-            <div class="col-6 mb-1 key"> PROTOCOL_S      </div>   <div class="col-6"> {{ alert.protocol_s}}          </div>
-            <div class="col-6 mb-1 key"> IP_DST_ADDR_S   </div>   <div class="col-6"> {{ alert.ip_dst_addr_s}}       </div>
-            <div class="col-6 mb-1 key"> THREAT.SCORE    </div>   <div class="col-6"> {{ alert.threatScore}}         </div>
-            <div class="col-6 mb-1 key"> TOS_S           </div>   <div class="col-6"> {{ alert.tos_s}}               </div>
-            <div class="col-6 mb-1 key"> ID_S            </div>   <div class="col-6"> {{ alert.id_s}}                </div>
-            <div class="col-6 mb-1 key"> IP_SRC_ADDR_S   </div>   <div class="col-6"> {{ alert.ip_src_addr_s}}       </div>
-            <div class="col-6 mb-1 key"> TIMESTAMP_L     </div>   <div class="col-6"> {{ alert.timestamp_l}}         </div>
-            <div class="col-6 mb-1 key"> ETHDST_S        </div>   <div class="col-6"> {{ alert.ethdst_s}}            </div>
-            <div class="col-6 mb-1 key"> IS_ALERT_S      </div>   <div class="col-6"> {{ alert.is_alert_s}}          </div>
-            <div class="col-6 mb-1 key"> TTL_S           </div>   <div class="col-6"> {{ alert.ttl_s}}               </div>
-            <div class="col-6 mb-1 key"> SOURCE.TYPE_S   </div>   <div class="col-6"> {{ alert.sourcetype_s}}        </div>
-            <div class="col-6 mb-1 key"> ETHLEN_S        </div>   <div class="col-6"> {{ alert.ethlen_s}}            </div>
-            <div class="col-6 mb-1 key"> IPLEN_S         </div>   <div class="col-6"> {{ alert.iplen_s}}             </div>
-            <div class="col-6 mb-1 key"> IP_SRC_PORT_S   </div>   <div class="col-6"> {{ alert.ip_src_port_s}}       </div>
-            <div class="col-6 mb-1 key"> TCPFLAGS_S      </div>   <div class="col-6"> {{ alert.tcpflags_s}}          </div>
-            <div class="col-6 mb-1 key"> SIG_ID_S        </div>   <div class="col-6"> {{ alert.sig_id_s}}            </div>
-            <div class="col-6 mb-1 key"> SIG_GENERATOR_S </div>   <div class="col-6"> {{ alert.sig_generator_s}}     </div>
-            <div class="col-6 mb-1 key"> _VERSION        </div>   <div class="col-6"> {{ alert._version_}}           </div>
+        <div class="ml-1 my-4 form">
+            <div *ngFor="let field of alertFields" class="row">
+              <div class="col-6 mb-1 key">{{ field }}</div>   <div class="col-6"> {{ alert._source[field] }} </div>
+            </div>
         </div>
     </div>
 </div>

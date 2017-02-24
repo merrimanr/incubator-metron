@@ -7,8 +7,9 @@
     "target": "http://localhost:8080",
     "secure": false
   },
-  "/_all": {
+  "/search": {
     "target": "http://node1:9200",
+    "pathRewrite": {"^/search" : ""},
     "secure": false
   }
 }
