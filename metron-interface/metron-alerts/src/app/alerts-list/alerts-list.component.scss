@@ -37,3 +37,21 @@
 .selected {
   background: $mine-shaft-2;
 }
+
+.highlighted {
+  background: $blue-chill;
+}
+
+td a:hover {
+  background: $blue-chill;
+}
+
+.cell-value {
+  padding: 5px;
+}
+
+.filter-button {
+  margin-left: 5px;
+  margin-right: 5px;
+  cursor: pointer;
+}

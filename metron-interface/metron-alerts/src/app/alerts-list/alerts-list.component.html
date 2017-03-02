@@ -3,12 +3,17 @@
         <div class="col-md-12">
             <div class="input-group search">
                 <input type="text" class="form-control" placeholder="Search Alerts" aria-describedby="basic-addon2" [(ngModel)]="searchRequest.query.query_string.query" (keyup)="onKeyUp($event)">
-                <span class="input-group-addon" id="basic-addon2" (click)="search()"></span>
+                <span class="input-group-addon" id="basic-addon2" (click)="onSearch()"></span>
             </div>
         </div>
     </div>
     <div class="mrow">
-        <h5 class="col-md-10"> Alerts ({{alerts.length}}) </h5>
+        <h5 class="col-md-1"> Alerts ({{alerts.length}}) </h5>
+        <div class="col-md-9">
+          <div  class="row">
+            <button *ngFor="let filter of filters" class="filter-button btn btn-primary" (click)="removeFilter(filter.field)" type="button">x {{ filter.field }}</button>
+          </div>
+        </div>
         <div class="col-md-2">
             <div class="dropdown pull-right">
                 <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -28,21 +33,21 @@
             <table class="table" metron-config-table [data]="alerts">
                 <thead>
                 <tr>
-                    <th *ngFor="let column of alertsColumnNames" > <metron-config-sorter [type]="column.type" [sortBy]="column.key"> {{ column.display }}</metron-config-sorter> </th>
+                    <th *ngFor="let column of alertsColumnNames" > <metron-config-sorter [type]="column.type" [sortBy]="column.key"> {{ column.key }}</metron-config-sorter> </th>
                     <th style="width:50px"><input id="select-deselect-all" class="fontawesome-checkbox" type="checkbox" (click)="selectAllRows($event)"><label for="select-deselect-all"></label></th>
                 </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let alert of alerts" (click)="showDetails($event, alert)" [ngClass]="{'selected' : selectedAlerts.indexOf(alert) != -1}">
-                        <td> <div [appAlertSeverity]="alert.score"> {{ alert.score }} </div> </td>
+                    <tr *ngFor="let alert of alerts" (click)="showDetails($event, alert)" [ngClass]="{'selected' : selectedAlerts.indexOf(alert) != -1}" (mouseover)="highlightRow($event)" (mouseout)="clearHighlight($event)">
+                        <td (click)="addFilter('score', alert.score)"> <div [appAlertSeverity]="alert.score"> {{ alert.score }} </div> </td>
                         <td> {{ alert.alertId }} </td>
-                        <td> {{ alert.age }} </td>
-                        <td> {{ alert.alertSource }} </td>
-                        <td> {{ alert.sourceIp }} </td>
-                        <td> {{ alert.sourceLocation }} </td>
-                        <td> {{ alert.destinationIP }} </td>
-                        <td> {{ alert.designatedHost }} </td>
-                        <td> {{ alert.status }} </td>
+                        <td><a class="cell-value" (click)="onAddFilter('age', alert.age)"> {{ alert.age }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('source_type', alert.source_type)"> {{ alert.source_type }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('ip_src_addr', alert.ip_src_addr)">{{ alert.ip_src_addr }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('sourceLocation', alert.sourceLocation)">{{ alert.sourceLocation }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('ip_dst_addr', alert.ip_dst_addr)"> {{ alert.ip_dst_addr }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('designatedHost', alert.designatedHost)">{{ alert.designatedHost }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('status', alert.status)">{{ alert.status }}</a></td>
                         <td><input id="{{ alert.alertId }}" class="fontawesome-checkbox" type="checkbox" name="{{alert.alertId}}" (click)="selectRow($event, alert)" [checked]="selectedAlerts.indexOf(alert) != -1"><label attr.for="{{ alert.alertId }}"></label></td>
                     </tr>
                 </tbody>

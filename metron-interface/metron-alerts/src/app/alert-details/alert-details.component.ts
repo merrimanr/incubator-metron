@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
 import {AlertService} from '../service/alert.service';
 import {Alert} from '../model/alert';
+import {WorkflowService} from "../service/workflow.service";
 
 export enum AlertState {
   NEW, OPEN, ESCALATE, DISMISS, RESOLVE
@@ -22,7 +23,7 @@ export class AlertDetailsComponent implements OnInit {
   alert: Alert = new Alert(-1, '', '', '', '', '', '', '', '', '', '', '', {});
   alertFields: string[] = [];
 
-  constructor(private router: Router, private activatedRoute: ActivatedRoute, private alertsService: AlertService) { }
+  constructor(private router: Router, private activatedRoute: ActivatedRoute, private alertsService: AlertService, private workflowService: WorkflowService) { }
 
   goBack() {
     this.router.navigateByUrl('/alerts-list');
@@ -48,7 +49,7 @@ export class AlertDetailsComponent implements OnInit {
   processEscalate() {
     console.log('escalate');
     this.selectedAlertState = AlertState.ESCALATE;
-    this.alertsService.updateAlertState([this.alert], 'ESCALATE').subscribe(results => {
+    this.alertsService.updateAlertState([this.alert], 'ESCALATE', '').subscribe(results => {
       this.getData()
     });
   }
@@ -56,7 +57,7 @@ export class AlertDetailsComponent implements OnInit {
   processNew() {
     console.log('new');
     this.selectedAlertState = AlertState.NEW;
-    this.alertsService.updateAlertState([this.alert], 'NEW').subscribe(results => {
+    this.alertsService.updateAlertState([this.alert], 'NEW', '').subscribe(results => {
       this.getData()
     });
   }
@@ -64,15 +65,18 @@ export class AlertDetailsComponent implements OnInit {
   processOpen() {
     console.log('open');
     this.selectedAlertState = AlertState.OPEN;
-    this.alertsService.updateAlertState([this.alert], 'OPEN').subscribe(results => {
-      this.getData()
+    this.workflowService.start([this.alert]).subscribe(workflowId => {
+      this.alertsService.updateAlertState([this.alert], 'OPEN', workflowId).subscribe(results => {
+        this.getData()
+      });
     });
+    
   }
 
   processDismiss() {
     console.log('dismiss');
     this.selectedAlertState = AlertState.DISMISS;
-    this.alertsService.updateAlertState([this.alert], 'DISMISS').subscribe(results => {
+    this.alertsService.updateAlertState([this.alert], 'DISMISS', '').subscribe(results => {
       this.getData()
     });
   }
@@ -80,7 +84,7 @@ export class AlertDetailsComponent implements OnInit {
   processResolve() {
     console.log('resolve');
     this.selectedAlertState = AlertState.RESOLVE;
-    this.alertsService.updateAlertState([this.alert], 'RESOLVE').subscribe(results => {
+    this.alertsService.updateAlertState([this.alert], 'RESOLVE', '').subscribe(results => {
       this.getData()
     });
   }
