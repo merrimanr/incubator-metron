@@ -34,6 +34,7 @@
                 <thead>
                 <tr>
                     <th *ngFor="let column of alertsColumnNames" > <metron-config-sorter [type]="column.type" [sortBy]="column.key"> {{ column.key }}</metron-config-sorter> </th>
+                    <th style="width:2%"><i class="fa fa-cog configure-table-icon" (click)="configureTable()"></i></th>
                     <th style="width:50px"><input id="select-deselect-all" class="fontawesome-checkbox" type="checkbox" (click)="selectAllRows($event)"><label for="select-deselect-all"></label></th>
                 </tr>
                 </thead>
@@ -48,6 +49,7 @@
                         <td><a class="cell-value" (click)="onAddFilter('ip_dst_addr', alert.ip_dst_addr)"> {{ alert.ip_dst_addr }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('designatedHost', alert.designatedHost)">{{ alert.designatedHost }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('status', alert.status)">{{ alert.status }}</a></td>
+                        <td></td>
                         <td><input id="{{ alert.alertId }}" class="fontawesome-checkbox" type="checkbox" name="{{alert.alertId}}" (click)="selectRow($event, alert)" [checked]="selectedAlerts.indexOf(alert) != -1"><label attr.for="{{ alert.alertId }}"></label></td>
                     </tr>
                 </tbody>

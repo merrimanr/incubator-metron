@@ -5,6 +5,7 @@ import {Alert} from '../model/alert';
 import {AlertService} from '../service/alert.service';
 import {SearchRequest} from "../model/search-request";
 import {Filter} from "../model/filter";
+import {ConfigureTableService} from "../service/configure-table.service";
 
 @Component({
   selector: 'app-alerts-list',
@@ -30,7 +31,9 @@ export class AlertsListComponent implements OnInit {
   searchRequest: SearchRequest = { query: { query_string: { query: '*'} }, from: 0, size: 10, sort: [{ timestamp: {order : 'desc', ignore_unmapped: true} }], aggs: {}};
   filters: Filter[] = [];
 
-  constructor(private router: Router, private alertsService: AlertService) {
+  showConfigureTable: boolean = false;
+
+  constructor(private router: Router, private alertsService: AlertService, private configureTableService: ConfigureTableService) {
     router.events.subscribe(event => {
       if (event instanceof NavigationStart && event.url === '/alerts-list') {
         this.selectedAlerts = [];
@@ -40,6 +43,9 @@ export class AlertsListComponent implements OnInit {
 
   ngOnInit() {
     this.search();
+    this.configureTableService.tableChanged$.subscribe(results => {
+      console.log(results);
+    })
   }
 
   onKeyUp($event) {
@@ -87,6 +93,7 @@ export class AlertsListComponent implements OnInit {
 
   selectRow($event, alert: Alert) {
     if ($event.target.checked) {
+      this.showConfigureTable = true;
       this.selectedAlerts.push(alert);
     } else {
       this.selectedAlerts.splice(this.selectedAlerts.indexOf(alert), 1);
@@ -107,21 +114,21 @@ export class AlertsListComponent implements OnInit {
       console.log(results);
     });
   }
-  
+
   processDismiss() {
     this.alertsService.updateAlertState(this.selectedAlerts, 'DISMISS', '').subscribe(results => {
       this.updateSelectedAlertStatus('DISMISS');
       console.log(results);
     });
   }
-  
+
   processEscalate() {
     this.alertsService.updateAlertState(this.selectedAlerts, 'ESCALATE', '').subscribe(results => {
       this.updateSelectedAlertStatus('ESCALATE');
       console.log(results);
     });
   }
-  
+
   processResolve() {
     this.alertsService.updateAlertState(this.selectedAlerts, 'RESOLVE', '').subscribe(results => {
       this.updateSelectedAlertStatus('RESOLVE');
@@ -179,5 +186,9 @@ export class AlertsListComponent implements OnInit {
 
   clearHighlight($event) {
     $event.target.parentElement.classList.remove('highlighted');
+  }
+
+  configureTable() {
+    this.router.navigateByUrl('/alerts-list(dialog:configure-table)');
   }
 }

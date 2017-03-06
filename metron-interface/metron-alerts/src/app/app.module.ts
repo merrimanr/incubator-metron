@@ -6,10 +6,10 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import {MetronAlertsRoutingModule} from './app-routing.module';
 import {AlertsListModule} from './alerts-list/alerts-list.module';
-import { AlertDetailsComponent } from './alert-details/alert-details.component';
 import {AlertDetailsModule} from './alert-details/alerts-details.module';
 import {APP_CONFIG, METRON_REST_CONFIG} from "./app.config";
-import {AlertSeverityDirective} from './shared/alert-severity.directive';
+import {ConfigureTableModule} from "./configure-table/configure-table.module";
+import {ConfigureTableService} from "./service/configure-table.service";
 
 @NgModule({
   declarations: [
@@ -21,9 +21,10 @@ import {AlertSeverityDirective} from './shared/alert-severity.directive';
     HttpModule,
     MetronAlertsRoutingModule,
     AlertsListModule,
-    AlertDetailsModule
+    AlertDetailsModule,
+    ConfigureTableModule
   ],
-  providers: [{ provide: APP_CONFIG, useValue: METRON_REST_CONFIG }],
+  providers: [{ provide: APP_CONFIG, useValue: METRON_REST_CONFIG }, ConfigureTableService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
