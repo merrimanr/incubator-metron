@@ -89,6 +89,24 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-indexing-to-kafkazk</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/compose/kafkazk/indexing</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../metron-platform/metron-indexing/target/</directory>
+                                    <includes>
+                                        <include>*.tar.gz</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-templates-to-elasticsearch</id>
                         <phase>prepare-package</phase>
                         <goals>
