@@ -37,10 +37,12 @@ RUN chmod 755 /opt/kafka_2.11-0.10.0.0/bin/wait-for-it.sh
 ADD ./common /common
 ADD ./parser /parser
 ADD ./enrichment /enrichment
+ADD ./indexing /indexing
 ADD ./data /data
 RUN tar -xzf /common/metron-common-$METRON_VERSION-archive.tar.gz -C /usr/metron/$METRON_VERSION/
 RUN tar -xzf /parser/metron-parsers-$METRON_VERSION-archive.tar.gz -C /usr/metron/$METRON_VERSION/
 RUN tar -xzf /enrichment/metron-enrichment-$METRON_VERSION-archive.tar.gz -C /usr/metron/$METRON_VERSION/
+RUN tar -xzf /indexing/metron-indexing-$METRON_VERSION-archive.tar.gz -C /usr/metron/$METRON_VERSION/
 ADD ./conf /$METRON_HOME/config/zookeeper
 
 EXPOSE 2181 9092
