@@ -23,12 +23,19 @@ export class AlertService {
     });
   }
 
-  public search(request: SearchRequest): Observable<{}> {
-    return this.http.post('/search/_all/' + this.types.join(',') + '/_search', request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+  public search(request: SearchRequest, sourceType: string): Observable<{}> {
+    let url: string;
+    if (sourceType) {
+      url = '/search/' + sourceType + '*/' + sourceType + '_doc/_search';
+    } else {
+      url = '/search/_all/' + this.types.join(',') + '/_search';
+    }
+
+    return this.http.post(url, request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
       .map(HttpUtil.extractData)
       .catch(HttpUtil.handleError);
   }
-  
+
   public mockSearch(): Observable<Alert[]> {
     return Observable.create(observer => {
       observer.next(Alert.getData());

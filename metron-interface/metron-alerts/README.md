@@ -1,31 +1,30 @@
 # MetronAlerts
 
-This project was generated with [angular-cli](https://github.com/angular/angular-cli) version 1.0.0-beta.16.
+This module provides a UI for viewing, searching and acting on alerts.
 
-## Development server
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+## Prerequisites
 
-## Code scaffolding
+The following services need to be running:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive/pipe/service/class`.
+* [Quick Dev](../../metron-deployment/vagrant/quick-dev-platform)
+* [metron-rest](../metron-rest) running locally or on quick dev, configured for quick dev environment
+* npm (version 3.8.9+)
 
-## Build
+## Intallation
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+Build Metron with Maven and then compile the metron-alerts project:
+```
+mvn clean package -DskipTests
+cd incubator-metron/metron-interface/metron-alerts
+npm install
+```
 
-## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Then start the application with:
+```
+./scripts/start_dev.sh
+```
 
-## Running end-to-end tests
+## Usage
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/). 
-Before running the tests make sure you are serving the app via `ng serve`.
-
-## Deploying to Github Pages
-
-Run `ng github-pages:deploy` to deploy to Github Pages.
-
-## Further help
-
-To get more help on the `angular-cli` use `ng --help` or go check out the [Angular-CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+The application is available on http://localhost:4200.  You must login to the REST API first (credentials= user/password) by navigating to http://localhost:8080/swagger-ui.html#/.   

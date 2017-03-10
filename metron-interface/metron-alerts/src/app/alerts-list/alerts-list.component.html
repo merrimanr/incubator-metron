@@ -48,7 +48,7 @@
                         <td><a class="cell-value" (click)="onAddFilter('sourceLocation', alert.sourceLocation)">{{ alert.sourceLocation }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('ip_dst_addr', alert.ip_dst_addr)"> {{ alert.ip_dst_addr }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('designatedHost', alert.designatedHost)">{{ alert.designatedHost }}</a></td>
-                        <td><a class="cell-value" (click)="onAddFilter('status', alert.status)">{{ alert.status }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('alert_status', alert.status)">{{ alert.status }}</a></td>
                         <td></td>
                         <td><input id="{{ alert.alertId }}" class="fontawesome-checkbox" type="checkbox" name="{{alert.alertId}}" (click)="selectRow($event, alert)" [checked]="selectedAlerts.indexOf(alert) != -1"><label attr.for="{{ alert.alertId }}"></label></td>
                     </tr>

@@ -6,6 +6,7 @@ import {AlertService} from '../service/alert.service';
 import {SearchRequest} from "../model/search-request";
 import {Filter} from "../model/filter";
 import {ConfigureTableService} from "../service/configure-table.service";
+import {WorkflowService} from "../service/workflow.service";
 
 @Component({
   selector: 'app-alerts-list',
@@ -30,10 +31,11 @@ export class AlertsListComponent implements OnInit {
 
   searchRequest: SearchRequest = { query: { query_string: { query: '*'} }, from: 0, size: 10, sort: [{ timestamp: {order : 'desc', ignore_unmapped: true} }], aggs: {}};
   filters: Filter[] = [];
+  sourceTypeFilter: string;
 
   showConfigureTable: boolean = false;
 
-  constructor(private router: Router, private alertsService: AlertService, private configureTableService: ConfigureTableService) {
+  constructor(private router: Router, private alertsService: AlertService, private configureTableService: ConfigureTableService, private workflowService: WorkflowService) {
     router.events.subscribe(event => {
       if (event instanceof NavigationStart && event.url === '/alerts-list') {
         this.selectedAlerts = [];
@@ -81,7 +83,7 @@ export class AlertsListComponent implements OnInit {
 
   search() {
     this.selectedAlerts = [];
-    this.alertsService.search(this.searchRequest).subscribe(results => {
+    this.alertsService.search(this.searchRequest, this.sourceTypeFilter).subscribe(results => {
       let alertResults = [];
       for(let hit of results['hits'].hits) {
         alertResults.push(new Alert(85,  'description', hit['_id'], hit['_source']['timestamp'], hit['_source']['source:type'],
@@ -109,9 +111,11 @@ export class AlertsListComponent implements OnInit {
   }
 
   processOpen() {
-    this.alertsService.updateAlertState(this.selectedAlerts, 'OPEN', '').subscribe(results => {
-      this.updateSelectedAlertStatus('OPEN');
-      console.log(results);
+    this.workflowService.start(this.selectedAlerts).subscribe(workflowId => {
+      this.alertsService.updateAlertState(this.selectedAlerts, 'OPEN', workflowId).subscribe(results => {
+        this.updateSelectedAlertStatus('OPEN');
+        console.log(results);
+      });
     });
   }
 
@@ -152,6 +156,9 @@ export class AlertsListComponent implements OnInit {
   }
 
   removeFilter(field: string) {
+    if (field === 'source_type') {
+      this.sourceTypeFilter = null;
+    }
     let filter = this.filters.find(filter => filter.field === field);
     this.filters.splice(this.filters.indexOf(filter), 1);
     this.generateQuery();
@@ -159,10 +166,14 @@ export class AlertsListComponent implements OnInit {
   }
 
   generateQuery() {
-    if (this.filters.length === 0) {
+    let sourceTypeFilter = this.filters.find(filter => filter.field === 'source_type');
+    if (sourceTypeFilter) {
+      this.sourceTypeFilter = sourceTypeFilter.value;
+    }
+
+    this.searchRequest.query['query_string'].query = this.filters.filter(filter => filter.field !== 'source_type').map(filter => filter.field + ':' + filter.value).join(' AND ');
+    if (this.searchRequest.query['query_string'].query.length === 0) {
       this.searchRequest.query['query_string'].query = '*';
-    } else {
-      this.searchRequest.query['query_string'].query = this.filters.map(filter => filter.field + ':' + filter.value).join(' AND ');
     }
   }
 
