@@ -21,7 +21,7 @@ export class AlertsListComponent implements OnInit {
     { 'key': 'score',           'display': 'Score',             'type': 'number'},
     { 'key': '_id',         'display': 'Alert ID',          'type': 'string'},
     { 'key': 'timestamp',             'display': 'Age',               'type': 'number'},
-    { 'key': 'source_type',     'display': 'Alert Source',      'type': 'string'},
+    { 'key': 'source:type',     'display': 'Alert Source',      'type': 'string'},
     { 'key': 'ip_src_addr',        'display': 'Source IP',         'type': 'string'},
     { 'key': 'sourceLocation',  'display': 'Source Location',   'type': 'string'},
     { 'key': 'ip_dst_addr',   'display': 'Destination IP',    'type': 'string'},
@@ -31,7 +31,6 @@ export class AlertsListComponent implements OnInit {
 
   searchRequest: SearchRequest = { query: { query_string: { query: '*'} }, from: 0, size: 10, sort: [{ timestamp: {order : 'desc', ignore_unmapped: true} }], aggs: {}};
   filters: Filter[] = [];
-  sourceTypeFilter: string;
 
   showConfigureTable: boolean = false;
 
@@ -83,7 +82,7 @@ export class AlertsListComponent implements OnInit {
 
   search() {
     this.selectedAlerts = [];
-    this.alertsService.search(this.searchRequest, this.sourceTypeFilter).subscribe(results => {
+    this.alertsService.search(this.searchRequest).subscribe(results => {
       let alertResults = [];
       for(let hit of results['hits'].hits) {
         alertResults.push(new Alert(85,  'description', hit['_id'], hit['_source']['timestamp'], hit['_source']['source:type'],
@@ -156,9 +155,6 @@ export class AlertsListComponent implements OnInit {
   }
 
   removeFilter(field: string) {
-    if (field === 'source_type') {
-      this.sourceTypeFilter = null;
-    }
     let filter = this.filters.find(filter => filter.field === field);
     this.filters.splice(this.filters.indexOf(filter), 1);
     this.generateQuery();
@@ -166,12 +162,7 @@ export class AlertsListComponent implements OnInit {
   }
 
   generateQuery() {
-    let sourceTypeFilter = this.filters.find(filter => filter.field === 'source_type');
-    if (sourceTypeFilter) {
-      this.sourceTypeFilter = sourceTypeFilter.value;
-    }
-
-    this.searchRequest.query['query_string'].query = this.filters.filter(filter => filter.field !== 'source_type').map(filter => filter.field + ':' + filter.value).join(' AND ');
+    this.searchRequest.query['query_string'].query = this.filters.map(filter => filter.field.replace(':', '\\:') + ':' + filter.value).join(' AND ');
     if (this.searchRequest.query['query_string'].query.length === 0) {
       this.searchRequest.query['query_string'].query = '*';
     }
@@ -183,8 +174,10 @@ export class AlertsListComponent implements OnInit {
     if (query && query !== '' && query !== '*') {
       let terms = query.split(' AND ');
       for (let term of terms) {
-        let fieldValue = term.split(':');
-        this.addFilter(fieldValue[0], fieldValue[1]);
+        let separatorPos = term.lastIndexOf(':');
+        let field = term.substring(0, separatorPos).replace('\\', '');
+        let value = term.substring(separatorPos + 1, term.length);
+        this.addFilter(field, value);
       }
     }
   }

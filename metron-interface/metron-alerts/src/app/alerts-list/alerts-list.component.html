@@ -43,7 +43,7 @@
                         <td (click)="addFilter('score', alert.score)"> <div [appAlertSeverity]="alert.score"> {{ alert.score }} </div> </td>
                         <td> {{ alert.alertId }} </td>
                         <td><a class="cell-value" (click)="onAddFilter('age', alert.age)"> {{ alert.age }}</a></td>
-                        <td><a class="cell-value" (click)="onAddFilter('source_type', alert.source_type)"> {{ alert.source_type }}</a></td>
+                        <td><a class="cell-value" (click)="onAddFilter('source:type', alert.source_type)"> {{ alert.source_type }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('ip_src_addr', alert.ip_src_addr)">{{ alert.ip_src_addr }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('sourceLocation', alert.sourceLocation)">{{ alert.sourceLocation }}</a></td>
                         <td><a class="cell-value" (click)="onAddFilter('ip_dst_addr', alert.ip_dst_addr)"> {{ alert.ip_dst_addr }}</a></td>
