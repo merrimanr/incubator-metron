@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 from resource_management.core.exceptions import ComponentIsNotRunning
-from resource_management.core.logger import Logger
 from resource_management.core.resources.system import File
 from resource_management.core.source import Template
 from resource_management.libraries.functions.format import format
@@ -32,11 +31,12 @@ class Enrichment(Script):
         commands = EnrichmentCommands(params)
         commands.setup_repo()
         self.install_packages(env)
-        self.configure(env)
+
 
     def configure(self, env, upgrade_type=None, config_dir=None):
         from params import params
         env.set_params(params)
+        commands = EnrichmentCommands(params)
 
         File(format("{metron_config_path}/enrichment.properties"),
              content=Template("enrichment.properties.j2"),
@@ -44,18 +44,26 @@ class Enrichment(Script):
              group=params.metron_group
              )
 
-    def start(self, env, upgrade_type=None):
-        from params import params
-        env.set_params(params)
-        commands = EnrichmentCommands(params)
         metron_service.load_global_config(params)
 
         if not commands.is_kafka_configured():
             commands.init_kafka_topics()
+        if params.security_enabled and not commands.is_kafka_acl_configured():
+            commands.init_kafka_acls()
         if not commands.is_hbase_configured():
             commands.create_hbase_tables()
+        if params.security_enabled and not commands.is_hbase_acl_configured():
+            commands.set_hbase_acls()
         if not commands.is_geo_configured():
             commands.init_geo()
+
+
+
+    def start(self, env, upgrade_type=None):
+        from params import params
+        env.set_params(params)
+        commands = EnrichmentCommands(params)
+        self.configure(env)
 
         commands.start_enrichment_topology()
 
