@@ -46,10 +46,10 @@ export class AlertDetailsComponent implements OnInit {
     });
   }
 
-  processEscalate() {
-    console.log('escalate');
-    this.selectedAlertState = AlertState.ESCALATE;
-    this.alertsService.updateAlertState([this.alert], 'ESCALATE', '').subscribe(results => {
+  processOpen() {
+    console.log('open');
+    this.selectedAlertState = AlertState.OPEN;
+    this.alertsService.updateAlertState([this.alert], 'OPEN', '').subscribe(results => {
       this.getData()
     });
   }
@@ -62,15 +62,14 @@ export class AlertDetailsComponent implements OnInit {
     });
   }
 
-  processOpen() {
-    console.log('open');
-    this.selectedAlertState = AlertState.OPEN;
+  processEscalate() {
+    console.log('escalate');
+    this.selectedAlertState = AlertState.ESCALATE;
     this.workflowService.start([this.alert]).subscribe(workflowId => {
-      this.alertsService.updateAlertState([this.alert], 'OPEN', workflowId).subscribe(results => {
+      this.alertsService.updateAlertState([this.alert], 'ESCALATE', workflowId).subscribe(results => {
         this.getData()
       });
     });
-    
   }
 
   processDismiss() {

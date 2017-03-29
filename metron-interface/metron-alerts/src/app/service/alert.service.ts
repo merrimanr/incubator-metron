@@ -40,13 +40,17 @@ export class AlertService {
   public getAlert(index: string, type: string, alertId: string): Observable<Alert> {
     return this.http.get('/search/' + index + '/' + type + '/' + alertId, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
       .map(HttpUtil.extractData)
-      .catch(HttpUtil.handleError);
+//      .catch(HttpUtil.handleError);
   }
 
   public updateAlertState(alerts: Alert[], state: string, workflowId: string) {
     let request = '';
     for (let alert of alerts) {
-      request += '{ "update" : { "_index" : "' + alert._index + '", "_type" : "' + alert._type + '", "_id" : "' + alert._id + '" } }\n{ "doc": { "alert_status": "' + state + '", "workflow_id": "' + workflowId + '" }}\n';
+      request += '{ "update" : { "_index" : "' + alert._index + '", "_type" : "' + alert._type + '", "_id" : "' + alert._id + '" } }\n{ "doc": { "alert_status": "' + state + '"';
+      if (workflowId) {
+        request += ', "workflow_id": "' + workflowId + '"';
+      }
+      request += ' }}\n';
     }
     return this.http.post('/search/_bulk', request, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
       .map(HttpUtil.extractData)
