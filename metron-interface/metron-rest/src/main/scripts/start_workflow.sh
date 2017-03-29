@@ -15,4 +15,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+read messages
+# echo $messages or do something with messages
 python -c 'import uuid; print uuid.uuid1()'
