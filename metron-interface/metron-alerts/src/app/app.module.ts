@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -27,4 +28,9 @@ import {ConfigureTableService} from "./service/configure-table.service";
   providers: [{ provide: APP_CONFIG, useValue: METRON_REST_CONFIG }, ConfigureTableService],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+
+export class AppModule {
+  constructor(router: Router) {
+    console.log('Routes: ', JSON.stringify(router.config, undefined, 2));
+  }
+}

@@ -17,6 +17,6 @@ export class WorkflowService {
   public start(alerts: Alert[]): Observable<string> {
     return this.http.post('/api/v1/workflow', alerts, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
       .map(HttpUtil.extractString)
-      .catch(HttpUtil.handleError);
+//      .catch(HttpUtil.handleError);
   }
 }
