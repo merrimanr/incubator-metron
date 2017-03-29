@@ -17,6 +17,8 @@
  */
 package org.apache.metron.rest.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.metron.common.utils.JSONUtils;
 import org.apache.metron.rest.RestException;
 import org.apache.metron.rest.service.WorkflowService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -45,14 +48,15 @@ public class WorkflowServiceImpl implements WorkflowService {
 
   @Override
   public String start(List<Map<String, Object>> messages) throws RestException {
-    String workflowResponse = runCommand(workflowScriptPath);
+    String workflowResponse = runCommand(workflowScriptPath, messages);
     return workflowResponse;
   }
 
-  protected String runCommand(String scriptPath) throws RestException {
-    ProcessBuilder pb = getProcessBuilder(scriptPath);
+  protected String runCommand(String scriptPath, List<Map<String, Object>> messages) throws RestException {
     String response = "";
     try {
+      String serializedMessages = JSONUtils.INSTANCE.toJSON(messages, false);
+      ProcessBuilder pb = new ProcessBuilder(scriptPath, serializedMessages);
       Process process = pb.start();
       process.waitFor();
       BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -61,9 +65,5 @@ public class WorkflowServiceImpl implements WorkflowService {
       throw new RestException(e);
     }
     return response;
-  }
-
-  protected ProcessBuilder getProcessBuilder(String... command) {
-    return new ProcessBuilder(command);
   }
 }
