@@ -15,30 +15,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { browser, element, by } from 'protractor/globals';
+import { browser, element, by, protractor } from 'protractor/globals';
+import { waitForElementVisibility } from '../utils/e2e_util';
 
 export class LoginPage {
+    private useNameInput = by.css('form input[name="user"]');
+    private passwordInput = by.css('form input[name="password"]');
+
     navigateToLogin() {
         return browser.get('/');
     }
 
     login() {
-        browser.wait(function() {return element(by.css('input.form-control')).isPresent();});
-        this.setUserNameAndPassword('admin', 'password');
-        this.submitLoginForm();
-        browser.wait(function() {return element(by.css('.logout')).isPresent();});
+        let flow = protractor.promise.controlFlow();
+        browser.get('/').then(flow.execute(() => waitForElementVisibility(element(this.useNameInput))))
+            .then(flow.execute(() => this.setUserNameAndPassword('admin', 'password')))
+            .then(flow.execute(() => this.submitLoginForm()));
+
+        browser.ignoreSynchronization = true;
     }
 
     logout() {
         browser.ignoreSynchronization = true;
+        
         element.all(by.css('.alert .close')).click();
         element.all(by.css('.logout-link')).click();
         browser.sleep(2000);
     }
 
     setUserNameAndPassword(userName: string, password: string) {
-        element.all(by.css('input.form-control')).get(0).sendKeys(userName);
-        element.all(by.css('input.form-control')).get(1).sendKeys(password);
+        element(this.useNameInput).sendKeys(userName);
+        element(this.passwordInput).sendKeys(password);
     }
 
     submitLoginForm() {
@@ -53,8 +60,6 @@ export class LoginPage {
     }
 
     getLocation() {
-        return browser.getCurrentUrl().then(url => {
-            return url;
-        });
+        return browser.getCurrentUrl();
     }
 }
