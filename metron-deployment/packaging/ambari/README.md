@@ -215,7 +215,7 @@ METRON_LOG_DIR="/var/log/metron"
 ...
 ```
 
-#### Defining presentation in the Ambari UI
+### Defining presentation in the Ambari UI
 Where and how a property is displayed can be controlled in the `METRON.CURRENT/themes/metron_theme.json` file.  Consider the `enrichment_workers` property that is defined in a component specific `*-env.xml` file, in this case `METRON.CURRENT/configuration/metron-enrichment-env.xml`.
 The property appears in `METRON.CURRENT/themes/metron_theme.json` in two different sections:
 ```
@@ -300,16 +300,18 @@ The steps to update are:
 After we've modified files in Ambari and the mpack is working, it is a good idea to reinstall it.  Fortunately this can be done without rebuilding the Vagrant environment by following these steps:
 
 1. Stop Metron through Ambari and remove the Metron service
-1. Rebuild the mpack on your local machine, ensuring that all changes made to directly to files in Ambari were also made in your local environment
-`cd metron-deployment && mvn clean package`
-1. Deploy the new mpack to Vagrant
-`scp packaging/ambari/metron-mpack/target/metron_mpack-0.4.0.0.tar.gz root@node1:~`
-1. Log in to Vagrant
-`ssh root@node1`
-1. Deploy the mpack to Ambari
-`ambari-server install-mpack --mpack=metron_mpack-0.4.0.0.tar.gz --verbose --force`
-1. Restart Ambari
-`ambari-server restart`
+1. Rebuild the mpack on your local machine and deploy it to Vagrant, ensuring that all changes made to directly to files in Ambari were also made in your local environment
+  ```
+  cd metron-deployment
+  mvn clean package
+  scp packaging/ambari/metron-mpack/target/metron_mpack-0.4.0.0.tar.gz root@node1:~
+  ```
+1. Log in to Vagrant, deploy the mpack and restart Ambari
+  ```
+  ssh root@node1
+  ambari-server install-mpack --mpack=metron_mpack-0.4.0.0.tar.gz --verbose --force
+  ambari-server restart
+  ```
 1. Install the mpack through Ambari as you normally would
 
 
