@@ -300,19 +300,19 @@ The steps to update are:
 After we've modified files in Ambari and the mpack is working, it is a good idea to reinstall it.  Fortunately this can be done without rebuilding the Vagrant environment by following these steps:
 
 1. Stop Metron through Ambari and remove the Metron service
-1. Rebuild the mpack on your local machine and deploy it to Vagrant, ensuring that all changes made to directly to files in Ambari were also made in your local environment
+2. Rebuild the mpack on your local machine and deploy it to Vagrant, ensuring that all changes made directly to files in Ambari were also made in your local environment
   ```
   cd metron-deployment
   mvn clean package
   scp packaging/ambari/metron-mpack/target/metron_mpack-0.4.0.0.tar.gz root@node1:~
   ```
-1. Log in to Vagrant, deploy the mpack and restart Ambari
+3. Log in to Vagrant, deploy the mpack and restart Ambari
   ```
   ssh root@node1
   ambari-server install-mpack --mpack=metron_mpack-0.4.0.0.tar.gz --verbose --force
   ambari-server restart
   ```
-1. Install the mpack through Ambari as you normally would
+4. Install the mpack through Ambari as you normally would
 
 
 ## Configuration involving dependency services
