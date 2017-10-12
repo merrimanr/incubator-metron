@@ -24,45 +24,18 @@ import {ConfigureTableService} from '../../service/configure-table.service';
   templateUrl: './configure-rows.component.html',
   styleUrls: ['./configure-rows.component.scss']
 })
-export class ConfigureRowsComponent  {
+export class ConfigureRowsComponent {
 
   showView = false;
-  tableMetadata = new TableMetadata();
 
+
+  @Input() tableMetadata: TableMetadata;
   @Input() srcElement: HTMLElement;
-  @Output() sizeChange = new EventEmitter();
-  @Output() intervalChange = new EventEmitter();
-  @Output() configRowsChange = new EventEmitter();
+  @Output() onPageSizeChanged = new EventEmitter<number>();
+  @Output() onRefreshIntervalChanged = new EventEmitter<number>();
 
   constructor(private elementRef: ElementRef,
               private configureTableService: ConfigureTableService) {}
-
-  @Input()
-  get size() {
-    return this.tableMetadata.size;
-  }
-
-  set size(val) {
-    this.tableMetadata.size = val;
-  }
-
-  @Input()
-  get interval() {
-    return this.tableMetadata.refreshInterval;
-  }
-
-  set interval(val) {
-    this.tableMetadata.refreshInterval = val;
-  }
-
-  @Input()
-  get tableMetaData() {
-    return this.tableMetadata;
-  }
-
-  set tableMetaData(val) {
-    this.tableMetadata = val;
-  }
 
   @HostListener('document:click', ['$event', '$event.target'])
   public onClick(event: MouseEvent, targetElement: HTMLElement): void {
@@ -81,32 +54,31 @@ export class ConfigureRowsComponent  {
     }
   }
 
-  onPageSizeChange($event, parentElement) {
+  changePageSize($event, parentElement) {
     parentElement.querySelector('.is-active').classList.remove('is-active');
     $event.target.classList.add('is-active');
 
-    this.size = parseInt($event.target.textContent.trim(), 10);
-    this.sizeChange.emit(this.tableMetadata.size);
-    this.configRowsChange.emit();
-    this.saveSettings();
+    this.tableMetadata.pageSize = parseInt($event.target.textContent.trim(), 10);
+    this.onPageSizeChanged.emit(this.tableMetadata.pageSize);
+    //this.saveSettings();
   }
-  onRefreshIntervalChange($event, parentElement) {
+
+  changeRefreshInterval($event, parentElement) {
     parentElement.querySelector('.is-active').classList.remove('is-active');
     $event.target.classList.add('is-active');
 
 
-    this.interval = parseInt($event.target.getAttribute('value').trim(), 10);
-    this.intervalChange.emit(this.tableMetadata.refreshInterval);
-    this.configRowsChange.emit();
-    this.saveSettings();
+    this.tableMetadata.refreshInterval = parseInt($event.target.getAttribute('value').trim(), 10);
+    this.onRefreshIntervalChanged.emit(this.tableMetadata.refreshInterval);
+    //this.saveSettings();
   }
 
-  saveSettings() {
-    if ( this.showView ) {
-      this.configureTableService.saveTableMetaData(this.tableMetadata).subscribe(() => {
-      }, error => {
-        console.log('Unable to save settings ....');
-      });
-    }
-  }
+  // saveSettings() {
+  //   if ( this.showView ) {
+  //     this.configureTableService.saveTableMetaData(this.tableMetadata).subscribe(() => {
+  //     }, error => {
+  //       console.log('Unable to save settings ....');
+  //     });
+  //   }
+  // }
 }

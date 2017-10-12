@@ -17,19 +17,17 @@
  */
 import {Component, OnInit, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef} from '@angular/core';
 import {Router, NavigationStart} from '@angular/router';
-import {Observable, Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Rx';
 
 import {Alert} from '../../model/alert';
 import {SearchService} from '../../service/search.service';
 import {UpdateService} from '../../service/update.service';
 import {QueryBuilder} from './query-builder';
 import {ConfigureTableService} from '../../service/configure-table.service';
-import {AlertsService} from '../../service/alerts.service';
-import {ClusterMetaDataService} from '../../service/cluster-metadata.service';
+import {AlertService} from '../../service/alert.service';
 import {ColumnMetadata} from '../../model/column-metadata';
-import {SaveSearchService} from '../../service/save-search.service';
-import {RefreshInterval} from '../configure-rows/configure-rows-enums';
-import {SaveSearch} from '../../model/save-search';
+import {SavedSearchService} from '../../service/saved-search.service';
+import {SavedSearch} from '../../model/saved-search';
 import {TableMetadata} from '../../model/table-metadata';
 import {MetronDialogBox, DialogType} from '../../shared/metron-dialog-box';
 import {AlertSearchDirective} from '../../shared/directives/alert-search.directive';
@@ -48,24 +46,21 @@ import {environment} from '../../../environments/environment';
 
 export class AlertsListComponent implements OnInit, OnDestroy {
 
-  alertsColumns: ColumnMetadata[] = [];
   alertsColumnsToDisplay: ColumnMetadata[] = [];
   selectedAlerts: Alert[] = [];
   alerts: Alert[] = [];
   searchResponse: SearchResponse = new SearchResponse();
   colNumberTimerId: number;
-  refreshInterval = RefreshInterval.ONE_MIN;
   refreshTimer: Subscription;
   pauseRefresh = false;
   lastPauseRefreshValue = false;
-  threatScoreFieldName = 'threat:triage:score';
   indices: string[];
 
   @ViewChild('table') table: ElementRef;
   @ViewChild('dataViewComponent') dataViewComponent: TableViewComponent;
   @ViewChild(AlertSearchDirective) alertSearchDirective: AlertSearchDirective;
 
-  tableMetaData = new TableMetadata();
+  tableMetadata = new TableMetadata();
   queryBuilder: QueryBuilder = new QueryBuilder();
   pagination: Pagination = new Pagination();
 
@@ -73,11 +68,9 @@ export class AlertsListComponent implements OnInit, OnDestroy {
               private searchService: SearchService,
               private updateService: UpdateService,
               private configureTableService: ConfigureTableService,
-              private alertsService: AlertsService,
-              private clusterMetaDataService: ClusterMetaDataService,
-              private saveSearchService: SaveSearchService,
-              private metronDialogBox: MetronDialogBox,
-              private changeDetector: ChangeDetectorRef) {
+              private alertService: AlertService,
+              private savedSearchService: SavedSearchService,
+              private metronDialogBox: MetronDialogBox) {
     router.events.subscribe(event => {
       if (event instanceof NavigationStart && event.url === '/alerts-list') {
         this.selectedAlerts = [];
@@ -89,20 +82,17 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     }
   }
 
-  addAlertColChangedListner() {
-    this.configureTableService.tableChanged$.subscribe(colChanged => {
-      if (colChanged) {
-        this.getAlertColumnNames(false);
-      }
+  addTableMetadataChangedListener() {
+    this.configureTableService.tableMetadataChanged$.subscribe(tableMetadata => {
+      this.prepareData(tableMetadata, false);
     });
   }
 
-  addLoadSavedSearchListner() {
-    this.saveSearchService.loadSavedSearch$.subscribe((savedSearch: SaveSearch) => {
-      let queryBuilder = new QueryBuilder();
-      queryBuilder.searchRequest = savedSearch.searchRequest;
-      this.queryBuilder = queryBuilder;
-      this.prepareColumnData(savedSearch.tableColumns, []);
+  addLoadSavedSearchListener() {
+    this.savedSearchService.loadSavedSearch$.subscribe((savedSearch: SavedSearch) => {
+      this.queryBuilder = new QueryBuilder();
+      this.queryBuilder.searchRequest = savedSearch.searchRequest;
+      this.prepareColumnData(savedSearch.tableColumns);
       this.search(true, savedSearch);
     });
   }
@@ -111,7 +101,7 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     let availableWidth = document.documentElement.clientWidth - (200 + (15 * 3)); /* screenwidth - (navPaneWidth + (paddings))*/
     availableWidth = availableWidth - (55 + 25 + 25); /* availableWidth - (score + colunSelectIcon +selectCheckbox )*/
     let tWidth = 0;
-    this.alertsColumnsToDisplay =  this.alertsColumns.filter(colMetaData => {
+    this.alertsColumnsToDisplay =  this.queryBuilder.tableColumns.filter(colMetaData => {
       if (colMetaData.type.toUpperCase() === 'DATE') {
         tWidth += 140;
       } else if (colMetaData.type.toUpperCase() === 'IP') {
@@ -127,19 +117,9 @@ export class AlertsListComponent implements OnInit, OnDestroy {
   }
 
   getAlertColumnNames(resetPaginationForSearch: boolean) {
-    Observable.forkJoin(
-      this.configureTableService.getTableMetadata(),
-      this.clusterMetaDataService.getDefaultColumns()
-    ).subscribe((response: any) => {
-      this.prepareData(response[0], response[1], resetPaginationForSearch);
+    this.configureTableService.getTableMetadata().subscribe(tableMetadata => {
+      this.prepareData(tableMetadata, resetPaginationForSearch);
     });
-  }
-
-  getColumnNamesForQuery() {
-    let fieldNames = this.alertsColumns.map(columnMetadata => columnMetadata.name);
-    fieldNames = fieldNames.filter(name => !(name === 'id' || name === 'alert_status'));
-    fieldNames.push(this.threatScoreFieldName);
-    return fieldNames;
   }
 
   ngOnDestroy() {
@@ -148,8 +128,8 @@ export class AlertsListComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.getAlertColumnNames(true);
-    this.addAlertColChangedListner();
-    this.addLoadSavedSearchListner();
+    this.addTableMetadataChangedListener();
+    this.addLoadSavedSearchListener();
   }
 
   onClear() {
@@ -181,8 +161,18 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     this.search();
   }
 
-  onConfigRowsChange() {
-    this.searchService.interval = this.refreshInterval;
+  onPageSizeChanged(pageSize: number) {
+    this.configureTableService.savePageSize(pageSize).subscribe(tableMetadata => {
+      this.tableMetadata.pageSize = tableMetadata.pageSize;
+    });
+    this.search();
+  }
+
+  onRefreshIntervalChanged(interval: number) {
+    this.configureTableService.saveRefreshInterval(interval).subscribe(tableMetadata => {
+      this.tableMetadata.refreshInterval = tableMetadata.refreshInterval;
+    });
+    this.searchService.interval = interval;
     this.search();
   }
 
@@ -200,18 +190,15 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     this.colNumberTimerId = setTimeout(() => { this.calcColumnsToDisplay(); }, 500);
   }
 
-  prepareColumnData(configuredColumns: ColumnMetadata[], defaultColumns: ColumnMetadata[]) {
-    this.alertsColumns = (configuredColumns && configuredColumns.length > 0) ? configuredColumns : defaultColumns;
-    this.queryBuilder.setFields(this.getColumnNamesForQuery());
+  prepareColumnData(configuredColumns: ColumnMetadata[]) {
+    this.queryBuilder.tableColumns = configuredColumns;
     this.calcColumnsToDisplay();
   }
 
-  prepareData(tableMetaData: TableMetadata, defaultColumns: ColumnMetadata[], resetPagination: boolean) {
-    this.tableMetaData = tableMetaData;
-    this.refreshInterval = this.tableMetaData.refreshInterval;
-
+  prepareData(tableMetaData: TableMetadata, resetPagination: boolean) {
+    this.tableMetadata = tableMetaData;
     this.updateConfigRowsSettings();
-    this.prepareColumnData(tableMetaData.tableColumns, defaultColumns);
+    this.prepareColumnData(tableMetaData.tableColumns);
 
     this.search(resetPagination);
   }
@@ -220,7 +207,7 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     this.updateService.updateAlertState(this.selectedAlerts, 'ESCALATE').subscribe(results => {
       this.updateSelectedAlertStatus('ESCALATE');
     });
-    this.alertsService.escalate(this.selectedAlerts).subscribe();
+    this.alertService.escalate(this.selectedAlerts).subscribe();
    
   }
 
@@ -252,14 +239,14 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     this.tryStartPolling();
   }
 
-  search(resetPaginationParams = true, savedSearch?: SaveSearch) {
+  search(resetPaginationParams = true, savedSearch?: SavedSearch) {
     this.saveCurrentSearch(savedSearch);
     if (resetPaginationParams) {
       this.pagination.from = 0;
     }
     this.queryBuilder.searchRequest.from = this.pagination.from;
-    if (this.tableMetaData.size) {
-      this.pagination.size = this.tableMetaData.size;
+    if (this.tableMetadata.pageSize) {
+      this.pagination.size = this.tableMetadata.pageSize;
     }
     this.queryBuilder.searchRequest.size = this.pagination.size;
     if (this.indices) {
@@ -275,16 +262,16 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     this.tryStartPolling();
   }
 
-  saveCurrentSearch(savedSearch: SaveSearch) {
+  saveCurrentSearch(savedSearch: SavedSearch) {
     if (this.queryBuilder.query !== '*') {
       if (!savedSearch) {
-        savedSearch = new SaveSearch();
+        savedSearch = new SavedSearch();
         savedSearch.searchRequest = this.queryBuilder.searchRequest;
-        savedSearch.tableColumns = this.alertsColumns;
+        savedSearch.tableColumns = this.queryBuilder.tableColumns;
         savedSearch.name = savedSearch.getDisplayString();
       }
 
-      this.saveSearchService.saveAsRecentSearches(savedSearch).subscribe(() => {
+      this.savedSearchService.saveRecentSearch(savedSearch).subscribe(() => {
       });
     }
   }
@@ -305,7 +292,7 @@ export class AlertsListComponent implements OnInit, OnDestroy {
     this.selectedAlerts = [];
     this.selectedAlerts = [alert];
     this.saveRefreshState();
-    this.router.navigateByUrl('/alerts-list(dialog:details/' + alert.source['source:type'] + '/' + alert.source.guid + ')');
+    this.router.navigateByUrl('/alerts-list(dialog:details/' + alert.source['source:type'] + '/' + alert.id + ')');
   }
 
   saveRefreshState() {
@@ -330,7 +317,7 @@ export class AlertsListComponent implements OnInit, OnDestroy {
 
   showSaveSearch() {
     this.saveRefreshState();
-    this.saveSearchService.setCurrentQueryBuilderAndTableColumns(this.queryBuilder, this.alertsColumns);
+    this.savedSearchService.setCurrentQueryBuilder(this.queryBuilder);
     this.router.navigateByUrl('/alerts-list(dialog:save-search)');
   }
 
@@ -350,13 +337,13 @@ export class AlertsListComponent implements OnInit, OnDestroy {
   }
 
   updateConfigRowsSettings() {
-    this.searchService.interval = this.refreshInterval;
+    this.searchService.interval = this.tableMetadata.refreshInterval;
   }
 
   updateSelectedAlertStatus(status: string) {
     for (let selectedAlert of this.selectedAlerts) {
       selectedAlert.status = status;
-      this.alerts.filter(alert => alert.source.guid == selectedAlert.source.guid)
+      this.alerts.filter(alert => alert.id == selectedAlert.id)
       .map(alert => alert.source['alert_status'] = status);
     }
     this.selectedAlerts = [];

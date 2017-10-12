@@ -18,16 +18,24 @@
 package org.apache.metron.rest.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.metron.common.utils.JSONUtils;
+import org.apache.metron.indexing.dao.search.FieldType;
 import org.apache.metron.rest.MetronRestConstants;
 import org.apache.metron.rest.RestException;
-import org.apache.metron.rest.model.AlertProfile;
-import org.apache.metron.rest.repository.AlertProfileRepository;
+import org.apache.metron.rest.model.alert.ColumnMetadata;
+import org.apache.metron.rest.model.alert.TableMetadata;
+import org.apache.metron.rest.repository.TableMetadataRepository;
 import org.apache.metron.rest.security.SecurityUtils;
 import org.apache.metron.rest.service.AlertService;
 import org.apache.metron.rest.service.KafkaService;
+import org.apache.metron.rest.service.SearchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -43,15 +51,18 @@ public class AlertServiceImpl implements AlertService {
 
   private Environment environment;
   private final KafkaService kafkaService;
-  private AlertProfileRepository alertProfileRepository;
+  private final SearchService searchService;
+  private TableMetadataRepository tableMetadataRepository;
 
   @Autowired
   public AlertServiceImpl(final KafkaService kafkaService,
+                          final SearchService searchService,
                           final Environment environment,
-                          final AlertProfileRepository alertsProfileRepository) {
+                          final TableMetadataRepository tableMetadataRepository) {
     this.kafkaService = kafkaService;
+    this.searchService = searchService;
     this.environment = environment;
-    this.alertProfileRepository = alertsProfileRepository;
+    this.tableMetadataRepository = tableMetadataRepository;
   }
 
   @Override
@@ -68,30 +79,70 @@ public class AlertServiceImpl implements AlertService {
   }
 
   @Override
-  public AlertProfile getProfile() {
-    return alertProfileRepository.findOne(SecurityUtils.getCurrentUser());
+  public TableMetadata getTableMetadata() throws RestException {
+    return tableMetadataRepository.findOne(SecurityUtils.getCurrentUser());
   }
 
   @Override
-  public Iterable<AlertProfile> findAllProfiles() {
-    return alertProfileRepository.findAll();
+  public Iterable<TableMetadata> findAllTableMetadata() {
+    return tableMetadataRepository.findAll();
   }
 
   @Override
-  public AlertProfile saveProfile(AlertProfile alertsProfile) {
+  public TableMetadata saveTableMetadata(TableMetadata tableMetadata) {
     String user = SecurityUtils.getCurrentUser();
-    alertsProfile.setId(user);
-    return alertProfileRepository.save(alertsProfile);
+    tableMetadata.setUser(user);
+    return tableMetadataRepository.save(tableMetadata);
   }
 
   @Override
-  public boolean deleteProfile(String user) {
+  public boolean deleteTableMetadata(String user) {
     boolean success = true;
     try {
-      alertProfileRepository.delete(user);
+      tableMetadataRepository.delete(user);
     } catch (EmptyResultDataAccessException e) {
       success = false;
     }
     return success;
   }
+
+  @Override
+  public TableMetadata patchTableMetadata(TableMetadata tableMetadata, JsonNode patch) throws RestException {
+    try {
+      JsonNode tableMetadataNode = JSONUtils.INSTANCE.convert(tableMetadata, JsonNode.class);
+      JsonNode patched = JSONUtils.INSTANCE.applyPatch(patch, tableMetadataNode);
+      TableMetadata updatedTableMetadata = JSONUtils.INSTANCE.getMapper().convertValue(patched, TableMetadata.class);
+      updatedTableMetadata.setUser(SecurityUtils.getCurrentUser());
+      return tableMetadataRepository.save(updatedTableMetadata);
+    } catch (Exception e) {
+      throw new RestException(e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public List<List<ColumnMetadata>> getAllColumnMetadata() throws RestException {
+    List<ColumnMetadata> selectedColumnMetadata = getTableMetadata().getTableColumns();
+    Map<String, FieldType> allColumnMetadata = searchService.getColumnMetadata(getDefaultIndices());
+    List<ColumnMetadata> unselectedColumnMetadata = allColumnMetadata.entrySet()
+        .stream()
+        .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
+        .map(entry -> {
+          ColumnMetadata columnMetadata = new ColumnMetadata();
+          columnMetadata.setName(entry.getKey());
+          columnMetadata.setType(entry.getValue());
+          return columnMetadata;
+        })
+        .filter(columnMetadata -> !selectedColumnMetadata.contains(columnMetadata))
+        .collect(Collectors.toList());
+    return new ArrayList<List<ColumnMetadata>>() {{
+      add(selectedColumnMetadata);
+      add(unselectedColumnMetadata);
+    }};
+  }
+
+  private List<String> getDefaultIndices() {
+    return Arrays.asList("websphere", "snort", "asa", "bro", "yaf");
+  }
+
+
 }

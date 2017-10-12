@@ -18,8 +18,8 @@
 import { Component, OnInit } from '@angular/core';
 import {Router} from '@angular/router';
 
-import {SaveSearchService} from '../../service/save-search.service';
-import {SaveSearch} from '../../model/save-search';
+import {SavedSearchService} from '../../service/saved-search.service';
+import {SavedSearch} from '../../model/saved-search';
 import {MetronDialogBox} from '../../shared/metron-dialog-box';
 
 @Component({
@@ -29,10 +29,10 @@ import {MetronDialogBox} from '../../shared/metron-dialog-box';
 })
 export class SaveSearchComponent implements OnInit {
 
-  saveSearch = new SaveSearch();
+  saveSearch = new SavedSearch();
 
   constructor(private router: Router,
-              private saveSearchService: SaveSearchService,
+              private savedSearchService: SavedSearchService,
               private metronDialogBox: MetronDialogBox) {
   }
 
@@ -45,17 +45,17 @@ export class SaveSearchComponent implements OnInit {
   }
 
   save() {
-    this.saveSearch.searchRequest = this.saveSearchService.queryBuilder.searchRequest;
-    this.saveSearch.tableColumns = this.saveSearchService.tableColumns;
+    this.saveSearch.searchRequest = this.savedSearchService.queryBuilder.searchRequest;
+    this.saveSearch.tableColumns = this.savedSearchService.queryBuilder.tableColumns;
 
-    this.saveSearchService.saveSearch(this.saveSearch).subscribe(() => {
+    this.savedSearchService.saveSearch(this.saveSearch).subscribe(() => {
       this.goBack();
     }, error => {
     });
   }
 
   trySave() {
-    this.saveSearchService.listSavedSearches().subscribe((savedSearches: SaveSearch[]) => {
+    this.savedSearchService.listSavedSearches().subscribe((savedSearches: SavedSearch[]) => {
       if (savedSearches && savedSearches.length > 0 && savedSearches.find(savedSearch => savedSearch.name === this.saveSearch.name)) {
         this.update();
       } else {
@@ -68,8 +68,8 @@ export class SaveSearchComponent implements OnInit {
     let message = 'A Search with the name \'' + this.saveSearch.name + '\' already exist do you wish to override it?';
     this.metronDialogBox.showConfirmationMessage(message).subscribe(result => {
       if (result) {
-        this.saveSearch.searchRequest = this.saveSearchService.queryBuilder.searchRequest;
-        this.saveSearchService.updateSearch(this.saveSearch).subscribe(() => { this.goBack(); }, error => {});
+        this.saveSearch.searchRequest = this.savedSearchService.queryBuilder.searchRequest;
+        this.savedSearchService.saveSearch(this.saveSearch).subscribe(() => { this.goBack(); }, error => {});
       }
     });
   }

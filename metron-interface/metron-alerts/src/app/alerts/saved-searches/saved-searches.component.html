@@ -22,9 +22,9 @@
 
     <div>
       <metron-collapse [data]="recentSearches" [fontSize]="15" [titleSeperator]="true"  [show]="true"
-                       (onSelect)="onSaveRecentSearchSelect($event)" (onDelete)="deleteRecentSearch($event)"> </metron-collapse>
+                       (onSelect)="onSelectRecentSearch($event)"> </metron-collapse>
       <metron-collapse [data]="savedSearches" [fontSize]="15" [titleSeperator]="true" [deleteOption]="true" [show]="true"
-                       (onSelect)="onSaveSearchSelect($event)" (onDelete)="deleteSearch($event)"> </metron-collapse>
+                       (onSelect)="onSelectSavedSearch($event)" (onDelete)="onDeleteSavedSearch($event)"> </metron-collapse>
     </div>
   </div>
 </div>

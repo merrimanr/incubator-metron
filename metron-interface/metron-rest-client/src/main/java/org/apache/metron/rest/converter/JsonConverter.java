@@ -32,9 +32,9 @@ public class JsonConverter implements AttributeConverter<Object, String> {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @Override
-  public String convertToDatabaseColumn(Object savedSearches) {
+  public String convertToDatabaseColumn(Object o) {
     try {
-      return JSONUtils.INSTANCE.toJSON(savedSearches, false);
+      return JSONUtils.INSTANCE.toJSON(o, false);
     } catch (JsonProcessingException e) {
       LOG.error("Error converting value to JSON", e);
     }
@@ -42,9 +42,9 @@ public class JsonConverter implements AttributeConverter<Object, String> {
   }
 
   @Override
-  public Object convertToEntityAttribute(String savedSearches) {
+  public Object convertToEntityAttribute(String json) {
     try {
-      return JSONUtils.INSTANCE.load(savedSearches, Object.class);
+      return JSONUtils.INSTANCE.load(json, Object.class);
     } catch (IOException e) {
       LOG.error("Error converting JSON to value", e);
     }

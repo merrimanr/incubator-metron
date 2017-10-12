@@ -16,35 +16,75 @@
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
+import {Http, Headers, RequestOptions} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
-import {Http} from '@angular/http';
 import {Subject} from 'rxjs/Subject';
 import {ColumnMetadata} from '../model/column-metadata';
 import {TableMetadata} from '../model/table-metadata';
-import {DataSource} from './data-source';
+import {HttpUtil} from '../utils/httpUtil';
+import {TableMetadataPatch} from "../model/table-metadata-patch";
 
 @Injectable()
 export class ConfigureTableService {
 
-  private tableChangedSource = new Subject<string>();
-  tableChanged$ = this.tableChangedSource.asObservable();
+  defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
 
-  constructor(private http: Http,
-              private dataSource: DataSource) {}
+  private tableMetadataChangedSource = new Subject<TableMetadata>();
+  tableMetadataChanged$ = this.tableMetadataChangedSource.asObservable();
 
-  fireTableChanged() {
-    this.tableChangedSource.next('table changed');
+  constructor(private http: Http) {}
+
+  getAllColumnMetadata(): Observable<ColumnMetadata[][]> {
+    let url = '/api/v1/alert/column/metadata/all';
+    return this.http.get(url, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(HttpUtil.extractData)
+    .catch(HttpUtil.handleError);
   }
 
   getTableMetadata(): Observable<TableMetadata> {
-    return this.dataSource.getAlertTableSettings();
+    let url = '/api/v1/alert/table/metadata';
+    return this.http.get(url, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(res => {
+      if (res.status === 404) {
+        return new TableMetadata();
+      } else {
+        return HttpUtil.extractData(res);
+      }
+    }).catch(HttpUtil.handleError);
   }
 
-  saveColumnMetaData(columns: ColumnMetadata[]): Observable<{}> {
-    return this.dataSource.saveColumnMetaDataInAlertTableSettings(columns);
+  saveColumnMetaData(columns: ColumnMetadata[]): Observable<TableMetadata> {
+    let columnMetadataPatch = new TableMetadataPatch('/tableColumns', columns);
+    let url = '/api/v1/alert/table/metadata';
+    return this.http.patch(url, [columnMetadataPatch], new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(res => {
+      let tableMetadata = HttpUtil.extractData(res);
+      this.tableMetadataChangedSource.next(tableMetadata);
+      return tableMetadata;
+    })
+    .catch(HttpUtil.handleError);
+  }
+
+  savePageSize(pageSize: number): Observable<TableMetadata> {
+    let pageSizePatch = new TableMetadataPatch('/pageSize', pageSize);
+    let url = '/api/v1/alert/table/metadata';
+    return this.http.patch(url, [pageSizePatch], new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(HttpUtil.extractData)
+    .catch(HttpUtil.handleError);
+  }
+
+  saveRefreshInterval(refreshInterval: number): Observable<TableMetadata> {
+    let refreshIntervalPatch = new TableMetadataPatch('/refreshInterval', refreshInterval);
+    let url = '/api/v1/alert/table/metadata';
+    return this.http.patch(url, [refreshIntervalPatch], new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(HttpUtil.extractData)
+    .catch(HttpUtil.handleError);
   }
 
   saveTableMetaData(tableMetadata: TableMetadata): Observable<TableMetadata> {
-    return this.dataSource.saveAlertTableSettings(tableMetadata);
+    let url = '/api/v1/alert/table/metadata';
+    return this.http.post(url, tableMetadata, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(HttpUtil.extractData)
+    .catch(HttpUtil.handleError);
   }
 }

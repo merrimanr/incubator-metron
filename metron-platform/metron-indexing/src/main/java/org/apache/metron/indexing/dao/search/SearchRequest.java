@@ -18,6 +18,9 @@
 
 package org.apache.metron.indexing.dao.search;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +32,7 @@ public class SearchRequest {
   private int size;
   private int from;
   private List<SortField> sort;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private List<String> fields;
   private List<String> facetFields;
 
@@ -38,6 +42,7 @@ public class SearchRequest {
     defaultSortField.setSortOrder(SortOrder.DESC.toString());
     sort = new ArrayList<>();
     sort.add(defaultSortField);
+    fields = new ArrayList<>();
     facetFields = new ArrayList<>();
   }
 
@@ -101,16 +106,28 @@ public class SearchRequest {
     this.sort = sort;
   }
 
+  @JsonIgnore
   public Optional<List<String>> getFields() {
     return fields == null || fields.size() == 0 ? Optional.empty() : Optional.of(fields);
+  }
+
+  @JsonProperty("fields")
+  public List<String> getFieldsValue() {
+    return fields;
   }
 
   public void setFields(List<String> fields) {
     this.fields = fields;
   }
 
+  @JsonIgnore
   public Optional<List<String>> getFacetFields() {
     return facetFields == null || facetFields.size() == 0 ? Optional.empty() : Optional.of(facetFields);
+  }
+
+  @JsonProperty("facetFields")
+  public List<String> getFacetFieldsValue() {
+    return facetFields;
   }
 
   public void setFacetFields(List<String> facetFields) {

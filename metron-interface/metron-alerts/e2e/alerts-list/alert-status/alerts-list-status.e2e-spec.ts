@@ -19,7 +19,7 @@
 import { MetronAlertsPage } from '../alerts-list.po';
 import {customMatchers} from '../../matchers/custom-matchers';
 import {LoginPage} from '../../login/login.po';
-import {loadTestData, deleteTestData} from '../../utils/e2e_util';
+import {loadTestData, deleteTestData, deleteTableMetadata} from '../../utils/e2e_util';
 
 describe('metron-alerts alert status', function() {
   let page: MetronAlertsPage;
@@ -27,6 +27,7 @@ describe('metron-alerts alert status', function() {
 
   beforeAll(() => {
     loadTestData();
+    deleteTableMetadata();
     loginPage = new LoginPage();
     loginPage.login();
   });

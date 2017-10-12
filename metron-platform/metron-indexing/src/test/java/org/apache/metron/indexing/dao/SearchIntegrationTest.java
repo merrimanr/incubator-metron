@@ -522,52 +522,32 @@ public abstract class SearchIntegrationTest {
     }
     // getColumnMetadata with multiple indices
     {
-      Map<String, Map<String, FieldType>> fieldTypes = dao.getColumnMetadata(Arrays.asList("bro", "snort"));
-      Assert.assertEquals(2, fieldTypes.size());
-      Map<String, FieldType> broTypes = fieldTypes.get("bro");
-      Assert.assertEquals(12, broTypes.size());
-      Assert.assertEquals(FieldType.STRING, broTypes.get("source:type"));
-      Assert.assertEquals(FieldType.IP, broTypes.get("ip_src_addr"));
-      Assert.assertEquals(FieldType.INTEGER, broTypes.get("ip_src_port"));
-      Assert.assertEquals(FieldType.LONG, broTypes.get("long_field"));
-      Assert.assertEquals(FieldType.DATE, broTypes.get("timestamp"));
-      Assert.assertEquals(FieldType.FLOAT, broTypes.get("latitude"));
-      Assert.assertEquals(FieldType.DOUBLE, broTypes.get("score"));
-      Assert.assertEquals(FieldType.BOOLEAN, broTypes.get("is_alert"));
-      Assert.assertEquals(FieldType.OTHER, broTypes.get("location_point"));
-      Assert.assertEquals(FieldType.STRING, broTypes.get("bro_field"));
-      Assert.assertEquals(FieldType.STRING, broTypes.get("duplicate_name_field"));
-      Assert.assertEquals(FieldType.STRING, broTypes.get("guid"));
-      Map<String, FieldType> snortTypes = fieldTypes.get("snort");
-      Assert.assertEquals(12, snortTypes.size());
-      Assert.assertEquals(FieldType.STRING, snortTypes.get("source:type"));
-      Assert.assertEquals(FieldType.IP, snortTypes.get("ip_src_addr"));
-      Assert.assertEquals(FieldType.INTEGER, snortTypes.get("ip_src_port"));
-      Assert.assertEquals(FieldType.LONG, snortTypes.get("long_field"));
-      Assert.assertEquals(FieldType.DATE, snortTypes.get("timestamp"));
-      Assert.assertEquals(FieldType.FLOAT, snortTypes.get("latitude"));
-      Assert.assertEquals(FieldType.DOUBLE, snortTypes.get("score"));
-      Assert.assertEquals(FieldType.BOOLEAN, snortTypes.get("is_alert"));
-      Assert.assertEquals(FieldType.OTHER, snortTypes.get("location_point"));
-      Assert.assertEquals(FieldType.INTEGER, snortTypes.get("snort_field"));
-      Assert.assertEquals(FieldType.INTEGER, snortTypes.get("duplicate_name_field"));
-      Assert.assertEquals(FieldType.STRING, broTypes.get("guid"));
+     Map<String, FieldType> fieldTypes = dao.getColumnMetadata(Arrays.asList("bro", "snort"));
+      Assert.assertEquals(12, fieldTypes.size());
+      Assert.assertEquals(FieldType.STRING, fieldTypes.get("guid"));
+      Assert.assertEquals(FieldType.STRING, fieldTypes.get("source:type"));
+      Assert.assertEquals(FieldType.IP, fieldTypes.get("ip_src_addr"));
+      Assert.assertEquals(FieldType.INTEGER, fieldTypes.get("ip_src_port"));
+      Assert.assertEquals(FieldType.LONG, fieldTypes.get("long_field"));
+      Assert.assertEquals(FieldType.DATE, fieldTypes.get("timestamp"));
+      Assert.assertEquals(FieldType.FLOAT, fieldTypes.get("latitude"));
+      Assert.assertEquals(FieldType.DOUBLE, fieldTypes.get("score"));
+      Assert.assertEquals(FieldType.BOOLEAN, fieldTypes.get("is_alert"));
+      Assert.assertEquals(FieldType.OTHER, fieldTypes.get("location_point"));
+      Assert.assertEquals(FieldType.STRING, fieldTypes.get("bro_field"));
+      Assert.assertEquals(FieldType.INTEGER, fieldTypes.get("snort_field"));
     }
     // getColumnMetadata with only bro
     {
-      Map<String, Map<String, FieldType>> fieldTypes = dao.getColumnMetadata(Collections.singletonList("bro"));
-      Assert.assertEquals(1, fieldTypes.size());
-      Map<String, FieldType> broTypes = fieldTypes.get("bro");
-      Assert.assertEquals(12, broTypes.size());
-      Assert.assertEquals(FieldType.STRING, broTypes.get("bro_field"));
+      Map<String, FieldType> fieldTypes = dao.getColumnMetadata(Collections.singletonList("bro"));
+      Assert.assertEquals(12, fieldTypes.size());
+      Assert.assertEquals(FieldType.STRING, fieldTypes.get("bro_field"));
     }
     // getColumnMetadata with only snort
     {
-      Map<String, Map<String, FieldType>> fieldTypes = dao.getColumnMetadata(Collections.singletonList("snort"));
-      Assert.assertEquals(1, fieldTypes.size());
-      Map<String, FieldType> snortTypes = fieldTypes.get("snort");
-      Assert.assertEquals(12, snortTypes.size());
-      Assert.assertEquals(FieldType.INTEGER, snortTypes.get("snort_field"));
+      Map<String, FieldType> fieldTypes = dao.getColumnMetadata(Collections.singletonList("snort"));
+      Assert.assertEquals(12, fieldTypes.size());
+      Assert.assertEquals(FieldType.INTEGER, fieldTypes.get("snort_field"));
     }
     // getCommonColumnMetadata with multiple Indices
     {

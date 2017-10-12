@@ -46,7 +46,7 @@ export class SearchService {
       for (let key of Object.keys(indexMetaData)) {
         if (processedKeys.indexOf(key) === -1) {
           processedKeys.push(key);
-          columnMetadatas.push(new ColumnMetadata(key, indexMetaData[key]));
+          columnMetadatas.push(new ColumnMetadata(key, '', indexMetaData[key]));
         }
       }
     }
@@ -72,6 +72,13 @@ export class SearchService {
     return this.http.post(url, INDEXES, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
     .map(HttpUtil.extractData)
     .map(SearchService.extractColumnNameDataFromRestApi)
+    .catch(HttpUtil.handleError);
+  }
+
+  public getCommonColumnMetaData(): Observable<{}> {
+    let url = '/api/v1/search/column/metadata/common';
+    return this.http.post(url, INDEXES, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .map(HttpUtil.extractData)
     .catch(HttpUtil.handleError);
   }
 

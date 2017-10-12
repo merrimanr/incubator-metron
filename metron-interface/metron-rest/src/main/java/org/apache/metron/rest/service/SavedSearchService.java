@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,22 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
-import {Alert} from '../model/alert';
-import {Http, Headers, RequestOptions} from '@angular/http';
-import {HttpUtil} from '../utils/httpUtil';
 
-@Injectable()
-export class AlertsService {
+package org.apache.metron.rest.service;
 
-  defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
+import java.util.List;
+import org.apache.metron.rest.model.alert.SavedSearch;
 
-  constructor(private http: Http) {
-  }
+public interface SavedSearchService {
 
-  public escalate(alerts: Alert[]): Observable<null> {
-    return this.http.post('/api/v1/alert/escalate', alerts, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
-    .catch(HttpUtil.handleError);
-  }
+  SavedSearch findOne(String name);
+
+  List<SavedSearch> getAll();
+
+  SavedSearch save(SavedSearch savedSearch);
+
+  boolean delete(String name);
+
 }

@@ -15,15 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {PageSize, RefreshInterval} from '../alerts/configure-rows/configure-rows-enums';
-import {ColumnMetadata} from './column-metadata';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs/Rx';
+import {Alert} from '../model/alert';
+import {Http, Headers, RequestOptions} from '@angular/http';
+import {HttpUtil} from '../utils/httpUtil';
+import {ColumnMetadata} from '../model/column-metadata';
 
-export class TableMetadata {
-  pageSize = PageSize.TWENTY_FIVE;
-  refreshInterval = RefreshInterval.ONE_MIN;
-  hideResolvedAlerts = true;
-  hideDismissedAlerts = true;
-  tableColumns: ColumnMetadata[] = [
+@Injectable()
+export class AlertService {
+
+  defaultHeaders = {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
+
+  private defaultColumnMetadata = [
     new ColumnMetadata('id', '', 'string'),
     new ColumnMetadata('timestamp', '', 'date'),
     new ColumnMetadata('source:type', '', 'string'),
@@ -34,16 +38,19 @@ export class TableMetadata {
     new ColumnMetadata('alert_status', '', 'string')
   ];
 
-  static fromJSON(obj: any): TableMetadata {
-    let tableMetadata = new TableMetadata();
-    if (obj) {
-      tableMetadata.pageSize = obj.pageSize;
-      tableMetadata.refreshInterval = obj.refreshInterval;
-      tableMetadata.hideResolvedAlerts = obj.hideResolvedAlerts;
-      tableMetadata.hideDismissedAlerts = obj.hideDismissedAlerts;
-      tableMetadata.tableColumns = (typeof (obj.tableColumns) === 'string') ? JSON.parse(obj.tableColumns) : obj.tableColumns;
-    }
+  constructor(private http: Http) {
+  }
 
-    return tableMetadata;
+  public escalate(alerts: Alert[]): Observable<null> {
+    return this.http.post('/api/v1/alert/escalate', alerts, new RequestOptions({headers: new Headers(this.defaultHeaders)}))
+    .catch(HttpUtil.handleError);
+  }
+  
+
+  public getDefaultAlertTableColumnNames(): Observable<ColumnMetadata[]> {
+    return Observable.create(observer => {
+      observer.next(JSON.parse(JSON.stringify(this.defaultColumnMetadata)));
+      observer.complete();
+    });
   }
 }

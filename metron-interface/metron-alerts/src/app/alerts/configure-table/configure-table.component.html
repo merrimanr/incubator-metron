@@ -49,7 +49,7 @@
               <span [attr.title]="columns.key"> {{ columns.columnMetadata.name | centerEllipses }} </span>
             </td>
             <td>
-              <input class="input" placeholder="rename" [(ngModel)]="columns.displayName">
+              <input class="input" placeholder="rename" [(ngModel)]="columns.columnMetadata.displayName">
             </td>
             <td>
               <span class="text-uppercase"> {{ columns.columnMetadata.type }} </span>

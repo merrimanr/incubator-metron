@@ -315,24 +315,29 @@ public class ElasticsearchDao implements IndexDao {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, Map<String, FieldType>> getColumnMetadata(List<String> indices) throws IOException {
-    Map<String, Map<String, FieldType>> allColumnMetadata = new HashMap<>();
+  public Map<String, FieldType> getColumnMetadata(List<String> indices) throws IOException {
+    Map<String, FieldType> indexColumnMetadata = new HashMap<>();
     ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings =
             client.admin().indices().getMappings(new GetMappingsRequest().indices(getLatestIndices(indices))).actionGet().getMappings();
     for(Object index: mappings.keys().toArray()) {
-      Map<String, FieldType> indexColumnMetadata = new HashMap<>();
       ImmutableOpenMap<String, MappingMetaData> mapping = mappings.get(index.toString());
       Iterator<String> mappingIterator = mapping.keysIt();
       while(mappingIterator.hasNext()) {
         MappingMetaData mappingMetaData = mapping.get(mappingIterator.next());
         Map<String, Map<String, String>> map = (Map<String, Map<String, String>>) mappingMetaData.getSourceAsMap().get("properties");
         for(String field: map.keySet()) {
-          indexColumnMetadata.put(field, elasticsearchSearchTypeMap.getOrDefault(map.get(field).get("type"), FieldType.OTHER));
+          FieldType type = elasticsearchSearchTypeMap.getOrDefault(map.get(field).get("type"), FieldType.OTHER);
+          if (indexColumnMetadata.containsKey(field)) {
+            if (!type.equals(indexColumnMetadata.get(field))) {
+              indexColumnMetadata.remove(field);
+            }
+          } else {
+            indexColumnMetadata.put(field, type);
+          }
         }
       }
-      allColumnMetadata.put(index.toString().split("_index_")[0], indexColumnMetadata);
     }
-    return allColumnMetadata;
+    return indexColumnMetadata;
   }
 
   @SuppressWarnings("unchecked")

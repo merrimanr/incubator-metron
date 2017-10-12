@@ -33,7 +33,7 @@ export class HttpUtil {
 
   public static handleError(res: Response): Observable<RestError> {
     // In a real world app, we might use a remote logging infrastructure
-    // We'd also dig deeper into the error to get a better message
+    // We'SavedSearch also dig deeper into the error to get a better message
     let restError: RestError;
     if (res.status === 401) {
       window.location.assign('/login?sessionExpired=true');

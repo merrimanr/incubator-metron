@@ -19,7 +19,7 @@
 import { customMatchers } from  '../../matchers/custom-matchers';
 import {MetronAlertsPage} from '../alerts-list.po';
 import {LoginPage} from '../../login/login.po';
-import {loadTestData, deleteTestData} from '../../utils/e2e_util';
+import {loadTestData, deleteTestData, deleteSavedSearches} from '../../utils/e2e_util';
 
 describe('metron-alerts Search', function() {
   let page: MetronAlertsPage;
@@ -27,6 +27,7 @@ describe('metron-alerts Search', function() {
 
   beforeAll(() => {
     loadTestData();
+    deleteSavedSearches();
     loginPage = new LoginPage();
     loginPage.login();
   });
@@ -54,6 +55,7 @@ describe('metron-alerts Search', function() {
   });
 
   it('should have all save search controls and they save search should be working', () => {
+    page.clearLocalStorage();
     page.saveSearch('e2e-1');
     page.clickSavedSearch();
     expect(page.getSavedSearchOptions()).toEqual({ 'Saved Searches': [ 'e2e-1' ] }, 'for saved search options e2e-1');

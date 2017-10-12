@@ -20,14 +20,14 @@ import {QueryBuilder} from '../alerts/alerts-list/query-builder';
 import {ColumnMetadata} from './column-metadata';
 import {SearchRequest} from './search-request';
 
-export class SaveSearch {
+export class SavedSearch {
   name  = '';
   lastAccessed = 0;
   searchRequest: SearchRequest;
   tableColumns: ColumnMetadata[];
 
-  public static fromJSON(obj: SaveSearch): SaveSearch {
-    let saveSearch = new SaveSearch();
+  public static fromJSON(obj: SavedSearch): SavedSearch {
+    let saveSearch = new SavedSearch();
     saveSearch.name = obj.name;
     saveSearch.lastAccessed = obj.lastAccessed;
     saveSearch.searchRequest = obj.searchRequest;

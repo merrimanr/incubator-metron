@@ -84,7 +84,7 @@ public class SearchController {
   @ApiOperation(value = "Get column metadata for each index in the list of indices")
   @ApiResponse(message = "Column Metadata", code = 200)
   @RequestMapping(value = "/column/metadata", method = RequestMethod.POST)
-  ResponseEntity<Map<String, Map<String, FieldType>>> getColumnMetadata(final @ApiParam(name = "indices", value = "Indices", required = true) @RequestBody List<String> indices) throws RestException {
+  ResponseEntity<Map<String, FieldType>> getColumnMetadata(final @ApiParam(name = "indices", value = "Indices", required = true) @RequestBody List<String> indices) throws RestException {
     return new ResponseEntity<>(searchService.getColumnMetadata(indices), HttpStatus.OK);
   }
 

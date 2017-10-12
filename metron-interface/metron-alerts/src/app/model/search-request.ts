@@ -18,10 +18,11 @@ import {INDEXES} from '../utils/constants';
  * limitations under the License.
  */
 export class SearchRequest {
-  // _source: string[]; //TODO: This needs to be removed
   from: number;
   indices: string[] = INDEXES;
   query: string;
   size: number;
   sort: SortField[];
+  fields: string[];
+  facetFields: string[];
 }

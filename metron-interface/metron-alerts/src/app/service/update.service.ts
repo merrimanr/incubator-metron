@@ -44,7 +44,7 @@ export class UpdateService {
   public updateAlertState(alerts: Alert[], state: string): Observable<{}> {
     let patchRequests: PatchRequest[] = alerts.map(alert => {
       let patchRequest = new PatchRequest();
-      patchRequest.guid = alert.source.guid;
+      patchRequest.guid = alert.id;
       patchRequest.sensorType = alert.source['source:type'];
       patchRequest.patch = [{'op': 'add', 'path': '/alert_status', 'value': state}];
       return patchRequest;

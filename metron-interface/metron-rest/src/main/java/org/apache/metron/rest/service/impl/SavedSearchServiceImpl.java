@@ -18,46 +18,51 @@
 
 package org.apache.metron.rest.service.impl;
 
-import org.apache.metron.rest.model.AlertProfile;
-import org.apache.metron.rest.repository.AlertProfileRepository;
+import java.util.Date;
+import java.util.List;
+import org.apache.metron.rest.model.alert.SavedSearch;
+import org.apache.metron.rest.model.alert.UserCompositeId;
+import org.apache.metron.rest.repository.SavedSearchRepository;
 import org.apache.metron.rest.security.SecurityUtils;
-import org.apache.metron.rest.service.AlertsProfileService;
+import org.apache.metron.rest.service.SavedSearchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AlertsProfileServiceImpl implements AlertsProfileService {
+public class SavedSearchServiceImpl implements SavedSearchService {
 
-  private AlertProfileRepository alertsProfileRepository;
+  private SavedSearchRepository savedSearchRepository;
 
   @Autowired
-  public AlertsProfileServiceImpl(AlertProfileRepository alertsProfileRepository) {
-    this.alertsProfileRepository = alertsProfileRepository;
+  public SavedSearchServiceImpl(SavedSearchRepository savedSearchRepository) {
+    this.savedSearchRepository = savedSearchRepository;
   }
 
   @Override
-  public AlertProfile get() {
-    return alertsProfileRepository.findOne(SecurityUtils.getCurrentUser());
+  public SavedSearch findOne(String name) {
+    return savedSearchRepository.findOne(new UserCompositeId(SecurityUtils.getCurrentUser(), name));
   }
 
   @Override
-  public Iterable<AlertProfile> findAll() {
-    return alertsProfileRepository.findAll();
+  public List<SavedSearch> getAll() {
+    return savedSearchRepository.findByUserOrderByLastAccessedDesc(SecurityUtils.getCurrentUser());
   }
 
   @Override
-  public AlertProfile save(AlertProfile alertsProfile) {
-    String user = SecurityUtils.getCurrentUser();
-    alertsProfile.setId(user);
-    return alertsProfileRepository.save(alertsProfile);
+  public SavedSearch save(SavedSearch savedSearch) {
+    savedSearch.setUser(SecurityUtils.getCurrentUser());
+    if (savedSearch.getLastAccessed() == null) {
+      savedSearch.setLastAccessed(new Date().getTime());
+    }
+    return savedSearchRepository.save(savedSearch);
   }
 
   @Override
-  public boolean delete(String user) {
+  public boolean delete(String name) {
     boolean success = true;
     try {
-      alertsProfileRepository.delete(user);
+      savedSearchRepository.delete(new UserCompositeId(SecurityUtils.getCurrentUser(), name));
     } catch (EmptyResultDataAccessException e) {
       success = false;
     }

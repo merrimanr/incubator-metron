@@ -15,11 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export class TableMetadataPatch {
+  op = 'add';
+  path: string;
+  value: any;
 
-package org.apache.metron.rest.repository;
-
-import org.apache.metron.rest.model.AlertProfile;
-import org.springframework.data.repository.CrudRepository;
-
-public interface AlertProfileRepository extends CrudRepository<AlertProfile, String> {
+  constructor(path: string, value: any) {
+    this.path = path;
+    this.value = value;
+  }
 }

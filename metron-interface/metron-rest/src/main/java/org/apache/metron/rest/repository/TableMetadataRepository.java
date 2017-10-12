@@ -16,17 +16,10 @@
  * limitations under the License.
  */
 
-package org.apache.metron.rest.service;
+package org.apache.metron.rest.repository;
 
-import org.apache.metron.rest.model.AlertProfile;
+import org.apache.metron.rest.model.alert.TableMetadata;
+import org.springframework.data.repository.CrudRepository;
 
-public interface AlertsProfileService {
-
-  AlertProfile get();
-
-  Iterable<AlertProfile> findAll();
-
-  AlertProfile save(AlertProfile alertsProfile);
-
-  boolean delete(String user);
+public interface TableMetadataRepository extends CrudRepository<TableMetadata, String> {
 }

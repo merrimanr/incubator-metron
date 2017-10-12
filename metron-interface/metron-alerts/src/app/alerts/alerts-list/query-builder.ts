@@ -16,15 +16,17 @@
  * limitations under the License.
  */
 import {Filter} from '../../model/filter';
-import {ColumnNamesService} from '../../service/column-names.service';
 import {SearchRequest} from '../../model/search-request';
 import {SortField} from '../../model/sort-field';
+import {ColumnMetadata} from "../../model/column-metadata";
 
 export class QueryBuilder {
   private _searchRequest = new SearchRequest();
   private _query = '*';
   private _displayQuery = this._query;
   private _filters: Filter[] = [];
+  private _tableColumns = [];
+  threatScoreFieldName = 'threat:triage:score';
 
   set query(value: string) {
     value = value.replace(/\\:/g, ':');
@@ -53,6 +55,7 @@ export class QueryBuilder {
 
 
   get searchRequest(): SearchRequest {
+    this._searchRequest.fields = this.generateFields();
     this._searchRequest.query = this.generateSelect();
     return this._searchRequest;
   }
@@ -60,6 +63,15 @@ export class QueryBuilder {
   set searchRequest(value: SearchRequest) {
     this._searchRequest = value;
     this.query = this._searchRequest.query;
+  }
+
+  get tableColumns(): ColumnMetadata[] {
+    return this._tableColumns;
+  }
+
+  set tableColumns(value: ColumnMetadata[]) {
+    this._tableColumns = value;
+    this._displayQuery = this.generateSelectForDisplay();
   }
 
   addOrUpdateFilter(filter: Filter) {
@@ -86,8 +98,15 @@ export class QueryBuilder {
   }
 
   generateSelectForDisplay() {
-    let select = this._filters.map(filter => ColumnNamesService.getColumnDisplayValue(filter.field) + ':' + filter.value).join(' AND ');
+    let select = this._filters.map(filter => this.getDisplayNameFromField(filter.field) + ':' + filter.value).join(' AND ');
     return (select.length === 0) ? '*' : select;
+  }
+
+  generateFields() {
+    let fieldNames = this.tableColumns.map(columnMetadata => columnMetadata.name);
+    fieldNames = fieldNames.filter(name => !(name === 'id'));
+    fieldNames.push(this.threatScoreFieldName);
+    return fieldNames;
   }
 
   onSearchChange() {
@@ -100,10 +119,6 @@ export class QueryBuilder {
     this._filters.splice(this._filters.indexOf(filter), 1);
 
     this.onSearchChange();
-  }
-
-  setFields(fieldNames: string[]) {
-      // this.searchRequest._source = fieldNames;
   }
 
   setFromAndSize(from: number, size: number) {
@@ -128,10 +143,28 @@ export class QueryBuilder {
       for (let term of terms) {
         let separatorPos = term.lastIndexOf(':');
         let field = term.substring(0, separatorPos).replace('\\', '');
-        field = updateNameTransform ? ColumnNamesService.getColumnDisplayKey(field) : field;
+        field = updateNameTransform ? this.getFieldFromDisplayName(field) : field;
         let value = term.substring(separatorPos + 1, term.length);
         this.addOrUpdateFilter(new Filter(field, value));
       }
+    }
+  }
+
+  private getDisplayNameFromField(name: string) {
+    let columnMetadata = this._tableColumns.filter(columnMetadata => columnMetadata.name === name);
+    if (columnMetadata.length > 0 && columnMetadata[0].displayName !== '') {
+      return columnMetadata[0].displayName;
+    } else {
+      return name;
+    }
+  }
+
+  private getFieldFromDisplayName(displayName: string) {
+    let columnMetadata = this._tableColumns.filter(columnMetadata => columnMetadata.displayName === displayName);
+    if (columnMetadata.length > 0 && columnMetadata[0].name !== '') {
+      return columnMetadata[0].name;
+    } else {
+      return displayName;
     }
   }
 }

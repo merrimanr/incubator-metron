@@ -22,46 +22,46 @@ export class ElasticsearchUtils {
 
   public static excludeIndexName = ',-*kibana,-error*';
 
-  private static createColumMetaData(properties: any, columnMetadata: ColumnMetadata[], seen: string[]) {
-     try {
-       let columnNames = Object.keys(properties);
-       for (let columnName of columnNames) {
-         if (seen.indexOf(columnName) === -1) {
-           seen.push(columnName);
-           columnMetadata.push(
-             new ColumnMetadata(columnName, (properties[columnName].type ? properties[columnName].type : ''))
-           );
-         }
-       }
-     } catch (e) {}
-  }
+  // private static createColumMetaData(properties: any, columnMetadata: ColumnMetadata[], seen: string[]) {
+  //    try {
+  //      let columnNames = Object.keys(properties);
+  //      for (let columnName of columnNames) {
+  //        if (seen.indexOf(columnName) === -1) {
+  //          seen.push(columnName);
+  //          columnMetadata.push(
+  //            new ColumnMetadata(columnName, (properties[columnName].type ? properties[columnName].type : ''))
+  //          );
+  //        }
+  //      }
+  //    } catch (e) {}
+  // }
 
-  public static extractColumnNameData(res: Response): ColumnMetadata[] {
-    let response: any = res || {};
-    let columnMetadata: ColumnMetadata[] = [];
-    let seen: string[] = [];
-
-    for (let index in response.metadata.indices) {
-      if (!index.endsWith(ElasticsearchUtils.excludeIndexName)) {
-        let mappings = response.metadata.indices[index].mappings;
-        for (let type of Object.keys(mappings)) {
-          ElasticsearchUtils.createColumMetaData(response.metadata.indices[index].mappings[type].properties, columnMetadata, seen);
-        }
-      }
-    }
-
-    columnMetadata.push(new ColumnMetadata('id', 'string'));
-    return columnMetadata;
-  }
-
-  public static extractAlertsData(res: Response): SearchResponse {
-    let response: any = res || {};
-    let alertsSearchResponse: SearchResponse = new SearchResponse();
-    alertsSearchResponse.total = response['hits']['total'];
-    alertsSearchResponse.results = response['hits']['hits'];
-    return alertsSearchResponse;
-  }
-
+  // public static extractColumnNameData(res: Response): ColumnMetadata[] {
+  //   let response: any = res || {};
+  //   let columnMetadata: ColumnMetadata[] = [];
+  //   let seen: string[] = [];
+  //
+  //   for (let index in response.metadata.indices) {
+  //     if (!index.endsWith(ElasticsearchUtils.excludeIndexName)) {
+  //       let mappings = response.metadata.indices[index].mappings;
+  //       for (let type of Object.keys(mappings)) {
+  //         ElasticsearchUtils.createColumMetaData(response.metadata.indices[index].mappings[type].properties, columnMetadata, seen);
+  //       }
+  //     }
+  //   }
+  //
+  //   columnMetadata.push(new ColumnMetadata('id', 'string'));
+  //   return columnMetadata;
+  // }
+  //
+  // public static extractAlertsData(res: Response): SearchResponse {
+  //   let response: any = res || {};
+  //   let alertsSearchResponse: SearchResponse = new SearchResponse();
+  //   alertsSearchResponse.total = response['hits']['total'];
+  //   alertsSearchResponse.results = response['hits']['hits'];
+  //   return alertsSearchResponse;
+  // }
+  //
   public static extractESErrorMessage(error: any): any {
     let message = error.error.reason;
     error.error.root_cause.map(cause => {

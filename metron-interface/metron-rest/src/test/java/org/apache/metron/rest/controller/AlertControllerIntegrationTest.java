@@ -33,9 +33,7 @@ import org.adrianwalker.multilinestring.Multiline;
 import org.apache.metron.integration.ComponentRunner;
 import org.apache.metron.integration.UnableToStartException;
 import org.apache.metron.integration.components.KafkaComponent;
-import org.apache.metron.rest.model.AlertProfile;
 import org.apache.metron.rest.service.AlertService;
-import org.apache.metron.rest.service.AlertsProfileService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,25 +68,20 @@ public class AlertControllerIntegrationTest {
 
     /**
      * {
-     *   "tableColumns": ["user1_field"],
-     *   "savedSearches": [
+     *   "pageSize": 25,
+     *   "refreshInterval": 5,
+     *   "hideResolvedAlerts": true,
+     *   "hideDismissedAlerts": true,
+     *   "tableColumns": [
      *     {
-     *       "name": "user1 search 1",
-     *       "searchRequest": {
-     *         "from": 0,
-     *         "indices": ["bro"],
-     *         "query": "*",
-     *         "size": 5
-     *       }
+     *       "name": "user1_field1",
+     *       "displayName": "",
+     *       "type": "string"
      *     },
      *     {
-     *       "name": "user1 search 2",
-     *       "searchRequest": {
-     *         "from": 10,
-     *         "indices": ["snort"],
-     *         "query": "*",
-     *         "size": 10
-     *       }
+     *       "name": "user1_field2",
+     *       "displayName": "field2",
+     *       "type": "integer"
      *     }
      *   ]
      * }
@@ -99,16 +92,18 @@ public class AlertControllerIntegrationTest {
 
     /**
      * {
-     *   "tableColumns": ["user2_field"],
-     *   "savedSearches": [
+     *   "pageSize": 100,
+     *   "refreshInterval": 60,
+     *   "tableColumns": [
      *     {
-     *       "name": "user2 search 1",
-     *       "searchRequest": {
-     *         "from": 0,
-     *         "indices": ["bro", "snort"],
-     *         "query": "ip_src_addr:192.168.1.1",
-     *         "size": 100
-     *       }
+     *       "name": "user2_field1",
+     *       "displayName": "field1",
+     *       "type": "long"
+     *     },
+     *     {
+     *       "name": "user2_field2",
+     *       "displayName": "",
+     *       "type": "ip"
      *     }
      *   ]
      * }
@@ -139,9 +134,6 @@ public class AlertControllerIntegrationTest {
 
     @Before
     public void setup() throws Exception {
-        for (AlertProfile alertsProfile : alertService.findAllProfiles()) {
-          alertService.deleteProfile(alertsProfile.getId());
-        }
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).apply(springSecurity()).build();
     }
 
@@ -149,17 +141,17 @@ public class AlertControllerIntegrationTest {
     public void testSecurity() throws Exception {
         this.mockMvc.perform(post(alertUrl + "/escalate").with(csrf()).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(alerts))
                 .andExpect(status().isUnauthorized());
-        this.mockMvc.perform(get(alertUrl + "/profile"))
+        this.mockMvc.perform(get(alertUrl + "/table/metadata"))
             .andExpect(status().isUnauthorized());
-        this.mockMvc.perform(get(alertUrl + "/profile/all"))
+        this.mockMvc.perform(get(alertUrl + "/table/metadata/all"))
             .andExpect(status().isUnauthorized());
-        this.mockMvc.perform(post(alertUrl + "/profile").with(csrf())
+        this.mockMvc.perform(post(alertUrl + "/table/metadata").with(csrf())
             .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
             .content(user1ProfileJson))
             .andExpect(status().isUnauthorized());
-        this.mockMvc.perform(get(alertUrl + "/profile/all").with(httpBasic(user1, password)).with(csrf()))
+        this.mockMvc.perform(get(alertUrl + "/table/metadata/all").with(httpBasic(user1, password)).with(csrf()))
             .andExpect(status().isForbidden());
-        this.mockMvc.perform(delete(alertUrl + "/profile/user1").with(httpBasic(user1, password)).with(csrf()))
+        this.mockMvc.perform(delete(alertUrl + "/table/metadata/user1").with(httpBasic(user1, password)).with(csrf()))
             .andExpect(status().isForbidden());
     }
 
@@ -187,15 +179,15 @@ public class AlertControllerIntegrationTest {
     private void emptyProfileShouldReturnNotFound() throws Exception {
 
       // user1 should get a 404 because an alerts profile has not been created
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user1, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user1, password)))
           .andExpect(status().isNotFound());
 
       // user2 should get a 404 because an alerts profile has not been created
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user2, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user2, password)))
           .andExpect(status().isNotFound());
 
       // getting all alerts profiles should return an empty list
-      this.mockMvc.perform(get(alertUrl + "/profile/all").with(httpBasic(admin, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata/all").with(httpBasic(admin, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
@@ -213,60 +205,60 @@ public class AlertControllerIntegrationTest {
     private void alertsProfilesShouldBeCreatedOrUpdated() throws Exception {
 
       // user1 creates their alerts profile
-      this.mockMvc.perform(post(alertUrl + "/profile").with(httpBasic(user1, password)).with(csrf())
+      this.mockMvc.perform(post(alertUrl + "/table/metadata").with(httpBasic(user1, password)).with(csrf())
           .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
           .content(user1ProfileJson))
           .andExpect(status().isCreated())
           .andExpect(content().json(user1ProfileJson));
 
       // user1 updates their alerts profile
-      this.mockMvc.perform(post(alertUrl + "/profile").with(httpBasic(user1, password)).with(csrf())
+      this.mockMvc.perform(post(alertUrl + "/table/metadata").with(httpBasic(user1, password)).with(csrf())
           .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
           .content(user1ProfileJson))
           .andExpect(status().isOk())
           .andExpect(content().json(user1ProfileJson));
 
       // user1 gets their alerts profile
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user1, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user1, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
           .andExpect(content().json(user1ProfileJson));
 
       // user2 alerts profile should still be empty
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user2, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user2, password)))
           .andExpect(status().isNotFound());
 
       // getting all alerts profiles should only return user1's
-      this.mockMvc.perform(get(alertUrl + "/profile/all").with(httpBasic(admin, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata/all").with(httpBasic(admin, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
           .andExpect(content().json("[" + user1ProfileJson + "]"));
 
       // user2 creates their alerts profile
-      this.mockMvc.perform(post(alertUrl + "/profile").with(httpBasic(user2, password)).with(csrf())
+      this.mockMvc.perform(post(alertUrl + "/table/metadata").with(httpBasic(user2, password)).with(csrf())
           .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
           .content(user2ProfileJson))
           .andExpect(status().isCreated())
           .andExpect(content().json(user2ProfileJson));
 
       // user2 updates their alerts profile
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user1, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user1, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
           .andExpect(content().json(user1ProfileJson));
 
       // user2 gets their alerts profile
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user2, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user2, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
           .andExpect(content().json(user2ProfileJson));
 
       // getting all alerts profiles should return both
-      this.mockMvc.perform(get(alertUrl + "/profile/all").with(httpBasic(admin, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata/all").with(httpBasic(admin, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
@@ -282,45 +274,45 @@ public class AlertControllerIntegrationTest {
     private void alertsProfilesShouldBeProperlyDeleted() throws Exception {
 
       // user1 deletes their profile
-      this.mockMvc.perform(delete(alertUrl + "/profile/user1").with(httpBasic(admin, password)))
+      this.mockMvc.perform(delete(alertUrl + "/table/metadata/user1").with(httpBasic(admin, password)))
           .andExpect(status().isOk());
 
       // user1 should get a 404 when trying to delete an alerts profile that doesn't exist
-      this.mockMvc.perform(delete(alertUrl + "/profile/user1").with(httpBasic(admin, password)))
+      this.mockMvc.perform(delete(alertUrl + "/table/metadata/user1").with(httpBasic(admin, password)))
           .andExpect(status().isNotFound());
 
       // user1 should get a 404 when trying to retrieve their alerts profile
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user1, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user1, password)))
           .andExpect(status().isNotFound());
 
       // user2's alerts profile should still exist
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user2, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user2, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
           .andExpect(content().json(user2ProfileJson));
 
       // getting all alerts profiles should only return user2's
-      this.mockMvc.perform(get(alertUrl + "/profile/all").with(httpBasic(admin, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata/all").with(httpBasic(admin, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))
           .andExpect(content().json("[" + user2ProfileJson + "]"));
 
       // user2 deletes their profile
-      this.mockMvc.perform(delete(alertUrl + "/profile/user2").with(httpBasic(admin, password)))
+      this.mockMvc.perform(delete(alertUrl + "/table/metadata/user2").with(httpBasic(admin, password)))
           .andExpect(status().isOk());
 
       // user2 should get a 404 when trying to delete an alerts profile that doesn't exist
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user1, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user1, password)))
           .andExpect(status().isNotFound());
 
       // user2 should get a 404 when trying to retrieve their alerts profile
-      this.mockMvc.perform(get(alertUrl + "/profile").with(httpBasic(user2, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata").with(httpBasic(user2, password)))
           .andExpect(status().isNotFound());
 
       // getting all alerts profiles should return an empty list
-      this.mockMvc.perform(get(alertUrl + "/profile/all").with(httpBasic(admin, password)))
+      this.mockMvc.perform(get(alertUrl + "/table/metadata/all").with(httpBasic(admin, password)))
           .andExpect(status().isOk())
           .andExpect(
               content().contentType(MediaType.parseMediaType("application/json;charset=UTF-8")))

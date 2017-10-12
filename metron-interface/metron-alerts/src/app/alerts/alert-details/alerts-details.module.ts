@@ -19,12 +19,12 @@ import { NgModule } from '@angular/core';
 import {routing} from './alerts-details.routing';
 import {SharedModule} from '../../shared/shared.module';
 import {AlertDetailsComponent} from './alert-details.component';
-import {AlertsService} from '../../service/alerts.service';
+import {AlertService} from '../../service/alert.service';
 import {UpdateService} from '../../service/update.service';
 
 @NgModule ({
     imports: [ routing,  SharedModule],
     declarations: [ AlertDetailsComponent ],
-    providers: [ AlertsService, UpdateService ],
+    providers: [ AlertService, UpdateService ],
 })
 export class AlertDetailsModule { }

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 import { Pipe, PipeTransform } from '@angular/core';
-import {ColumnNamesService} from '../../service/column-names.service';
+import {ColumnMetadata} from "../../model/column-metadata";
 
 @Pipe({
   name: 'columnNameTranslate',
@@ -24,13 +24,11 @@ import {ColumnNamesService} from '../../service/column-names.service';
 })
 export class ColumnNameTranslatePipe implements PipeTransform {
 
-  transform(value: any, args?: any): any {
-    if (!value) {
+  transform(columnMetadata: ColumnMetadata, args?: any): any {
+    if (!columnMetadata) {
       return '';
     }
 
-    let displayValue = ColumnNamesService.columnNameToDisplayValueMap[value];
-
-    return displayValue ? displayValue : value;
+    return columnMetadata.displayName ? columnMetadata.displayName : columnMetadata.name;
   }
 }

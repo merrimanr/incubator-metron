@@ -20,7 +20,7 @@ import {Router, ActivatedRoute} from '@angular/router';
 import {SearchService} from '../../service/search.service';
 import {UpdateService} from '../../service/update.service';
 import {Alert} from '../../model/alert';
-import {AlertsService} from '../../service/alerts.service';
+import {AlertService} from '../../service/alert.service';
 import {AlertSource} from '../../model/alert-source';
 
 export enum AlertState {
@@ -45,7 +45,7 @@ export class AlertDetailsComponent implements OnInit {
               private activatedRoute: ActivatedRoute,
               private searchService: SearchService,
               private updateService: UpdateService,
-              private alertsService: AlertsService) { }
+              private alertService: AlertService) { }
 
   goBack() {
     this.router.navigateByUrl('/alerts-list');
@@ -84,6 +84,7 @@ export class AlertDetailsComponent implements OnInit {
 
   processOpen() {
     let tAlert = new Alert();
+    tAlert.id = this.alertId;
     tAlert.source = this.alertSource;
 
     this.selectedAlertState = AlertState.OPEN;
@@ -94,6 +95,7 @@ export class AlertDetailsComponent implements OnInit {
 
   processNew() {
     let tAlert = new Alert();
+    tAlert.id = this.alertId;
     tAlert.source = this.alertSource;
 
     this.selectedAlertState = AlertState.NEW;
@@ -104,17 +106,19 @@ export class AlertDetailsComponent implements OnInit {
 
   processEscalate() {
     let tAlert = new Alert();
+    tAlert.id = this.alertId;
     tAlert.source = this.alertSource;
 
     this.selectedAlertState = AlertState.ESCALATE;
     this.updateService.updateAlertState([tAlert], 'ESCALATE').subscribe(results => {
       this.getData();
     });
-    this.alertsService.escalate([tAlert]).subscribe();
+    this.alertService.escalate([tAlert]).subscribe();
   }
 
   processDismiss() {
     let tAlert = new Alert();
+    tAlert.id = this.alertId;
     tAlert.source = this.alertSource;
 
     this.selectedAlertState = AlertState.DISMISS;
@@ -125,6 +129,7 @@ export class AlertDetailsComponent implements OnInit {
 
   processResolve() {
     let tAlert = new Alert();
+    tAlert.id = this.alertId;
     tAlert.source = this.alertSource;
 
     this.selectedAlertState = AlertState.RESOLVE;

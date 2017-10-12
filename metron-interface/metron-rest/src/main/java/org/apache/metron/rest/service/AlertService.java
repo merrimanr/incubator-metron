@@ -20,7 +20,9 @@ package org.apache.metron.rest.service;
 import java.util.List;
 import java.util.Map;
 import org.apache.metron.rest.RestException;
-import org.apache.metron.rest.model.AlertProfile;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.metron.rest.model.alert.ColumnMetadata;
+import org.apache.metron.rest.model.alert.TableMetadata;
 
 /**
  * This is a set of operations created to interact with alerts.
@@ -29,11 +31,15 @@ public interface AlertService {
 
   void escalateAlerts(List<Map<String, Object>> alerts) throws RestException;
 
-  AlertProfile getProfile();
+  TableMetadata getTableMetadata() throws RestException;
 
-  Iterable<AlertProfile> findAllProfiles();
+  Iterable<TableMetadata> findAllTableMetadata();
 
-  AlertProfile saveProfile(AlertProfile alertsProfile);
+  TableMetadata saveTableMetadata(TableMetadata tableMetadata);
 
-  boolean deleteProfile(String user);
+  boolean deleteTableMetadata(String user);
+
+  TableMetadata patchTableMetadata(TableMetadata tableMetadata, JsonNode patch) throws RestException;
+
+  List<List<ColumnMetadata>> getAllColumnMetadata() throws RestException;
 }

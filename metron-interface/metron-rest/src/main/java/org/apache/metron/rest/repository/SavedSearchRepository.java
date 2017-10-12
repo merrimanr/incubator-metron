@@ -15,23 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
-import {Http} from '@angular/http';
 
+package org.apache.metron.rest.repository;
 
-import {ColumnMetadata} from '../model/column-metadata';
-import {DataSource} from './data-source';
+import java.util.List;
+import org.apache.metron.rest.model.alert.SavedSearch;
+import org.apache.metron.rest.model.alert.UserCompositeId;
+import org.springframework.data.repository.CrudRepository;
 
-@Injectable()
-export class ClusterMetaDataService {
-  defaultHeaders: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
+public interface SavedSearchRepository extends CrudRepository<SavedSearch, UserCompositeId> {
 
-  constructor(private http: Http,
-              private dataSource: DataSource) {
-  }
-
-  getDefaultColumns(): Observable<ColumnMetadata[]> {
-    return this.dataSource.getDefaultAlertTableColumnNames();
-  }
+  List<SavedSearch> findByUserOrderByLastAccessedDesc(String user);
 }
