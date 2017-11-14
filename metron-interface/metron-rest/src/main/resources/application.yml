@@ -56,6 +56,8 @@ index:
   writer:
   # Used to retrieve the index names from the sensor index configurations.  Should be either 'elasticsearch' or 'solr'.
     name: elasticsearch
+  fieldNameConverter:
+    impl: org.apache.metron.indexing.converter.DotToColonFieldNameConverter
 
 meta:
   dao:

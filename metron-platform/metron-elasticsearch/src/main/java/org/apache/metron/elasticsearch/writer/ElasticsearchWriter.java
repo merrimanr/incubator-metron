@@ -23,6 +23,7 @@ import org.apache.metron.common.interfaces.FieldNameConverter;
 import org.apache.metron.common.writer.BulkMessageWriter;
 import org.apache.metron.common.writer.BulkWriterResponse;
 import org.apache.metron.elasticsearch.utils.ElasticsearchUtils;
+import org.apache.metron.indexing.converter.DotToColonFieldNameConverter;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -47,7 +48,7 @@ public class ElasticsearchWriter implements BulkMessageWriter<JSONObject>, Seria
   private transient TransportClient client;
   private SimpleDateFormat dateFormat;
   private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
-  private FieldNameConverter fieldNameConverter = new ElasticsearchFieldNameConverter();
+  private FieldNameConverter fieldNameConverter = new DotToColonFieldNameConverter();
 
   public ElasticsearchWriter withOptionalSettings(Map<String, String> optionalSettings) {
     this.optionalSettings = optionalSettings;

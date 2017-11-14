@@ -15,18 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.metron.indexing.converter;
 
-package org.apache.metron.elasticsearch.writer;
+import org.apache.metron.common.interfaces.FieldNameConverter;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-public class ElasticsearchFieldNameConverterTest {
-
-    @Test
-    public void convert() throws Exception {
-        assertEquals("testfield:with:colons",new ElasticsearchFieldNameConverter().convert("testfield.with.colons"));
-    }
-
+public class DefaultFieldNameConverter implements FieldNameConverter {
+  @Override
+  public String convert(String originalField) {
+    return originalField;
+  }
 }
