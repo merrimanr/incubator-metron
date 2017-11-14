@@ -35,7 +35,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.metron.common.Constants;
+import org.apache.metron.common.interfaces.FieldNameConverter;
 import org.apache.metron.common.utils.JSONUtils;
+import org.apache.metron.indexing.converter.DefaultFieldNameConverter;
 import org.apache.metron.indexing.dao.search.FieldType;
 import org.apache.metron.indexing.dao.search.GroupRequest;
 import org.apache.metron.indexing.dao.search.GroupResponse;
@@ -43,6 +45,8 @@ import org.apache.metron.indexing.dao.search.InvalidSearchException;
 import org.apache.metron.indexing.dao.search.SearchRequest;
 import org.apache.metron.indexing.dao.search.SearchResponse;
 import org.apache.metron.indexing.dao.update.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The HBaseDao is an index dao which only supports the following actions:
@@ -56,7 +60,8 @@ import org.apache.metron.indexing.dao.update.Document;
  *
  */
 public class HBaseDao implements IndexDao {
-  public static final String SOURCE_TYPE = Constants.SENSOR_TYPE.replace('.', ':');
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseDao.class);
+  public String SOURCE_TYPE;
   public static String HBASE_TABLE = "update.hbase.table";
   public static String HBASE_CF = "update.hbase.cf";
   private HTableInterface tableInterface;
@@ -95,6 +100,15 @@ public class HBaseDao implements IndexDao {
       } catch (IOException e) {
         throw new IllegalStateException("Unable to initialize HBaseDao: " + e.getMessage(), e);
       }
+      FieldNameConverter fieldNameConverter = null;
+      if(config.getFieldNameConverter() == null) {
+        LOG.warn("Unable to find the field name transformer.  Using default field name transformer instead.");
+        fieldNameConverter = new DefaultFieldNameConverter();
+      }
+      else {
+        fieldNameConverter = config.getFieldNameConverter();
+      }
+      SOURCE_TYPE = fieldNameConverter.convert(Constants.SENSOR_TYPE);
     }
   }
 

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.metron.hbase.mock.MockHBaseTableProvider;
+import org.apache.metron.indexing.converter.DotToColonFieldNameConverter;
 import org.apache.metron.indexing.dao.AccessConfig;
 import org.apache.metron.indexing.dao.HBaseDao;
 import org.apache.metron.indexing.dao.IndexDao;
@@ -57,6 +58,7 @@ public class HBaseDaoIntegrationTest {
       put(HBASE_TABLE, TABLE_NAME);
       put(HBASE_CF, COLUMN_FAMILY);
     }});
+    accessConfig.setFieldNameConverter(new DotToColonFieldNameConverter());
     MockHBaseTableProvider.addToCache(TABLE_NAME, COLUMN_FAMILY);
     accessConfig.setTableProvider(new MockHBaseTableProvider());
 

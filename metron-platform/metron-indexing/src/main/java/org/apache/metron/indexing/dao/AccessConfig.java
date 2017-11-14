@@ -17,6 +17,8 @@
  */
 package org.apache.metron.indexing.dao;
 
+import org.apache.metron.common.interfaces.FieldNameConverter;
+import org.apache.metron.common.utils.ReflectionUtils;
 import org.apache.metron.hbase.TableProvider;
 
 import java.util.HashMap;
@@ -24,11 +26,24 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class AccessConfig {
+  private FieldNameConverter fieldNameConverter;
   private Integer maxSearchResults;
   private Integer maxSearchGroups;
   private Supplier<Map<String, Object>> globalConfigSupplier;
   private Map<String, String> optionalSettings = new HashMap<>();
   private TableProvider tableProvider = null;
+
+  public FieldNameConverter getFieldNameConverter() {
+    return fieldNameConverter;
+  }
+
+  public void setFieldNameConverter(FieldNameConverter fieldNameConverter) {
+    this.fieldNameConverter = fieldNameConverter;
+  }
+
+  public void setFieldNameConverter(String fieldNameConverterClazz) {
+    this.fieldNameConverter = ReflectionUtils.createInstance(fieldNameConverterClazz);
+  }
 
   /**
    * A supplier which will return the current global config.

@@ -15,18 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.metron.elasticsearch.writer;
 
-import org.apache.metron.common.interfaces.FieldNameConverter;
-import java.io.Serializable;
+package org.apache.metron.indexing.converter;
 
-public class ElasticsearchFieldNameConverter implements FieldNameConverter, Serializable {
+import org.apache.metron.indexing.converter.DotToColonFieldNameConverter;
+import org.junit.Test;
 
-    private static final long serialVersionUID = -3126840090749760299L;
+import static org.junit.Assert.*;
 
-    @Override
-    public String convert(String originalField) {
-        return originalField.replace(".",":");
+public class DotToColonFieldNameConverterTest {
+
+    @Test
+    public void convert() throws Exception {
+        assertEquals("testfield:with:colons",new DotToColonFieldNameConverter().convert("testfield.with.colons"));
     }
 
 }
