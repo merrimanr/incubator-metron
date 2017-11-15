@@ -137,6 +137,8 @@ public class KafkaConfig {
     if (environment.getProperty(MetronRestConstants.KERBEROS_ENABLED_SPRING_PROPERTY, Boolean.class, false)) {
       String securityProtocol = System.getenv(SECURITY_PROTOCOL_KAFKA_ENV);
       if (StringUtils.isEmpty(securityProtocol)) {
+        LOG.warn("Falling back to default secure protocol: " + DEFAULT_SECURITY_PROTOCOL + ".  " +
+                "If this is wrong, please set the " + SECURITY_PROTOCOL_KAFKA_ENV + " to the appropriate protocol.");
         securityProtocol = DEFAULT_SECURITY_PROTOCOL;
       }
       return Optional.ofNullable(securityProtocol);
