@@ -20,6 +20,7 @@ package org.apache.metron.rest.config;
 import kafka.admin.AdminUtils$;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.metron.rest.MetronRestConstants;
@@ -42,6 +43,8 @@ import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 @Configuration
 @Profile("!" + TEST_PROFILE)
 public class KafkaConfig {
+  public static final String SECURITY_PROTOCOL_KAFKA_ENV = "KAFKA_SECURITY_PROTOCOL";
+  public static final String DEFAULT_SECURITY_PROTOCOL = "SASL_PLAINTEXT";
   /**
    * The Spring environment.
    */
@@ -109,7 +112,11 @@ public class KafkaConfig {
     producerConfig.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     producerConfig.put("request.required.acks", 1);
     if (environment.getProperty(MetronRestConstants.KERBEROS_ENABLED_SPRING_PROPERTY, Boolean.class, false)) {
-      producerConfig.put("security.protocol", "SASL_PLAINTEXT");
+      String securityProtocol = System.getenv(SECURITY_PROTOCOL_KAFKA_ENV);
+      if(StringUtils.isEmpty(securityProtocol)) {
+        securityProtocol = DEFAULT_SECURITY_PROTOCOL;
+      }
+      producerConfig.put("security.protocol", securityProtocol);
     }
     return producerConfig;
   }
