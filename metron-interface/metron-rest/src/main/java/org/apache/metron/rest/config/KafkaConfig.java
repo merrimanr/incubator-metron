@@ -24,6 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.metron.rest.MetronRestConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +36,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 
@@ -45,6 +48,10 @@ import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 public class KafkaConfig {
   public static final String SECURITY_PROTOCOL_KAFKA_ENV = "KAFKA_SECURITY_PROTOCOL";
   public static final String DEFAULT_SECURITY_PROTOCOL = "SASL_PLAINTEXT";
+
+  private static final Logger LOG = LoggerFactory
+          .getLogger(KafkaConfig.class);
+
   /**
    * The Spring environment.
    */
@@ -88,9 +95,11 @@ public class KafkaConfig {
     props.put("session.timeout.ms", "30000");
     props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
     props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    if (environment.getProperty(MetronRestConstants.KERBEROS_ENABLED_SPRING_PROPERTY, Boolean.class, false)) {
-      props.put("security.protocol", "SASL_PLAINTEXT");
+    Optional<String> securityProtocol = getSecurityProtocol();
+    if(securityProtocol.isPresent()) {
+      props.put("security.protocol", securityProtocol.get());
     }
+
     return props;
   }
 
@@ -111,19 +120,28 @@ public class KafkaConfig {
     producerConfig.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     producerConfig.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     producerConfig.put("request.required.acks", 1);
-    if (environment.getProperty(MetronRestConstants.KERBEROS_ENABLED_SPRING_PROPERTY, Boolean.class, false)) {
-      String securityProtocol = System.getenv(SECURITY_PROTOCOL_KAFKA_ENV);
-      if(StringUtils.isEmpty(securityProtocol)) {
-        securityProtocol = DEFAULT_SECURITY_PROTOCOL;
-      }
-      producerConfig.put("security.protocol", securityProtocol);
+    Optional<String> securityProtocol = getSecurityProtocol();
+    if(securityProtocol.isPresent()) {
+      producerConfig.put("security.protocol", securityProtocol.get());
     }
+
     return producerConfig;
   }
 
   @Bean
   public KafkaProducer kafkaProducer() {
     return new KafkaProducer<>(producerProperties());
+  }
+
+  public Optional<String> getSecurityProtocol() {
+    if (environment.getProperty(MetronRestConstants.KERBEROS_ENABLED_SPRING_PROPERTY, Boolean.class, false)) {
+      String securityProtocol = System.getenv(SECURITY_PROTOCOL_KAFKA_ENV);
+      if (StringUtils.isEmpty(securityProtocol)) {
+        securityProtocol = DEFAULT_SECURITY_PROTOCOL;
+      }
+      return Optional.ofNullable(securityProtocol);
+    }
+    return Optional.empty();
   }
 
   /**
