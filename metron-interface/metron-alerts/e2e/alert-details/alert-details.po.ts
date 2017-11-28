@@ -59,7 +59,8 @@ export class MetronAlertDetailsPage {
   }
 
   clickCommentsInSideNav() {
-    return element(by.css('app-alert-details .fa.fa-comment')).click();
+    return element(by.css('app-alert-details .fa.fa-comment')).click()
+    .then(() => waitForElementVisibility(element(by.buttonText('ADD COMMENT'))));
   }
 
   clickNoForConfirmation() {

@@ -17,7 +17,7 @@ export function waitForURL(url: string) {
 
 export function waitForText(element, text) {
   let EC = protractor.ExpectedConditions;
-  return browser.wait(EC.textToBePresentInElementValue(element, text));
+  return browser.wait(EC.textToBePresentInElement(element, text));
 }
 
 export function waitForTextChange(element, previousText) {
@@ -43,6 +43,30 @@ export function waitForElementVisibility (_element ) {
 export function waitForStalenessOf (_element ) {
     let EC = protractor.ExpectedConditions;
     return browser.wait(EC.stalenessOf(_element));
+}
+
+export function waitForCssClass(elementFinder, desiredClass) {
+  function waitForCssClass$(elementFinder, desiredClass)
+  {
+    return function () {
+      return elementFinder.getAttribute('class').then(function (classValue) {
+        return classValue && classValue.indexOf(desiredClass) >= 0;
+      });
+    }
+  }
+  return browser.wait(waitForCssClass$(elementFinder, desiredClass), 5000);
+}
+
+export function waitForCssClassNotToBePresent(elementFinder, desiredClass) {
+  function waitForCssClassNotToBePresent$(elementFinder, desiredClass)
+  {
+    return function () {
+      return elementFinder.getAttribute('class').then(function (classValue) {
+        return classValue && classValue.indexOf(desiredClass) === -1;
+      });
+    }
+  }
+  return browser.wait(waitForCssClassNotToBePresent$(elementFinder, desiredClass), 5000);
 }
 
 export function loadTestData() {

@@ -218,6 +218,7 @@ describe('metron-alerts tree view', function () {
     expect(page.getNumOfSubGroups('alerts_ui_e2e')).toEqual(3, 'three sub groups should be present');
 
     listPage.setSearchText('enrichments:geo:ip_dst_addr:country:FR');
+    expect(listPage.getChangesAlertTableTitle('Alerts (169)')).toEqual('Alerts (25)');
 
     expect(page.getNumOfSubGroups('alerts_ui_e2e')).toEqual(1, 'one sub groups should be present');
     page.expandSubGroup('alerts_ui_e2e', 'FR');

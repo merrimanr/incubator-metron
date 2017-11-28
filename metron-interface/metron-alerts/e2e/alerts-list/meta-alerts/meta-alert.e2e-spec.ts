@@ -67,7 +67,7 @@ describe('meta-alerts workflow', function() {
     tablePage.navigateTo();
 
     /* Create Meta Alert */
-    treePage.selectGroup('ip_src_addr');
+    treePage.selectGroup('ip_src_addr'); // TODO This failed
     expect(treePage.getDashGroupValues('192.168.138.158')).toEqualBcoz(dashRowValues.firstDashRow, 'First Dashrow to be present');
     expect(treePage.getDashGroupValues('192.168.66.1')).toEqualBcoz(dashRowValues.secondDashRow, 'Second Dashrow to be present');
 

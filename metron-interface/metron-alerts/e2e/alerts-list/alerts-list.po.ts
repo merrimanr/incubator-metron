@@ -18,7 +18,10 @@
 
 import {browser, element, by, protractor} from 'protractor';
 import * as moment from 'moment/moment';
-import {waitForElementVisibility, waitForElementPresence, waitForElementInVisibility} from '../utils/e2e_util';
+import {
+  waitForElementVisibility, waitForElementPresence, waitForElementInVisibility,
+  waitForText, waitForCssClass, waitForCssClassNotToBePresent, waitForTextChange
+} from '../utils/e2e_util';
 
 export class MetronAlertsPage {
   navigateTo() {
@@ -172,12 +175,22 @@ export class MetronAlertsPage {
     element(by.css('.btn.pause-play')).click();
   }
 
-  clickTableText(name: string) {
-    waitForElementPresence(element.all(by.linkText(name))).then(() => element.all(by.linkText(name)).get(0).click());
+  clickTableTextAndGetSearchText(name: string, textToWaitFor: string) {
+    let searchBoxElement = element(by.css('.ace_line'));
+    let tableTextElement = element.all(by.cssContainingText('table tr td a', name)).get(0);
+    return waitForElementPresence(tableTextElement)
+          .then(() => tableTextElement.click())
+          .then(() => waitForText(searchBoxElement, textToWaitFor))
+          .then(() => element(by.css('.ace_line')).getText())
+  }
+
+  private clickTableText(name: string) {
+    waitForElementVisibility(element.all(by.linkText(name))).then(() => element.all(by.linkText(name)).get(0).click());
   }
 
   clickClearSearch() {
-    element(by.css('.btn-search-clear')).click();
+    return element(by.css('.btn-search-clear')).click()
+    .then(() => waitForText(element(by.css('.ace_line')), '*'));
   }
 
   getSavedSearchTitle() {
@@ -238,14 +251,21 @@ export class MetronAlertsPage {
     element(by.css('app-configure-table')).element(by.buttonText('SAVE')).click();
   }
 
-  clickRemoveSearchChip() {
+  clickRemoveSearchChipAndGetSearchText(expectedSearchText: string) {
+    let searchBoxElement = element(by.css('.ace_line'));
+    return this.clickRemoveSearchChip()
+    .then(() => waitForText(searchBoxElement, expectedSearchText))
+    .then(() => element(by.css('.ace_line')).getText())
+  }
+
+  private clickRemoveSearchChip(): any {
     let aceLine = element.all(by.css('.ace_keyword')).get(0);
     /* - Focus on the search text box by sending a empty string
        - move the mouse to the text in search bos so that delete buttons become visible
        - wait for delete buttons become visible
        - click on delete button
     */
-    element(by.css('app-alerts-list .ace_text-input')).sendKeys('')
+    return element(by.css('app-alerts-list .ace_text-input')).sendKeys('')
     .then(() => browser.actions().mouseMove(aceLine).perform())
     .then(() => this.waitForElementPresence(element(by.css('.ace_value i'))))
     .then(() => element.all(by.css('.ace_value i')).get(0).click());
@@ -256,7 +276,6 @@ export class MetronAlertsPage {
     element(by.css('app-alerts-list .ace_text-input')).sendKeys(protractor.Key.BACK_SPACE);
     element(by.css('app-alerts-list .ace_text-input')).sendKeys(search);
     element(by.css('app-alerts-list .ace_text-input')).sendKeys(protractor.Key.ENTER);
-    browser.sleep(2000);
   }
 
   waitForElementPresence (element ) {
@@ -298,8 +317,14 @@ export class MetronAlertsPage {
   }
 
   clickDateSettings() {
-    element(by.css('app-time-range button.btn-search')).click();
-    browser.sleep(2000);
+    return element(by.css('app-time-range button.btn-search')).click()
+    .then(() => waitForCssClass(element(by.css('app-time-range #time-range')), 'show'));
+  }
+
+  hideDateSettings() {
+    return element(by.css('app-time-range button.btn-search')).click()
+    .then(() => waitForCssClassNotToBePresent(element(by.css('app-time-range #time-range')), 'show'))
+    .then(() => waitForElementInVisibility(element(by.css('app-time-range #time-range'))));
   }
 
   getTimeRangeTitles() {
@@ -318,9 +343,27 @@ export class MetronAlertsPage {
     return element.all(by.css('app-time-range')).all(by.buttonText('APPLY')).count().then(count => count === 1);
   }
 
+  selectQuickTimeRangeAndGetTimeRangeAndTimeText(quickRange: string) {
+    let currentTimeRangeVal: any = [];
+    return element.all(by.css('app-time-range button span')).getText()
+          .then(text => { currentTimeRangeVal = text; })
+          .then(() => this.selectQuickTimeRange(quickRange))
+          .then(() => waitForCssClassNotToBePresent(element(by.css('app-time-range #time-range')), 'show'))
+          .then(() => waitForTextChange(element.all(by.css('app-time-range button span')).get(0), currentTimeRangeVal[0]))
+          .then(() => waitForTextChange(element.all(by.css('app-time-range button span')).get(1), currentTimeRangeVal[1]))
+          .then(() => this.getTimeRangeButtonAndSubText());
+  }
+
+  selectQuickTimeRangeAndGetTimeRangeText(quickRange: string) {
+    return this.selectQuickTimeRange(quickRange)
+    .then(() => waitForElementInVisibility(element(by.css('#time-range'))))
+    .then(() => waitForText(element.all(by.css('app-time-range button span')).get(0), quickRange))
+    .then(() => element.all(by.css('app-time-range button span')).get(0).getText());
+  }
+
   selectQuickTimeRange(quickRange: string) {
-    element.all(by.cssContainingText('.quick-ranges span', quickRange)).get(0).click();
-    browser.sleep(2000);
+    return element.all(by.cssContainingText('.quick-ranges span', quickRange)).get(0).click();
+    // browser.sleep(2000);
   }
 
   getTimeRangeButtonText() {
@@ -411,8 +454,7 @@ export class MetronAlertsPage {
   }
 
   getTimeRangeButtonAndSubText() {
-    return waitForElementInVisibility(element(by.css('#time-range')))
-    .then(() => element.all(by.css('app-time-range button span')).getText())
+    return element.all(by.css('app-time-range button span')).getText()
     .then(arr => {
         let retArr = [arr[0]];
         for (let i=1; i < arr.length; i++) {

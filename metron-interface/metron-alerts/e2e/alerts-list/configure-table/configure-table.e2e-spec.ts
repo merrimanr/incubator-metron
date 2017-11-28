@@ -66,8 +66,7 @@ describe('metron-alerts configure table', function() {
     page.renameColumn('enrichments:geo:ip_dst_addr:country', 'Country');
     page.saveConfigureColumns();
 
-    page.clickTableText('FR');
-    expect(page.getSearchText()).toEqual('Country:FR');
+    expect(page.clickTableTextAndGetSearchText('FR', 'Country:FR')).toEqual('Country:FR');
     expect(page.getChangesAlertTableTitle('Alerts (169)')).toEqual('Alerts (25)');
     page.clickClearSearch();
 
