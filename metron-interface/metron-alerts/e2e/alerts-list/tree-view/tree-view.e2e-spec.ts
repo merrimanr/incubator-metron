@@ -59,7 +59,7 @@ describe('metron-alerts tree view', function () {
                                                     '5 Group By Elements values should be present');
   });
 
-  it('drag and drop should change group order', () => {
+  it('drag and drop should change group order',  async function() : Promise<any> {
     let before = {
       'firstDashRow': ['0', 'alerts_ui_e2e', 'ALERTS', '169'],
       'firstSubGroup': '0 US (22)',
@@ -78,8 +78,9 @@ describe('metron-alerts tree view', function () {
 
     page.selectGroup('source:type');
     page.selectGroup('enrichments:geo:ip_dst_addr:country');
-    page.expandDashGroup('alerts_ui_e2e');
     expect(page.getDashGroupValues('alerts_ui_e2e')).toEqualBcoz(before.firstDashRow, 'First Dash Row should be correct');
+
+    await page.expandDashGroup('alerts_ui_e2e');
     expect(page.getSubGroupValues('alerts_ui_e2e', 'US')).toEqualBcoz(before.firstSubGroup,
         'Dash Group Values should be correct for US');
     expect(page.getSubGroupValues('alerts_ui_e2e', 'RU')).toEqualBcoz(before.secondSubGroup,
@@ -87,8 +88,7 @@ describe('metron-alerts tree view', function () {
     expect(page.getSubGroupValues('alerts_ui_e2e', 'FR')).toEqualBcoz(before.thirdSubGroup,
         'Dash Group Values should be present for FR');
 
-    page.dragGroup('source:type', 'ip_src_addr');
-    //page.selectGroup('source:type');
+    await page.dragGroup('source:type', 'ip_src_addr');
     expect(page.getDashGroupValues('US')).toEqualBcoz(after.firstDashRow, 'First Dash Row after ' +
         'reorder should be correct');
     expect(page.getDashGroupValues('RU')).toEqualBcoz(after.secondDashRow, 'Second Dash Row after ' +
@@ -96,34 +96,36 @@ describe('metron-alerts tree view', function () {
     expect(page.getDashGroupValues('FR')).toEqualBcoz(after.thirdDashRow, 'Third Dash Row after ' +
         'reorder should be correct');
 
-    page.expandDashGroup('US');
+    await page.expandDashGroup('US');
     expect(page.getSubGroupValues('US', 'alerts_ui_e2e')).toEqualBcoz(after.firstDashSubGroup,
         'First Dash Group Values should be present for alerts_ui_e2e');
 
-    page.expandDashGroup('RU');
+    await page.expandDashGroup('RU');
     expect(page.getSubGroupValues('RU', 'alerts_ui_e2e')).toEqualBcoz(after.secondDashSubGroup,
         'Second Dash Group Values should be present for alerts_ui_e2e');
 
-    page.expandDashGroup('FR');
+    await page.expandDashGroup('FR');
     expect(page.getSubGroupValues('FR', 'alerts_ui_e2e')).toEqualBcoz(after.thirdDashSubGroup,
         'Third Dash Group Values should be present for alerts_ui_e2e');
 
-    page.dragGroup('source:type', 'ip_dst_addr');
+    await page.dragGroup('source:type', 'ip_dst_addr');
     page.unGroup();
+
   });
 
-  it('should have group details for single group by', () => {
+  it('should have group details for single group by', async function() : Promise<any> {
     let dashRowValues = ['0', 'alerts_ui_e2e', 'ALERTS', '169'];
     let row1_page1 = ['-', 'dcda4423-7...0962fafc47', '2017-09-13 17:59:32', 'alerts_ui_e2e',
       '192.168.138.158', 'US', '72.34.49.86', 'comarksecurity.com', 'NEW', '', ''];
     let row1_page2 = ['-', '07b29c29-9...ff19eaa888', '2017-09-13 17:59:37', 'alerts_ui_e2e',
       '192.168.138.158', 'FR', '62.75.195.236', '62.75.195.236', 'NEW', '', ''];
 
+    page.unGroup();
     page.selectGroup('source:type');
     expect(page.getActiveGroups()).toEqualBcoz(['source:type'], 'only source type group should be selected');
     expect(page.getDashGroupValues('alerts_ui_e2e')).toEqualBcoz(dashRowValues, 'Dash Group Values should be present');
 
-    page.expandDashGroup('alerts_ui_e2e');
+    await page.expandDashGroup('alerts_ui_e2e');
     expect(page.getDashGroupTableValuesForRow('alerts_ui_e2e', 0)).toEqualBcoz(row1_page1, 'Dash Group Values should be present');
 
     page.clickOnNextPage('alerts_ui_e2e');
@@ -133,11 +135,12 @@ describe('metron-alerts tree view', function () {
     expect(page.getActiveGroups()).toEqualBcoz([], 'no groups should be selected');
   });
 
-  it('should have group details for multiple group by', () => {
+  it('should have group details for multiple group by', async function() : Promise<any> {
 
     let usGroupIds = ['9a969c64-b...001cb011a3','a651f7c3-1...a97d4966c9','afc36901-3...d931231ab2','d860ac35-1...f9e282d571','04a5c3d0-9...af17c06fbc'];
     let frGroupIds = ['07b29c29-9...ff19eaa888','7cd91565-1...de5be54a6e','ca5bde58-a...f3a88d2df4','5d6faf83-8...b88a407647','e2883424-f...79bb8b0606'];
 
+    page.unGroup();
     page.selectGroup('source:type');
     page.selectGroup('ip_dst_addr');
     page.selectGroup('enrichments:geo:ip_dst_addr:country');
@@ -146,7 +149,7 @@ describe('metron-alerts tree view', function () {
     expect(page.getDashGroupValues('alerts_ui_e2e')).toEqualBcoz(['0', 'alerts_ui_e2e', 'ALERTS', '169'],
                                                               'Top Level Group Values should be present for alerts_ui_e2e');
 
-    page.expandDashGroup('alerts_ui_e2e');
+    await page.expandDashGroup('alerts_ui_e2e');
     expect(page.getSubGroupValuesByPosition('alerts_ui_e2e', '204.152.254.221', 0)).toEqualBcoz('0 204.152.254.221 (13)',
                                                                     'Second Level Group Values should be present for 204.152.254.221');
 
@@ -174,7 +177,7 @@ describe('metron-alerts tree view', function () {
   });
 
 
-  it('should have sort working for group details for multiple sub groups', () => {
+  it('should have sort working for group details for multiple sub groups', async function() : Promise<any> {
 
     let usTSCol = ['2017-09-13 17:59:32', '2017-09-13 17:59:42', '2017-09-13 17:59:53', '2017-09-13 18:00:02', '2017-09-13 18:00:14'];
     let ruTSCol = ['2017-09-13 17:59:33', '2017-09-13 17:59:48', '2017-09-13 17:59:51', '2017-09-13 17:59:54', '2017-09-13 17:59:57'];
@@ -184,10 +187,11 @@ describe('metron-alerts tree view', function () {
     let ruSortedTSCol = ['2017-09-14 06:29:40', '2017-09-14 06:29:40', '2017-09-14 06:29:40', '2017-09-14 06:29:40', '2017-09-13 18:02:13'];
     let frSortedTSCol = ['2017-09-14 06:29:40', '2017-09-14 04:29:40', '2017-09-13 18:02:20', '2017-09-13 18:02:05', '2017-09-13 18:02:04'];
 
+    page.unGroup();
     page.selectGroup('source:type');
     page.selectGroup('enrichments:geo:ip_dst_addr:country');
 
-    page.expandDashGroup('alerts_ui_e2e');
+    await page.expandDashGroup('alerts_ui_e2e');
     page.expandSubGroup('alerts_ui_e2e', 'US');
     page.expandSubGroup('alerts_ui_e2e', 'RU');
     page.expandSubGroup('alerts_ui_e2e', 'FR');
@@ -209,26 +213,24 @@ describe('metron-alerts tree view', function () {
     expect(page.getActiveGroups()).toEqualBcoz([], 'no groups should be selected');
   });
 
-  it('should have search working for group details for multiple sub groups', () => {
+  it('should have search working for group details for multiple sub groups', async function() : Promise<any> {
+
+    page.unGroup();
+    listPage.setSearchText('enrichments:geo:ip_dst_addr:country:FR');
 
     page.selectGroup('source:type');
     page.selectGroup('enrichments:geo:ip_dst_addr:country');
 
-    page.expandDashGroup('alerts_ui_e2e');
-    expect(page.getNumOfSubGroups('alerts_ui_e2e')).toEqual(3, 'three sub groups should be present');
-
-    listPage.setSearchText('enrichments:geo:ip_dst_addr:country:FR');
+    await page.expandDashGroup('alerts_ui_e2e');
+    expect(page.getNumOfSubGroups('alerts_ui_e2e')).toEqual(1, 'three sub groups should be present');
     expect(listPage.getChangesAlertTableTitle('Alerts (169)')).toEqual('Alerts (25)');
 
-    expect(page.getNumOfSubGroups('alerts_ui_e2e')).toEqual(1, 'one sub groups should be present');
     page.expandSubGroup('alerts_ui_e2e', 'FR');
 
     let expected = ['FR', 'FR', 'FR', 'FR', 'FR'];
     expect(page.getCellValuesFromTable('alerts_ui_e2e', 'enrichments:geo:ip_dst_addr:country', 'FR')).toEqual(expected,
                                                                                                               'id should be sorted');
-
     page.unGroup();
-    expect(page.getActiveGroups()).toEqualBcoz([], 'no groups should be selected');
   });
 
 });

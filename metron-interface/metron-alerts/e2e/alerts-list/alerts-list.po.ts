@@ -24,6 +24,8 @@ import {
 } from '../utils/e2e_util';
 
 export class MetronAlertsPage {
+  private EC = protractor.ExpectedConditions;
+
   navigateTo() {
     browser.waitForAngularEnabled(false);
     return browser.get('/alerts-list');
@@ -94,6 +96,12 @@ export class MetronAlertsPage {
     return element.all(by.css('app-alerts-list .table th')).getText();
   }
 
+  getChangedPaginationText(previousText: string) {
+    let paginationElement = element(by.css('metron-table-pagination span'));
+    return waitForTextChange(paginationElement, previousText)
+    .then(() => paginationElement.getText());
+  }
+
   getPaginationText() {
     return element(by.css('metron-table-pagination span')).getText();
   }
@@ -110,16 +118,24 @@ export class MetronAlertsPage {
     });
   }
 
-  clickChevronRight(times = 1) {
-    for (let i = 0; i < times; i++) {
-      element(by.css('metron-table-pagination .fa.fa-chevron-right')).click();
-    }
+  clickChevronRight() {
+    // for (let i = 0; i < times; i++) {
+    //   ;
+    // }
+    let paginationEle = element(by.css('metron-table-pagination .fa.fa-chevron-right'));
+    return waitForElementVisibility(paginationEle)
+    .then(() => browser.actions().mouseMove(paginationEle).perform())
+    .then(() => paginationEle.click())
   }
 
   clickChevronLeft(times = 1) {
-    for (let i = 0; i < times; i++) {
-      element(by.css('metron-table-pagination .fa.fa-chevron-left')).click();
-    }
+    // for (let i = 0; i < times; i++) {
+    //
+    // }
+    let paginationEle = element(by.css('metron-table-pagination .fa.fa-chevron-left'));
+    return waitForElementVisibility(paginationEle)
+    .then(() => browser.actions().mouseMove(paginationEle).perform())
+    .then(() => paginationEle.click());
   }
 
   clickSettings() {
@@ -171,16 +187,17 @@ export class MetronAlertsPage {
     browser.sleep(1000);
   }
 
-  clickPlayPause() {
-    element(by.css('.btn.pause-play')).click();
+  clickPlayPause(waitForPreviousClass: string) {
+    let playPauseButton = element(by.css('.btn.pause-play'));
+    return browser.actions().mouseMove(playPauseButton).perform()
+          .then(() => playPauseButton.click())
+          .then(() => waitForCssClass(element(by.css('.btn.pause-play i')), waitForPreviousClass));
   }
 
   clickTableTextAndGetSearchText(name: string, textToWaitFor: string) {
-    let searchBoxElement = element(by.css('.ace_line'));
-    let tableTextElement = element.all(by.cssContainingText('table tr td a', name)).get(0);
-    return waitForElementPresence(tableTextElement)
-          .then(() => tableTextElement.click())
-          .then(() => waitForText(searchBoxElement, textToWaitFor))
+    return waitForElementVisibility(element.all(by.cssContainingText('table tr td a', name)).get(0))
+          .then(() => element.all(by.cssContainingText('table tr td a', name)).get(0).click())
+          .then(() => waitForText('.ace_line', textToWaitFor))
           .then(() => element(by.css('.ace_line')).getText())
   }
 
@@ -188,9 +205,10 @@ export class MetronAlertsPage {
     waitForElementVisibility(element.all(by.linkText(name))).then(() => element.all(by.linkText(name)).get(0).click());
   }
 
-  clickClearSearch() {
-    return element(by.css('.btn-search-clear')).click()
-    .then(() => waitForText(element(by.css('.ace_line')), '*'));
+  clickClearSearch(alertCount = '169') {
+    element(by.css('.btn-search-clear')).click()
+    .then(() => waitForText('.ace_line', '*'))
+    .then(() => waitForText('.col-form-label-lg', `Alerts (${alertCount})`));
   }
 
   getSavedSearchTitle() {
@@ -252,9 +270,8 @@ export class MetronAlertsPage {
   }
 
   clickRemoveSearchChipAndGetSearchText(expectedSearchText: string) {
-    let searchBoxElement = element(by.css('.ace_line'));
     return this.clickRemoveSearchChip()
-    .then(() => waitForText(searchBoxElement, expectedSearchText))
+    .then(() => waitForText('.ace_line', expectedSearchText))
     .then(() => element(by.css('.ace_line')).getText())
   }
 
@@ -271,8 +288,8 @@ export class MetronAlertsPage {
     .then(() => element.all(by.css('.ace_value i')).get(0).click());
   }
 
-  setSearchText(search: string) {
-    this.clickClearSearch();
+  setSearchText(search: string,  alertCount = '169') {
+    this.clickClearSearch(alertCount);
     element(by.css('app-alerts-list .ace_text-input')).sendKeys(protractor.Key.BACK_SPACE);
     element(by.css('app-alerts-list .ace_text-input')).sendKeys(search);
     element(by.css('app-alerts-list .ace_text-input')).sendKeys(protractor.Key.ENTER);
@@ -317,12 +334,12 @@ export class MetronAlertsPage {
   }
 
   clickDateSettings() {
-    return element(by.css('app-time-range button.btn-search')).click()
+    element(by.css('app-time-range button.btn-search')).click()
     .then(() => waitForCssClass(element(by.css('app-time-range #time-range')), 'show'));
   }
 
   hideDateSettings() {
-    return element(by.css('app-time-range button.btn-search')).click()
+    element(by.css('app-time-range button.btn-search')).click()
     .then(() => waitForCssClassNotToBePresent(element(by.css('app-time-range #time-range')), 'show'))
     .then(() => waitForElementInVisibility(element(by.css('app-time-range #time-range'))));
   }
@@ -343,31 +360,35 @@ export class MetronAlertsPage {
     return element.all(by.css('app-time-range')).all(by.buttonText('APPLY')).count().then(count => count === 1);
   }
 
+  waitForTextAndSubTextInTimeRange(currentTimeRangeVal) {
+    return waitForTextChange(element(by.css('app-time-range .time-range-value')), currentTimeRangeVal[1])
+    .then(() => waitForTextChange(element(by.css('app-time-range .time-range-text')), currentTimeRangeVal[0]))
+  }
+
   selectQuickTimeRangeAndGetTimeRangeAndTimeText(quickRange: string) {
     let currentTimeRangeVal: any = [];
     return element.all(by.css('app-time-range button span')).getText()
-          .then(text => { currentTimeRangeVal = text; })
+          .then(text => currentTimeRangeVal = text)
           .then(() => this.selectQuickTimeRange(quickRange))
           .then(() => waitForCssClassNotToBePresent(element(by.css('app-time-range #time-range')), 'show'))
-          .then(() => waitForTextChange(element.all(by.css('app-time-range button span')).get(0), currentTimeRangeVal[0]))
-          .then(() => waitForTextChange(element.all(by.css('app-time-range button span')).get(1), currentTimeRangeVal[1]))
+          .then(() => waitForTextChange(element(by.css('app-time-range .time-range-value')), currentTimeRangeVal[1]))
+          .then(() => waitForTextChange(element(by.css('app-time-range .time-range-text')), currentTimeRangeVal[0]))
           .then(() => this.getTimeRangeButtonAndSubText());
   }
 
   selectQuickTimeRangeAndGetTimeRangeText(quickRange: string) {
     return this.selectQuickTimeRange(quickRange)
     .then(() => waitForElementInVisibility(element(by.css('#time-range'))))
-    .then(() => waitForText(element.all(by.css('app-time-range button span')).get(0), quickRange))
+    .then(() => browser.wait(this.EC.textToBePresentInElement(element(by.css('app-time-range .time-range-text')), quickRange)))
     .then(() => element.all(by.css('app-time-range button span')).get(0).getText());
   }
 
   selectQuickTimeRange(quickRange: string) {
     return element.all(by.cssContainingText('.quick-ranges span', quickRange)).get(0).click();
-    // browser.sleep(2000);
   }
 
   getTimeRangeButtonText() {
-    return element.all(by.css('app-time-range button.btn-search span')).get(0).getText();
+    return element(by.css('app-time-range .time-range-text')).getText();
   }
 
   setDate(index: number, year: string, month: string, day: string, hour: string, min: string, sec: string) {
@@ -393,9 +414,8 @@ export class MetronAlertsPage {
   }
 
   getChangesAlertTableTitle(previousText: string) {
-    // browser.pause();
     let title = element(by.css('.col-form-label-lg'));
-    return this.waitForTextChange(title, previousText).then(() => {
+    return waitForTextChange(title, previousText).then(() => {
       return title.getText();
     });
   }
@@ -454,16 +474,18 @@ export class MetronAlertsPage {
   }
 
   getTimeRangeButtonAndSubText() {
-    return element.all(by.css('app-time-range button span')).getText()
-    .then(arr => {
-        let retArr = [arr[0]];
-        for (let i=1; i < arr.length; i++) {
-          let dateStr = arr[i].split(' to ');
-          let fromTime = moment.utc(dateStr[0], 'YYYY-MM-DD HH:mm:ss Z').unix() * 1000;
-          let toTime = moment.utc(dateStr[1], 'YYYY-MM-DD HH:mm:ss Z').unix() * 1000;
-          retArr.push((toTime - fromTime) + '');
-        }
-        return retArr;
+    let timeRangetext = '', timeRangeValue = '';
+    return element(by.css('app-time-range .time-range-text')).getText()
+    .then(text => timeRangetext = text)
+    .then(() => element(by.css('app-time-range .time-range-value')).getText())
+    .then(text => timeRangeValue = text)
+    .then(() => {
+      let retArr = [timeRangetext];
+      let dateStr = timeRangeValue.split(' to ');
+      let fromTime = moment.utc(dateStr[0], 'YYYY-MM-DD HH:mm:ss Z').unix() * 1000;
+      let toTime = moment.utc(dateStr[1], 'YYYY-MM-DD HH:mm:ss Z').unix() * 1000;
+      retArr.push((toTime - fromTime) + '');
+      return retArr;
     });
   }
 

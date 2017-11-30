@@ -65,30 +65,34 @@ describe('metron-alerts App', function() {
     expect(page.getTableColumnNames()).toEqualBcoz(columnNames, 'for default column names for alert list table');
   });
 
-  it('should have all pagination controls and they should be working', () => {
+  it('should have all pagination controls and they should be working', async function() : Promise<any> {
     expect(page.isChevronLeftEnabled()).toEqualBcoz(false, 'for left chevron to be disabled for first page');
     expect(page.getPaginationText()).toEqualBcoz('1 - 25 of 169', 'for pagination text');
     expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for first page');
 
-    page.clickChevronRight();
+    await page.clickChevronRight();
 
     expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be enabled for second page');
     expect(page.getPaginationText()).toEqualBcoz('26 - 50 of 169', 'for pagination text');
     expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for second page');
 
-    page.clickChevronRight();
+    await page.clickChevronRight();
 
     expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be enabled for third page');
     expect(page.getPaginationText()).toEqualBcoz('51 - 75 of 169', 'for pagination text');
     expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for third page');
 
-    page.clickChevronRight(4);
+    for (let i = 0; i < 4; i++) {
+      await page.clickChevronRight();
+    }
 
     expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be enabled for last page');
     expect(page.getPaginationText()).toEqualBcoz('151 - 169 of 169', 'for pagination text');
     expect(page.isChevronRightEnabled()).toEqualBcoz(false, 'for right chevron to be disabled for last page');
 
-    page.clickChevronLeft(7);
+    for (let i = 0; i < 7; i++) {
+      await page.clickChevronLeft(7);
+    }
 
     expect(page.isChevronLeftEnabled()).toEqualBcoz(false, 'for left chevron to be disabled for first page again');
     expect(page.getPaginationText()).toEqualBcoz('1 - 25 of 169', 'for pagination text');
@@ -126,14 +130,14 @@ describe('metron-alerts App', function() {
     page.clickSettings();
   });
 
-  it('play pause should start polling and stop polling ', () => {
-    expect(page.getPlayPauseState()).toEqual('fa fa-pause', 'for default pause option');
-
-    page.clickPlayPause();
+  it('play pause should start polling and stop polling ', async function() : Promise<any> {
     expect(page.getPlayPauseState()).toEqual('fa fa-play', 'for default pause option');
 
-    page.clickPlayPause();
+    await page.clickPlayPause('fa-pause');
     expect(page.getPlayPauseState()).toEqual('fa fa-pause', 'for default pause option');
+
+    await page.clickPlayPause('fa-play');
+    expect(page.getPlayPauseState()).toEqual('fa fa-play', 'for default pause option');
   });
 
   it('should select columns from table configuration', () => {

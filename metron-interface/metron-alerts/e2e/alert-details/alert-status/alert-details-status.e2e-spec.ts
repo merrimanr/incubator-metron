@@ -48,39 +48,39 @@ describe('metron-alerts alert status', function() {
     jasmine.addMatchers(customMatchers);
   });
 
-  it('should change alert statuses', () => {
+  it('should change alert statuses', async function() : Promise<any> {
     let alertId = 'c4c5e418-3938-099e-bb0d-37028a98dca8';
 
-    page.navigateTo(alertId);
-    page.clickNew();
+    await page.navigateTo(alertId);
+    await page.clickNew();
     expect(page.getAlertStatus('ANY')).toEqual('NEW');
-    page.clickOpen();
+    await page.clickOpen();
     expect(page.getAlertStatus('NEW')).toEqual('OPEN');
     expect(listPage.getAlertStatusById(alertId)).toEqual('OPEN');
-    page.clickDismiss();
+    await page.clickDismiss();
     expect(page.getAlertStatus('OPEN')).toEqual('DISMISS');
     expect(listPage.getAlertStatusById(alertId)).toEqual('DISMISS');
-    page.clickEscalate();
+    await page.clickEscalate();
     expect(page.getAlertStatus('DISMISS')).toEqual('ESCALATE');
     expect(listPage.getAlertStatusById(alertId)).toEqual('ESCALATE');
-    page.clickResolve();
+    await page.clickResolve();
     expect(page.getAlertStatus('ESCALATE')).toEqual('RESOLVE');
     expect(listPage.getAlertStatusById(alertId)).toEqual('RESOLVE');
-    page.clickNew();
+    await page.clickNew();
   });
 
-  it('should add comments for table view', () => {
+  it('should add comments for table view', async function() : Promise<any> {
     let comment1 = 'This is a sample comment';
     let comment2 = 'This is a sample comment again';
     let userNameAndTimestamp = '- admin - a few seconds ago';
 
-    page.clickCommentsInSideNav();
+    await page.clickCommentsInSideNav();
     page.addCommentAndSave(comment1, 0);
 
     expect(page.getCommentsText()).toEqual([comment1]);
     expect(page.getCommentsUserNameAndTimeStamp()).toEqual([userNameAndTimestamp]);
 
-    page.addCommentAndSave(comment2, 1);
+    await page.addCommentAndSave(comment2, 1);
     expect(page.getCommentsText()).toEqual([comment2, comment1]);
     expect(page.getCommentsUserNameAndTimeStamp()).toEqual([userNameAndTimestamp, userNameAndTimestamp]);
 

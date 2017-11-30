@@ -1,4 +1,4 @@
-import { browser, protractor } from 'protractor';
+import { browser, protractor, by, element } from 'protractor';
 import request = require('request');
 import fs = require('fs');
 
@@ -15,13 +15,16 @@ export function waitForURL(url: string) {
   return browser.wait(EC.urlIs(url));
 }
 
-export function waitForText(element, text) {
+export function waitForText(selector, text) {
   let EC = protractor.ExpectedConditions;
-  return browser.wait(EC.textToBePresentInElement(element, text));
+  return browser.wait(EC.textToBePresentInElement(element(by.css(selector)), text));
 }
 
 export function waitForTextChange(element, previousText) {
   let EC = protractor.ExpectedConditions;
+  if (previousText.length === 0) {
+    return waitForNonEmptyText(element);
+  }
   return browser.wait(EC.not(EC.textToBePresentInElement(element, previousText)));
 }
 
@@ -54,7 +57,7 @@ export function waitForCssClass(elementFinder, desiredClass) {
       });
     }
   }
-  return browser.wait(waitForCssClass$(elementFinder, desiredClass), 5000);
+  return browser.wait(waitForCssClass$(elementFinder, desiredClass));
 }
 
 export function waitForCssClassNotToBePresent(elementFinder, desiredClass) {
@@ -66,7 +69,19 @@ export function waitForCssClassNotToBePresent(elementFinder, desiredClass) {
       });
     }
   }
-  return browser.wait(waitForCssClassNotToBePresent$(elementFinder, desiredClass), 5000);
+  return browser.wait(waitForCssClassNotToBePresent$(elementFinder, desiredClass));
+}
+
+export function waitForNonEmptyText(elementFinder) {
+  function waitForNonEmptyText$(elementFinder)
+  {
+    return function () {
+      return elementFinder.getText().then(function (text) {
+        return elementFinder.isDisplayed() && text.trim().length > 0;
+      });
+    }
+  }
+  return browser.wait(waitForNonEmptyText$(elementFinder));
 }
 
 export function loadTestData() {

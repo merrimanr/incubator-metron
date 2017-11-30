@@ -39,6 +39,7 @@ export class TreeGroupData {
 
   // Used by only Leafnodes
   groupQueryMap = null;
+  groupQueryMapValues = '';
   response: SearchResponse = new SearchResponse();
   pagingData: Pagination = new Pagination();
 

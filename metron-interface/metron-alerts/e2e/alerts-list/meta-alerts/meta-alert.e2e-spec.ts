@@ -55,7 +55,7 @@ describe('meta-alerts workflow', function() {
     jasmine.addMatchers(customMatchers);
   });
 
-  it('should have all the steps for meta alerts workflow', () => {
+  it('should have all the steps for meta alerts workflow', async function() : Promise<any> {
     let comment1 = 'This is a sample comment';
     let userNameAndTimestamp = '- admin - a few seconds ago';
     let confirmText = 'Do you wish to create a meta alert with 113 selected alerts?';
@@ -76,14 +76,14 @@ describe('meta-alerts workflow', function() {
     treePage.clickNoForConfirmation();
 
     treePage.clickOnMergeAlerts('192.168.138.158');
-    treePage.clickYesForConfirmation();
+     treePage.clickYesForConfirmation();
 
     treePage.waitForElementToDisappear('192.168.138.158');
 
     treePage.unGroup();
 
     /* Table should have all alerts */
-    tablePage.waitForMetaAlert();
+     tablePage.waitForMetaAlert();
     expect(tablePage.getPaginationText()).toEqualBcoz('1 - 25 of 57', 'pagination text to be present');
     expect(tablePage.getCellValue(0, 2, '(114)')).toContain('(113)', 'number of alerts in a meta alert should be correct');
     expect(tablePage.getNonHiddenRowCount()).toEqualBcoz(25, '25 rows to be visible');
@@ -138,17 +138,17 @@ describe('meta-alerts workflow', function() {
     let removAlertConfirmText = 'Do you wish to remove the alert from the meta alert?';
     tablePage.removeAlert(2);
     expect(treePage.getConfirmationText()).toEqualBcoz(removAlertConfirmText, 'confirmation text to remove alert from meta alert');
-    treePage.clickYesForConfirmation();
+     treePage.clickYesForConfirmation();
     expect(tablePage.getCellValue(0, 2, '(114')).toContain('(113)', 'alert count should be decremented');
 
     /* Delete Meta Alert */
     let removeMetaAlertConfirmText = 'Do you wish to remove all the alerts from meta alert?';
     tablePage.removeAlert(0);
     expect(treePage.getConfirmationText()).toEqualBcoz(removeMetaAlertConfirmText, 'confirmation text to remove meta alert');
-    treePage.clickYesForConfirmation();
+     treePage.clickYesForConfirmation();
   });
 
-  it('should create a meta alert from nesting of more than one level', () => {
+  it('should create a meta alert from nesting of more than one level', async function() : Promise<any> {
     let groupByItems = {
       'source:type': '1',
       'ip_dst_addr': '7',
@@ -204,10 +204,10 @@ describe('meta-alerts workflow', function() {
     // Create a meta alert from a group that is nested by more than 1 level
     treePage.selectGroup('source:type');
     treePage.selectGroup('ip_dst_addr');
-    treePage.expandDashGroup('alerts_ui_e2e');
+     treePage.expandDashGroup('alerts_ui_e2e');
 
     treePage.clickOnMergeAlertsInTable('alerts_ui_e2e', '224.0.0.251', 0);
-    treePage.clickYesForConfirmation();
+     treePage.clickYesForConfirmation();
 
     treePage.unGroup();
     tablePage.waitForMetaAlert();
@@ -224,19 +224,19 @@ describe('meta-alerts workflow', function() {
         '5 Group By Elements values should be present');
 
 
-    tablePage.setSearchText('guid:c894bbcf-3195-0708-aebe-0574cf0cc1fe');
+    tablePage.setSearchText('guid:c894bbcf-3195-0708-aebe-0574cf0cc1fe', '150');
     expect(tablePage.getChangesAlertTableTitle('Alerts (150)')).toEqual('Alerts (1)');
     tablePage.expandMetaAlert(0);
     expect(tablePage.getAllRowsCount()).toEqual(21);
     tablePage.expandMetaAlert(0);
-    tablePage.clickClearSearch();
+    tablePage.clickClearSearch('150');
     expect(tablePage.getChangesAlertTableTitle('Alerts (1)')).toEqual('Alerts (150)');
 
     // Delete a meta alert from the middle and check the data
     tablePage.expandMetaAlert(0);
     expect(tablePage.getTableCellValues(3, 1, 21)).toEqual(alertsInMetaAlerts);
     tablePage.removeAlert(5);
-    treePage.clickYesForConfirmation();
+     treePage.clickYesForConfirmation();
     expect(tablePage.getCellValue(0, 2, '(20')).toContain('(19)', 'alert count should be decremented');
     expect(tablePage.getTableCellValues(3, 1, 20)).toEqual(alertsAfterDeletedInMetaAlerts);
 

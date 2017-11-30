@@ -21,9 +21,18 @@
 
 /*global jasmine */
 var SpecReporter = require('jasmine-spec-reporter').SpecReporter;
+var HtmlScreenshotReporter = require('protractor-jasmine2-screenshot-reporter');
+
+// var reporter = new HtmlScreenshotReporter({
+//   cleanDestination: false,
+//   captureOnlyFailedSpecs: true,
+//   showQuickLinks: true,
+//   dest: './e2e-report',
+//   filename: 'my-report.html'
+// });
 
 exports.config = {
-  allScriptsTimeout: 25000,
+  allScriptsTimeout: 15000,
   specs: [
     './e2e/login/login.e2e-spec.ts',
     './e2e/alerts-list/alerts-list.e2e-spec.ts',
@@ -59,13 +68,26 @@ exports.config = {
     require('ts-node').register({
       project: 'e2e'
     });
+    // return new Promise(function(resolve){
+    //   reporter.beforeLaunch(resolve);
+    // });
+  },
+  afterLaunch: function(exitCode) {
+    // return new Promise(function(resolve){
+    //   reporter.afterLaunch(resolve.bind(this, exitCode));
+    // });
   },
   onPrepare: function() {
     var defer = protractor.promise.defer();
     var cleanMetronUpdateTable = require('./e2e/utils/clean_metron_update_table').cleanMetronUpdateTable;
+    var createMetaAlertsIndex = require('./e2e/utils/e2e_util').createMetaAlertsIndex;
     cleanMetronUpdateTable()
     .then(function() {
-      jasmine.getEnv().addReporter(new SpecReporter());
+      jasmine.getEnv().addReporter(new SpecReporter({
+        displayStacktrace: 'specs'
+      }));
+      // jasmine.getEnv().addReporter(reporter);
+      createMetaAlertsIndex();
       defer.fulfill();
     })
     .catch(function (error) {

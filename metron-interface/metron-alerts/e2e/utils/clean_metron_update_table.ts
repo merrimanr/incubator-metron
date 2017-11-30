@@ -22,7 +22,7 @@ function cleanupTable(resolve, reject) {
       stream.on('close', function() {
         if (errorMsg.length > 0) {
           console.log(chalk.bold.red('Error is:') + errorMsg);
-          console.log(chalk.red.bgBlack.bold('Unable to truncate metron_update table in HBase. Most likely reason is HBase is down !!!'))
+          console.log(chalk.red.bgBlack.bold('Unable to truncate metron_update table in HBase. Most likely reason is HBase is down !!!'));
           reject();
         } else {
           console.log(chalk.bold.green('Truncated metron_update table in HBase'));

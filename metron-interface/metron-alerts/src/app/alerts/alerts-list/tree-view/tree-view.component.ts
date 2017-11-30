@@ -112,6 +112,7 @@ export class TreeViewComponent extends TableViewComponent implements OnInit, OnC
     searchRequest.from = selectedGroup.pagingData.from;
     searchRequest.size = selectedGroup.pagingData.size;
     searchRequest.sort = selectedGroup.sortField ? [selectedGroup.sortField] : [];
+    selectedGroup.groupQueryMapValues = Object.keys(selectedGroup.groupQueryMap).map(key => selectedGroup.groupQueryMap[key]).join('-');
 
     return this.searchGroup(selectedGroup, searchRequest);
   }
@@ -383,7 +384,7 @@ export class TreeViewComponent extends TableViewComponent implements OnInit, OnC
       if (this.canCreateMetaAlert(searchResponse.total)) {
         let metaAlert = new MetaAlertCreateRequest();
         metaAlert.alerts = this.createGetRequestArray(searchResponse);
-        metaAlert.groups = this.queryBuilder.groupRequest.groups.map(grp => grp.field);
+        metaAlert.groups = Object.keys(group.groupQueryMap);
 
         this.metaAlertService.create(metaAlert).subscribe(() => {
           setTimeout(() => this.onRefreshData.emit(true), 1000);
