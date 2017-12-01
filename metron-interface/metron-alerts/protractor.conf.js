@@ -38,7 +38,7 @@ exports.config = {
   capabilities: {
     'browserName': 'chrome',
     'chromeOptions': {
-      args: [  "--disable-gpu", "--window-size=1435,850" ],
+      args: [ "--headless", "--disable-gpu", "--window-size=1435,850" ],
       'prefs': {
         'credentials_enable_service': false,
         'profile': { 'password_manager_enabled': false}
@@ -51,7 +51,6 @@ exports.config = {
   jasmineNodeOpts: {
     showColors: true,
     defaultTimeoutInterval: 50000
-  //  print: function() {}
   },
   useAllAngular2AppRoots: true,
   rootElement: 'metron-alerts-root',
@@ -69,7 +68,6 @@ exports.config = {
       jasmine.getEnv().addReporter(new SpecReporter({
         displayStacktrace: 'specs'
       }));
-      // jasmine.getEnv().addReporter(reporter);
       createMetaAlertsIndex();
       defer.fulfill();
     })

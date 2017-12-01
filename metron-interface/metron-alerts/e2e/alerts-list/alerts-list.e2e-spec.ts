@@ -30,16 +30,16 @@ describe('metron-alerts App', function() {
   let colNamesColumnConfig = [ 'score', 'id', 'timestamp', 'source:type', 'ip_src_addr', 'enrichments:geo:ip_dst_addr:country',
                                 'ip_dst_addr', 'host', 'alert_status' ];
 
-  beforeAll(() => {
+  beforeAll(async function() : Promise<any> {
     loginPage = new LoginPage();
     loginPage.login();
 
-    loadTestData();
+    await loadTestData();
   });
 
-  afterAll(() => {
+  afterAll(async function() : Promise<any> {
     loginPage.logout();
-    deleteTestData();
+    await deleteTestData();
   });
 
   beforeEach(() => {
@@ -51,6 +51,8 @@ describe('metron-alerts App', function() {
     page.navigateTo();
     page.clearLocalStorage();
 
+    expect(page.getChangesAlertTableTitle('Alerts (0)')).toEqualBcoz('Alerts (169)', 'for alerts title');
+
     expect(page.isMetronLogoPresent()).toEqualBcoz(true, 'for Metron Logo');
     expect(page.isSavedSearchButtonPresent()).toEqualBcoz(true, 'for SavedSearch Button');
     expect(page.isClearSearchPresent()).toEqualBcoz(true, 'for Clear Search');
@@ -60,7 +62,6 @@ describe('metron-alerts App', function() {
     expect(page.isPausePlayRefreshButtonPresent()).toEqualBcoz(true, 'for pause/play button');
     expect(page.isConfigureTableColumnsPresent()).toEqualBcoz(true, 'for alerts table column configure button');
 
-    expect(page.getChangesAlertTableTitle('Alerts (0)')).toEqualBcoz('Alerts (169)', 'for alerts title');
     expect(page.getActionDropdownItems()).toEqualBcoz([ 'Open', 'Dismiss', 'Escalate', 'Resolve', 'Add to Alert' ],
                                                         'for default dropdown actions');
     expect(page.getTableColumnNames()).toEqualBcoz(columnNames, 'for default column names for alert list table');

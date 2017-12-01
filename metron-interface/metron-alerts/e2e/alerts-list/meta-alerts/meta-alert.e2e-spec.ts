@@ -33,7 +33,7 @@ describe('meta-alerts workflow', function() {
   let loginPage: LoginPage;
   let alertFacetsPage: AlertFacetsPage;
 
-  beforeAll(() => {
+  beforeAll(async function() : Promise<any> {
     loginPage = new LoginPage();
     loginPage.login();
     tablePage = new MetronAlertsPage();
@@ -43,13 +43,13 @@ describe('meta-alerts workflow', function() {
     detailsPage = new MetronAlertDetailsPage();
     alertFacetsPage = new AlertFacetsPage();
 
-    loadTestData();
-    createMetaAlertsIndex();
+    await createMetaAlertsIndex();
+    await loadTestData();
   });
 
-  afterAll(() => {
+  afterAll(async function() : Promise<any> {
     loginPage.logout();
-    deleteTestData();
+    await deleteTestData();
   });
 
   beforeEach(() => {

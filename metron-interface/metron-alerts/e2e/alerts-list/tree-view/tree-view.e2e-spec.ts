@@ -27,19 +27,19 @@ describe('metron-alerts tree view', function () {
   let listPage: MetronAlertsPage;
   let loginPage: LoginPage;
 
-  beforeAll(() => {
+  beforeAll(async function() : Promise<any> {
     loginPage = new LoginPage();
     page = new TreeViewPage();
     listPage = new MetronAlertsPage();
     loginPage.login();
     page.navigateToAlertsList();
 
-    loadTestData();
+    await loadTestData();
   });
 
-  afterAll(() => {
+  afterAll(async function() : Promise<any> {
     loginPage.logout();
-    deleteTestData();
+    await deleteTestData();
   });
 
   beforeEach(() => {

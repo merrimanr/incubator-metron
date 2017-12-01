@@ -29,20 +29,20 @@ describe('metron-alerts alert status', function() {
   let treePage: TreeViewPage;
   let loginPage: LoginPage;
 
-  beforeAll(() => {
+  beforeAll(async function() : Promise<any> {
 
     loginPage = new LoginPage();
     listPage = new MetronAlertsPage();
     treePage = new TreeViewPage();
     loginPage.login();
 
-    loadTestData();
+    await loadTestData();
   });
 
-  afterAll(() => {
+  afterAll(async function() : Promise<any> {
     new MetronAlertsPage().navigateTo();
     loginPage.logout();
-    deleteTestData();
+    await deleteTestData();
   });
 
   beforeEach(() => {

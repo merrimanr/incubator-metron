@@ -26,16 +26,16 @@ describe('metron-alerts facets', function() {
   let page: AlertFacetsPage;
   let loginPage: LoginPage;
 
-  beforeAll(() => {
+  beforeAll(async function() : Promise<any> {
     loginPage = new LoginPage();
     loginPage.login();
 
-    loadTestData();
+    await loadTestData();
   });
 
-  afterAll(() => {
+  afterAll(async function() : Promise<any> {
     loginPage.logout();
-    deleteTestData();
+    await deleteTestData();
   });
 
   beforeEach(() => {

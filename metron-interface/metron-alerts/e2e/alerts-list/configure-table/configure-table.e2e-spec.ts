@@ -27,16 +27,16 @@ describe('metron-alerts configure table', function() {
   let colNamesColumnConfig = [ 'score', 'id', 'timestamp', 'source:type', 'ip_src_addr', 'enrichments:geo:ip_dst_addr:country',
     'ip_dst_addr', 'host', 'alert_status' ];
 
-  beforeAll(() => {
+  beforeAll(async function() : Promise<any> {
     loginPage = new LoginPage();
     loginPage.login();
 
-    loadTestData();
+    await loadTestData();
   });
 
-  afterAll(() => {
+  afterAll(async function() : Promise<any> {
     loginPage.logout();
-    deleteTestData();
+    await deleteTestData();
   });
 
   beforeEach(() => {

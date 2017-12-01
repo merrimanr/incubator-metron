@@ -6,9 +6,9 @@ var errorMsg = '';
 export function cleanMetronUpdateTable() {
   return  new Promise(
       function (resolve, reject) {
-        resolve();
-        // checkNodeVersion();
-        // cleanupTable(resolve, reject);
+        // resolve();
+        checkNodeVersion();
+        cleanupTable(resolve, reject);
       }
   );
 }

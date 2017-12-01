@@ -84,26 +84,69 @@ export function waitForNonEmptyText(elementFinder) {
   return browser.wait(waitForNonEmptyText$(elementFinder));
 }
 
-export function loadTestData() {
-  deleteTestData();
+function promiseHandler(resolve, reject) {
+  return (response) => {
+    if (response.statusCode === 200) {
+      resolve()
+    } else {
+      reject();
+    }
+  };
+}
 
-  fs.createReadStream('e2e/mock-data/alerts_ui_e2e_index.template')
-    .pipe(request.post('http://node1:9200/_template/alerts_ui_e2e_index'));
-  fs.createReadStream('e2e/mock-data/alerts_ui_e2e_index.data')
-    .pipe(request.post('http://node1:9200/alerts_ui_e2e_index/alerts_ui_e2e_doc/_bulk'));
+export function loadTestData() {
+  let deleteIndex = function () {
+    return new Promise((resolve, reject) => {
+      request.delete('http://node1:9200/alerts_ui_e2e_index*')
+      .on('response', promiseHandler(resolve, reject));
+    });
+  };
+
+  let createTemplate = function () {
+    return new Promise((resolve, reject) => {
+      fs.createReadStream('e2e/mock-data/alerts_ui_e2e_index.template')
+      .pipe(request.post('http://node1:9200/_template/alerts_ui_e2e_index').on('response', promiseHandler(resolve, reject)));
+    });
+
+  };
+
+  let loadData = function () {
+    return new Promise((resolve, reject) => {
+      fs.createReadStream('e2e/mock-data/alerts_ui_e2e_index.data')
+      .pipe(request.post('http://node1:9200/alerts_ui_e2e_index/alerts_ui_e2e_doc/_bulk').on('response', promiseHandler(resolve, reject)));
+    });
+  };
+
+  return deleteIndex().then(() => createTemplate()).then(() => loadData());
 }
 
 export function deleteTestData() {
-  request.delete('http://node1:9200/alerts_ui_e2e_index*');
+  return new Promise((resolve, reject) => {
+    request.delete('http://node1:9200/alerts_ui_e2e_index*')
+    .on('response', promiseHandler(resolve, reject));
+  });
 }
 
 export function createMetaAlertsIndex() {
-  deleteMetaAlertsIndex();
-  fs.createReadStream('./../../metron-deployment/packaging/ambari/metron-mpack/src/main/resources/common-services/METRON/CURRENT/package/files/metaalert_index.template')
-  .pipe(request.post('http://node1:9200/metaalert_index'));
+  let deleteIndex = function () {
+    return new Promise((resolve, reject) => {
+      request.delete('http://node1:9200/metaalert_index*')
+      .on('response', promiseHandler(resolve, reject));
+    });
+  };
+
+  let createIndex = function () {
+    new Promise((resolve, reject) => {
+      fs.createReadStream('./../../metron-deployment/packaging/ambari/metron-mpack/src/main/resources/common-services/METRON/CURRENT/package/files/metaalert_index.template')
+      .pipe(request.post('http://node1:9200/metaalert_index').on('response', promiseHandler(resolve, reject)));
+    });
+  };
+  return deleteIndex().then(() => createIndex());
 }
 
 export function deleteMetaAlertsIndex() {
-  request.delete('http://node1:9200/metaalert_index*');
+  return new Promise((resolve, reject) => {
+    request.delete('http://node1:9200/metaalert_index*');
+  });
 }
 
