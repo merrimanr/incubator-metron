@@ -64,20 +64,25 @@ export class TreeViewPage {
 
   selectGroup(name: string) {
     return element(by.css('app-group-by div[data-name="' + name + '"]')).click()
-    .then(() => waitForCssClass(element(by.css('app-group-by div[data-name="' + name + '"]')), 'active'));
+    .then(() => waitForCssClass(element(by.css('app-group-by div[data-name="' + name + '"]')), 'active'))
+    .then(() => browser.waitForAngular());
   }
 
   dragGroup(from: string, to: string) {
    return  browser.actions().dragAndDrop(
         element(by.css('app-group-by div[data-name="' + from + '"]')),
         element(by.css('app-group-by div[data-name="' + to + '"]'))
-    ).perform();
+    ).perform()
+    .then(() => browser.waitForAngular());
   }
 
   getDashGroupValues(name: string) {
     return waitForElementVisibility(element(by.css('[data-name="' + name + '"] .card-header .severity-padding .title')))
     .then(() => waitForElementVisibility(element(by.css('[data-name="' + name + '"] .card-header .two-line .title'))))
-    .then(() => element.all(by.css('[data-name="' + name + '"] .card-header span')).getText());
+    .then(() => {
+      browser.sleep(500);
+      return element.all(by.css('[data-name="' + name + '"] .card-header span')).getText()
+    });
   }
 
   expandDashGroup(name: string) {
@@ -87,7 +92,7 @@ export class TreeViewPage {
 
     return waitForElementPresence(cardBody)
     .then(() => waitForElementVisibility(cardHeader))
-    .then(() => browser.actions().mouseMove(cardHeader).perform())
+    .then(() => browser.actions().mouseMove(element(by.css('.card[data-name="' + name + '"] .card-header .down-arrow'))).perform())
     .then(() => cardHeader.click())
     .then(() => waitForCssClass(cardBody, 'show'))
     .then(() => waitForElementVisibility(element(by.css('.card[data-name="' + name + '"] .collapse table tbody tr:nth-child(1)'))));
@@ -136,7 +141,7 @@ export class TreeViewPage {
   }
 
   unGroup() {
-    element(by.css('app-group-by .ungroup-button')).click()
+    return element(by.css('app-group-by .ungroup-button')).click()
     .then(() => waitForStalenessOf(element(by.css('app-tree-view'))));
   }
 

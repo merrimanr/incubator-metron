@@ -20,7 +20,7 @@ import {browser, element, by, protractor} from 'protractor';
 import * as moment from 'moment/moment';
 import {
   waitForElementVisibility, waitForElementPresence, waitForElementInVisibility,
-  waitForText, waitForCssClass, waitForCssClassNotToBePresent, waitForTextChange
+  waitForText, waitForCssClass, waitForCssClassNotToBePresent, waitForTextChange, waitForStalenessOf
 } from '../utils/e2e_util';
 
 export class MetronAlertsPage {
@@ -178,13 +178,14 @@ export class MetronAlertsPage {
   }
 
   clickCloseSavedSearch() {
-    element(by.css('app-saved-searches .close-button')).click();
-    browser.sleep(2000);
+    return element(by.css('app-saved-searches .close-button')).click()
+    .then(() => waitForStalenessOf(element(by.css('app-saved-searches'))));
   }
 
   clickSavedSearch() {
-    element(by.buttonText('Searches')).click();
-    browser.sleep(1000);
+    return element(by.buttonText('Searches')).click()
+    .then(() => waitForElementVisibility(element(by.css('app-saved-searches'))))
+    .then(() => browser.sleep(1000));
   }
 
   clickPlayPause(waitForPreviousClass: string) {
@@ -228,22 +229,18 @@ export class MetronAlertsPage {
   }
 
   getRecentSearchOptions() {
-    browser.sleep(1000);
     return element(by.linkText('Recent Searches')).element(by.xpath('..')).all(by.css('li')).getText();
   }
 
   getDefaultRecentSearchValue() {
-    browser.sleep(1000);
     return element(by.linkText('Recent Searches')).element(by.xpath('..')).all(by.css('i')).getText();
   }
 
   getSavedSearchOptions() {
-    browser.sleep(1000);
     return element(by.linkText('Saved Searches')).element(by.xpath('..')).all(by.css('li')).getText();
   }
 
   getDefaultSavedSearchValue() {
-    browser.sleep(1000);
     return element(by.linkText('Saved Searches')).element(by.xpath('..')).all(by.css('i')).getText();
   }
 
@@ -475,6 +472,7 @@ export class MetronAlertsPage {
 
   getTimeRangeButtonAndSubText() {
     let timeRangetext = '', timeRangeValue = '';
+    browser.sleep(500);
     return element(by.css('app-time-range .time-range-text')).getText()
     .then(text => timeRangetext = text)
     .then(() => element(by.css('app-time-range .time-range-value')).getText())

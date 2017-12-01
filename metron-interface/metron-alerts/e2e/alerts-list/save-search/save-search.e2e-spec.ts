@@ -26,9 +26,10 @@ describe('metron-alerts Search', function() {
   let loginPage: LoginPage;
 
   beforeAll(() => {
-    loadTestData();
     loginPage = new LoginPage();
     loginPage.login();
+
+    loadTestData();
   });
 
   afterAll(() => {
@@ -55,9 +56,9 @@ describe('metron-alerts Search', function() {
 
   });
 
-  it('should have all save search controls and they save search should be working', () => {
+  it('should have all save search controls and they save search should be working', async function() : Promise<any> {
     page.saveSearch('e2e-1');
-    page.clickSavedSearch();
+    await page.clickSavedSearch();
     expect(page.getSavedSearchOptions()).toEqualBcoz([ 'e2e-1' ], 'for saved search options e2e-1');
     page.clickCloseSavedSearch();
   });
@@ -90,7 +91,7 @@ describe('metron-alerts Search', function() {
                                                 'for pagination text with search text enrichments:geo:ip_dst_addr:country:US');
 
     page.setSearchText('enrichments:geo:ip_dst_addr:country:RU');
-    expect(page.getChangesAlertTableTitle('Alerts (22)')).toEqual('Alerts (44)');
+    expect(page.getChangesAlertTableTitle('Alerts (169)')).toEqual('Alerts (44)');
     expect(page.getPaginationText()).toEqualBcoz('1 - 25 of 44',
                                                   'for pagination text with search text enrichments:geo:ip_dst_addr:country:RU as text');
   });

@@ -21,15 +21,6 @@
 
 /*global jasmine */
 var SpecReporter = require('jasmine-spec-reporter').SpecReporter;
-var HtmlScreenshotReporter = require('protractor-jasmine2-screenshot-reporter');
-
-// var reporter = new HtmlScreenshotReporter({
-//   cleanDestination: false,
-//   captureOnlyFailedSpecs: true,
-//   showQuickLinks: true,
-//   dest: './e2e-report',
-//   filename: 'my-report.html'
-// });
 
 exports.config = {
   allScriptsTimeout: 15000,
@@ -47,7 +38,7 @@ exports.config = {
   capabilities: {
     'browserName': 'chrome',
     'chromeOptions': {
-      args: [ "--headless", "--disable-gpu", "--window-size=1435,850" ],
+      args: [  "--disable-gpu", "--window-size=1435,850" ],
       'prefs': {
         'credentials_enable_service': false,
         'profile': { 'password_manager_enabled': false}
@@ -68,14 +59,6 @@ exports.config = {
     require('ts-node').register({
       project: 'e2e'
     });
-    // return new Promise(function(resolve){
-    //   reporter.beforeLaunch(resolve);
-    // });
-  },
-  afterLaunch: function(exitCode) {
-    // return new Promise(function(resolve){
-    //   reporter.afterLaunch(resolve.bind(this, exitCode));
-    // });
   },
   onPrepare: function() {
     var defer = protractor.promise.defer();

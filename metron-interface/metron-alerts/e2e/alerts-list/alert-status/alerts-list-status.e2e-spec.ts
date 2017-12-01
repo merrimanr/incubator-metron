@@ -28,9 +28,10 @@ describe('metron-alerts alert status', function() {
   let loginPage: LoginPage;
 
   beforeAll(() => {
-    loadTestData();
     loginPage = new LoginPage();
     loginPage.login();
+
+    loadTestData();
   });
 
   afterAll(() => {

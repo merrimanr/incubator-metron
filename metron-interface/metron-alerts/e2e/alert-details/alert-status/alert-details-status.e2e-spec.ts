@@ -30,11 +30,13 @@ describe('metron-alerts alert status', function() {
   let loginPage: LoginPage;
 
   beforeAll(() => {
-    loadTestData();
+
     loginPage = new LoginPage();
     listPage = new MetronAlertsPage();
     treePage = new TreeViewPage();
     loginPage.login();
+
+    loadTestData();
   });
 
   afterAll(() => {
@@ -49,10 +51,9 @@ describe('metron-alerts alert status', function() {
   });
 
   it('should change alert statuses', async function() : Promise<any> {
-    let alertId = 'c4c5e418-3938-099e-bb0d-37028a98dca8';
+    let alertId = '2cc174d7-c049-aaf4-d0d6-138073777309';
 
     await page.navigateTo(alertId);
-    await page.clickNew();
     expect(page.getAlertStatus('ANY')).toEqual('NEW');
     await page.clickOpen();
     expect(page.getAlertStatus('NEW')).toEqual('OPEN');

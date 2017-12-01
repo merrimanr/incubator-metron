@@ -31,9 +31,10 @@ describe('metron-alerts App', function() {
                                 'ip_dst_addr', 'host', 'alert_status' ];
 
   beforeAll(() => {
-    loadTestData();
     loginPage = new LoginPage();
     loginPage.login();
+
+    loadTestData();
   });
 
   afterAll(() => {
@@ -100,34 +101,37 @@ describe('metron-alerts App', function() {
 
   });
 
-  it('should have all settings controls and they should be working', () => {
+  it('should have all settings controls and they should be working', async function() : Promise<any> {
     let settingsPaneLbelNames = [ 'REFRESH RATE', 'ROWS PER PAGE', 'HIDE Resolved Alerts', 'HIDE Dismissed Alerts' ];
     let settingPaneRefreshIntervals = [ '5s', '10s', '15s', '30s', '1m', '10m', '1h' ];
     let settingsPanePageSize = [ '10', '25', '50', '100', '250', '500', '1000' ];
 
-    page.clickSettings(); //TODO This failed
+    await page.clickSettings();
 
     expect(page.getSettingsLabels()).toEqualBcoz(settingsPaneLbelNames, 'for table settings labels');
 
     expect(page.getRefreshRateOptions()).toEqualBcoz(settingPaneRefreshIntervals, 'for table settings refresh rate labels');
     expect(page.getRefreshRateSelectedOption()).toEqualBcoz([ '1m' ], 'for table settings default refresh rate');
 
-    page.clickRefreshInterval('10s');
+    await  page.clickRefreshInterval('10s');
     expect(page.getRefreshRateSelectedOption()).toEqualBcoz([ '10s' ], 'for refresh interval 10s');
 
-    page.clickRefreshInterval('1h');
+    await page.clickRefreshInterval('1h');
     expect(page.getRefreshRateSelectedOption()).toEqualBcoz([ '1h' ], 'for refresh interval 1h');
 
     expect(page.getPageSizeOptions()).toEqualBcoz(settingsPanePageSize, 'for table settings refresh rate labels');
     expect(page.getPageSizeSelectedOption()).toEqualBcoz([ '25' ], 'for table settings default page size');
 
-    page.clickPageSize('10');
-    expect(page.getPageSizeSelectedOption()).toEqualBcoz([ '10' ], 'for page size 10');
+    await page.clickPageSize('50');
+    expect(page.getPageSizeSelectedOption()).toEqualBcoz([ '50' ], 'for page size 50');
 
-    page.clickPageSize('100');
+    await page.clickPageSize('100');
     expect(page.getPageSizeSelectedOption()).toEqualBcoz([ '100' ], 'for page size 100');
 
-    page.clickSettings();
+    await page.clickPageSize('25');
+    expect(page.getPageSizeSelectedOption()).toEqualBcoz([ '25' ], 'for page size 100');
+
+    await page.clickSettings();
   });
 
   it('play pause should start polling and stop polling ', async function() : Promise<any> {

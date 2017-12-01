@@ -27,9 +27,10 @@ describe('metron-alerts facets', function() {
   let loginPage: LoginPage;
 
   beforeAll(() => {
-    loadTestData();
     loginPage = new LoginPage();
     loginPage.login();
+
+    loadTestData();
   });
 
   afterAll(() => {

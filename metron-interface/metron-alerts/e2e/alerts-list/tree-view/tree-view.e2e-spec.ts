@@ -28,12 +28,13 @@ describe('metron-alerts tree view', function () {
   let loginPage: LoginPage;
 
   beforeAll(() => {
-    loadTestData();
     loginPage = new LoginPage();
     page = new TreeViewPage();
     listPage = new MetronAlertsPage();
     loginPage.login();
     page.navigateToAlertsList();
+
+    loadTestData();
   });
 
   afterAll(() => {
@@ -76,8 +77,8 @@ describe('metron-alerts tree view', function () {
       'thirdDashSubGroup': '0 alerts_ui_e2e (25)'
     };
 
-    page.selectGroup('source:type');
-    page.selectGroup('enrichments:geo:ip_dst_addr:country');
+    await page.selectGroup('source:type');
+    await page.selectGroup('enrichments:geo:ip_dst_addr:country');
     expect(page.getDashGroupValues('alerts_ui_e2e')).toEqualBcoz(before.firstDashRow, 'First Dash Row should be correct');
 
     await page.expandDashGroup('alerts_ui_e2e');
@@ -109,7 +110,7 @@ describe('metron-alerts tree view', function () {
         'Third Dash Group Values should be present for alerts_ui_e2e');
 
     await page.dragGroup('source:type', 'ip_dst_addr');
-    page.unGroup();
+    await page.unGroup();
 
   });
 
@@ -120,18 +121,18 @@ describe('metron-alerts tree view', function () {
     let row1_page2 = ['-', '07b29c29-9...ff19eaa888', '2017-09-13 17:59:37', 'alerts_ui_e2e',
       '192.168.138.158', 'FR', '62.75.195.236', '62.75.195.236', 'NEW', '', ''];
 
-    page.unGroup();
-    page.selectGroup('source:type');
+    await page.unGroup();
+    await page.selectGroup('source:type');
     expect(page.getActiveGroups()).toEqualBcoz(['source:type'], 'only source type group should be selected');
     expect(page.getDashGroupValues('alerts_ui_e2e')).toEqualBcoz(dashRowValues, 'Dash Group Values should be present');
 
     await page.expandDashGroup('alerts_ui_e2e');
     expect(page.getDashGroupTableValuesForRow('alerts_ui_e2e', 0)).toEqualBcoz(row1_page1, 'Dash Group Values should be present');
 
-    page.clickOnNextPage('alerts_ui_e2e');
+    await page.clickOnNextPage('alerts_ui_e2e');
     expect(page.getTableValuesByRowId('alerts_ui_e2e', 0, 'FR')).toEqualBcoz(row1_page2, 'Dash Group Values should be present');
 
-    page.unGroup();
+    await page.unGroup();
     expect(page.getActiveGroups()).toEqualBcoz([], 'no groups should be selected');
   });
 
@@ -140,10 +141,10 @@ describe('metron-alerts tree view', function () {
     let usGroupIds = ['9a969c64-b...001cb011a3','a651f7c3-1...a97d4966c9','afc36901-3...d931231ab2','d860ac35-1...f9e282d571','04a5c3d0-9...af17c06fbc'];
     let frGroupIds = ['07b29c29-9...ff19eaa888','7cd91565-1...de5be54a6e','ca5bde58-a...f3a88d2df4','5d6faf83-8...b88a407647','e2883424-f...79bb8b0606'];
 
-    page.unGroup();
-    page.selectGroup('source:type');
-    page.selectGroup('ip_dst_addr');
-    page.selectGroup('enrichments:geo:ip_dst_addr:country');
+    await page.unGroup();
+    await page.selectGroup('source:type');
+    await page.selectGroup('ip_dst_addr');
+    await page.selectGroup('enrichments:geo:ip_dst_addr:country');
     expect(page.getActiveGroups()).toEqualBcoz(['source:type', 'ip_dst_addr', 'enrichments:geo:ip_dst_addr:country'], '3 groups should be selected');
 
     expect(page.getDashGroupValues('alerts_ui_e2e')).toEqualBcoz(['0', 'alerts_ui_e2e', 'ALERTS', '169'],
@@ -153,26 +154,26 @@ describe('metron-alerts tree view', function () {
     expect(page.getSubGroupValuesByPosition('alerts_ui_e2e', '204.152.254.221', 0)).toEqualBcoz('0 204.152.254.221 (13)',
                                                                     'Second Level Group Values should be present for 204.152.254.221');
 
-    page.expandSubGroupByPosition('alerts_ui_e2e', '204.152.254.221', 0);
+    await page.expandSubGroupByPosition('alerts_ui_e2e', '204.152.254.221', 0);
     expect(page.getSubGroupValuesByPosition('alerts_ui_e2e', 'US', 0)).toEqualBcoz('0 US (13)',
         'Third Level Group Values should be present for US');
 
-    page.expandSubGroup('alerts_ui_e2e', 'US');
+    await page.expandSubGroup('alerts_ui_e2e', 'US');
     expect(page.getSubGroupValuesByPosition('alerts_ui_e2e', 'US', 0)).toEqualBcoz('0 US (13)',
         'Third Level Group Values should not change when expanded for US');
     expect(page.getCellValuesFromTable('alerts_ui_e2e', 'id', '04a5c3d0-9...af17c06fbc')).toEqual(usGroupIds, 'rows should be present for US');
 
 
-    page.expandSubGroup('alerts_ui_e2e', '62.75.195.236');
+    await page.expandSubGroup('alerts_ui_e2e', '62.75.195.236');
     expect(page.getSubGroupValuesByPosition('alerts_ui_e2e', 'FR', 1)).toEqualBcoz('0 FR (23)',
         'Third Level Group Values should be present for FR');
 
-    page.expandSubGroupByPosition('alerts_ui_e2e', 'FR', 1);
+    await page.expandSubGroupByPosition('alerts_ui_e2e', 'FR', 1);
     expect(page.getSubGroupValuesByPosition('alerts_ui_e2e', 'FR', 1)).toEqualBcoz('0 FR (23)',
         'Third Level Group Values should not change when expanded for FR');
     expect(page.getCellValuesFromTable('alerts_ui_e2e', 'id', 'e2883424-f...79bb8b0606')).toEqual(usGroupIds.concat(frGroupIds), 'rows should be present for FR');
-    
-    page.unGroup();
+
+    await page.unGroup();
     expect(page.getActiveGroups()).toEqualBcoz([], 'no groups should be selected');
   });
 
@@ -199,38 +200,38 @@ describe('metron-alerts tree view', function () {
     let unsortedTS = [...usTSCol, ...ruTSCol, ...frTSCol];
     let sortedTS = [...usSortedTSCol, ...ruSortedTSCol, ...frSortedTSCol];
 
-    page.sortSubGroup('alerts_ui_e2e', 'timestamp');
+    await page.sortSubGroup('alerts_ui_e2e', 'timestamp');
 
     expect(page.getCellValuesFromTable('alerts_ui_e2e', 'timestamp', '2017-09-13 18:00:37')).toEqual(unsortedTS,
                                                                                                       'timestamp should be sorted asc');
 
-    page.sortSubGroup('alerts_ui_e2e', 'timestamp');
+    await page.sortSubGroup('alerts_ui_e2e', 'timestamp');
 
     expect(page.getCellValuesFromTable('alerts_ui_e2e', 'timestamp', '2017-09-13 18:02:04')).toEqual(sortedTS,
                                                                                                       'timestamp should be sorted dsc');
 
-    page.unGroup();
+    await page.unGroup();
     expect(page.getActiveGroups()).toEqualBcoz([], 'no groups should be selected');
   });
 
   it('should have search working for group details for multiple sub groups', async function() : Promise<any> {
 
-    page.unGroup();
+    await page.unGroup();
     listPage.setSearchText('enrichments:geo:ip_dst_addr:country:FR');
 
-    page.selectGroup('source:type');
-    page.selectGroup('enrichments:geo:ip_dst_addr:country');
+    await page.selectGroup('source:type');
+    await page.selectGroup('enrichments:geo:ip_dst_addr:country');
 
     await page.expandDashGroup('alerts_ui_e2e');
     expect(page.getNumOfSubGroups('alerts_ui_e2e')).toEqual(1, 'three sub groups should be present');
     expect(listPage.getChangesAlertTableTitle('Alerts (169)')).toEqual('Alerts (25)');
 
-    page.expandSubGroup('alerts_ui_e2e', 'FR');
+    await page.expandSubGroup('alerts_ui_e2e', 'FR');
 
     let expected = ['FR', 'FR', 'FR', 'FR', 'FR'];
     expect(page.getCellValuesFromTable('alerts_ui_e2e', 'enrichments:geo:ip_dst_addr:country', 'FR')).toEqual(expected,
                                                                                                               'id should be sorted');
-    page.unGroup();
+    await page.unGroup();
   });
 
 });

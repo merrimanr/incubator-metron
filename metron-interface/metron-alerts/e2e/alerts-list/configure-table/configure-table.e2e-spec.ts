@@ -28,9 +28,10 @@ describe('metron-alerts configure table', function() {
     'ip_dst_addr', 'host', 'alert_status' ];
 
   beforeAll(() => {
-    loadTestData();
     loginPage = new LoginPage();
     loginPage.login();
+
+    loadTestData();
   });
 
   afterAll(() => {
