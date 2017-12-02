@@ -196,6 +196,7 @@ export class MetronAlertsPage {
   }
 
   clickTableTextAndGetSearchText(name: string, textToWaitFor: string) {
+    browser.sleep(500);
     return waitForElementVisibility(element.all(by.cssContainingText('table tr td a', name)).get(0))
           .then(() => element.all(by.cssContainingText('table tr td a', name)).get(0).click())
           .then(() => waitForText('.ace_line', textToWaitFor))

@@ -25,7 +25,7 @@ import {MetronAlertDetailsPage} from '../../alert-details/alert-details.po';
 import {MetaAlertPage} from './meta-alert.po';
 import {AlertFacetsPage} from '../alert-filters/alert-filters.po';
 
-describe('meta-alerts workflow', function() {
+describe('Test spec for meta alerts workflow', function() {
   let detailsPage: MetronAlertDetailsPage;
   let tablePage: MetronAlertsPage;
   let metaAlertPage: MetaAlertPage;

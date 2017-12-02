@@ -22,7 +22,7 @@ import {TreeViewPage} from './tree-view.po';
 import {loadTestData, deleteTestData} from '../../utils/e2e_util';
 import {MetronAlertsPage} from '../alerts-list.po';
 
-describe('metron-alerts tree view', function () {
+describe('Test spec for tree view', function () {
   let page: TreeViewPage;
   let listPage: MetronAlertsPage;
   let loginPage: LoginPage;

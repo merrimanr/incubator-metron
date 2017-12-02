@@ -22,7 +22,7 @@ import {LoginPage} from '../../login/login.po';
 import {AlertFacetsPage} from './alert-filters.po';
 import {loadTestData, deleteTestData} from '../../utils/e2e_util';
 
-describe('metron-alerts facets', function() {
+describe('Test spec for facet filters', function() {
   let page: AlertFacetsPage;
   let loginPage: LoginPage;
 

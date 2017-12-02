@@ -23,7 +23,7 @@ import {loadTestData, deleteTestData} from '../../utils/e2e_util';
 import { MetronAlertsPage } from '../../alerts-list/alerts-list.po';
 import {TreeViewPage} from '../../alerts-list/tree-view/tree-view.po';
 
-describe('metron-alerts alert status', function() {
+describe('Test spec for metron details page', function() {
   let page: MetronAlertDetailsPage;
   let listPage: MetronAlertsPage;
   let treePage: TreeViewPage;

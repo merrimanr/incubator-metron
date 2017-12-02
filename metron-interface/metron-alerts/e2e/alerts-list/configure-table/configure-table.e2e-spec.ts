@@ -21,7 +21,7 @@ import {customMatchers} from '../../matchers/custom-matchers';
 import {LoginPage} from '../../login/login.po';
 import {loadTestData, deleteTestData} from '../../utils/e2e_util';
 
-describe('metron-alerts configure table', function() {
+describe('Test spec for table column configuration', function() {
   let page: MetronAlertsPage;
   let loginPage: LoginPage;
   let colNamesColumnConfig = [ 'score', 'id', 'timestamp', 'source:type', 'ip_src_addr', 'enrichments:geo:ip_dst_addr:country',

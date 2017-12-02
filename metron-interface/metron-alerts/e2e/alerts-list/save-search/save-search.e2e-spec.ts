@@ -21,7 +21,7 @@ import {MetronAlertsPage} from '../alerts-list.po';
 import {LoginPage} from '../../login/login.po';
 import {loadTestData, deleteTestData} from '../../utils/e2e_util';
 
-describe('metron-alerts Search', function() {
+describe('Test spec for search and save search', function() {
   let page: MetronAlertsPage;
   let loginPage: LoginPage;
 

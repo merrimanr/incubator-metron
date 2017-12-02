@@ -22,7 +22,7 @@ import { LoginPage } from '../login/login.po';
 import { loadTestData, deleteTestData } from '../utils/e2e_util';
 import {browser} from "protractor/built";
 
-describe('metron-alerts App', function() {
+describe('Test spec for all ui elements & list view', function() {
   let page: MetronAlertsPage;
   let loginPage: LoginPage;
   let columnNames = [ '', 'Score', 'id', 'timestamp', 'source:type', 'ip_src_addr', 'enrichm...:country',
@@ -68,38 +68,29 @@ describe('metron-alerts App', function() {
   });
 
   it('should have all pagination controls and they should be working', async function() : Promise<any> {
+
+    await page.clickSettings();
+    await page.clickPageSize('100');
+
+    expect(page.getChangedPaginationText('1 - 25 of 169')).toEqualBcoz('1 - 100 of 169', 'for pagination text');
     expect(page.isChevronLeftEnabled()).toEqualBcoz(false, 'for left chevron to be disabled for first page');
-    expect(page.getPaginationText()).toEqualBcoz('1 - 25 of 169', 'for pagination text');
     expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for first page');
 
     await page.clickChevronRight();
+    expect(page.getChangedPaginationText('1 - 100 of 169')).toEqualBcoz('101 - 169 of 169', 'for pagination text');
+    expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be disabled for first page');
+    expect(page.isChevronRightEnabled()).toEqualBcoz(false, 'for right chevron to be enabled for first page');
 
-    expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be enabled for second page');
-    expect(page.getPaginationText()).toEqualBcoz('26 - 50 of 169', 'for pagination text');
-    expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for second page');
+    await page.clickChevronLeft();
+    expect(page.getChangedPaginationText('101 - 169 of 169')).toEqualBcoz('1 - 100 of 169', 'for pagination text');
+    expect(page.isChevronLeftEnabled()).toEqualBcoz(false, 'for left chevron to be disabled for first page');
+    expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for first page');
 
-    await page.clickChevronRight();
+    await page.clickSettings();
+    await page.clickPageSize('25');
+    expect(page.getChangedPaginationText('1 - 100 of 169')).toEqualBcoz('1 - 25 of 169', 'for pagination text');
 
-    expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be enabled for third page');
-    expect(page.getPaginationText()).toEqualBcoz('51 - 75 of 169', 'for pagination text');
-    expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for third page');
-
-    for (let i = 0; i < 4; i++) {
-      await page.clickChevronRight();
-    }
-
-    expect(page.isChevronLeftEnabled()).toEqualBcoz(true, 'for left chevron to be enabled for last page');
-    expect(page.getPaginationText()).toEqualBcoz('151 - 169 of 169', 'for pagination text');
-    expect(page.isChevronRightEnabled()).toEqualBcoz(false, 'for right chevron to be disabled for last page');
-
-    for (let i = 0; i < 7; i++) {
-      await page.clickChevronLeft(7);
-    }
-
-    expect(page.isChevronLeftEnabled()).toEqualBcoz(false, 'for left chevron to be disabled for first page again');
-    expect(page.getPaginationText()).toEqualBcoz('1 - 25 of 169', 'for pagination text');
-    expect(page.isChevronRightEnabled()).toEqualBcoz(true, 'for right chevron to be enabled for first page again');
-
+    await page.clickSettings();
   });
 
   it('should have all settings controls and they should be working', async function() : Promise<any> {

@@ -22,7 +22,7 @@ import {LoginPage} from '../../login/login.po';
 import {loadTestData, deleteTestData} from '../../utils/e2e_util';
 import {TreeViewPage} from '../tree-view/tree-view.po';
 
-describe('metron-alerts alert status', function() {
+describe('Test spec for changing alert status in list view & tree view', function() {
   let page: MetronAlertsPage;
   let treePage: TreeViewPage;
   let loginPage: LoginPage;
@@ -85,7 +85,6 @@ describe('metron-alerts alert status', function() {
     expect(page.getAlertStatus(10, 'NEW')).toEqual('RESOLVE');
     expect(page.getAlertStatus(11, 'NEW')).toEqual('RESOLVE');
   });
-
 
   it('should change alert status for multiple alerts to OPEN in tree view', () => {
     treePage.selectGroup('source:type');
