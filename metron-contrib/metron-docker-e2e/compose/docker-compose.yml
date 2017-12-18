@@ -30,6 +30,15 @@ services:
       - "9092:9092"
     depends_on:
       - zookeeper
+  hbase:
+    image: harisekhon/hbase:1.1
+    container_name: hbase
+    ports:
+      - "16010:16010"
+    depends_on:
+      - zookeeper
+    volumes:
+      - "/hbase"
   elasticsearch:
     image: elasticsearch:2.3
     ports:
@@ -46,6 +55,9 @@ services:
       - kafka
       - zookeeper
       - elasticsearch
+      - hbase
+    volumes_from:
+      - hbase
   metron-ui:
     build:
       context: ./metron-ui
@@ -53,3 +65,5 @@ services:
         METRON_VERSION: $METRON_VERSION
     ports:
       - "4201:4201"
+    depends_on:
+      - metron-rest
