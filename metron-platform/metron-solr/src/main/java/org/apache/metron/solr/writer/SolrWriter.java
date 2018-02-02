@@ -17,6 +17,7 @@
  */
 package org.apache.metron.solr.writer;
 
+import org.apache.solr.common.util.NamedList;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 import org.apache.metron.common.configuration.Configurations;
@@ -60,9 +61,9 @@ public class SolrWriter implements BulkMessageWriter<JSONObject>, Serializable {
   public void init(Map stormConf, TopologyContext topologyContext, WriterConfiguration configurations) throws IOException, SolrServerException {
     Map<String, Object> globalConfiguration = configurations.getGlobalConfig();
     if(solr == null) solr = new MetronSolrClient((String) globalConfiguration.get("solr.zookeeper"));
-    String collection = getCollection(configurations);
-    solr.createCollection(collection, (Integer) globalConfiguration.get("solr.numShards"), (Integer) globalConfiguration.get("solr.replicationFactor"));
-    solr.setDefaultCollection(collection);
+    //String collection = getCollection(configurations);
+    //solr.createCollection(collection, (Integer) globalConfiguration.get("solr.numShards"), (Integer) globalConfiguration.get("solr.replicationFactor"));
+    //solr.setDefaultCollection(collection);
   }
 
   @Override
@@ -81,13 +82,15 @@ public class SolrWriter implements BulkMessageWriter<JSONObject>, Serializable {
           document.addField(getFieldName(key, value), value);
         }
       }
-      if(!document.containsKey("id")) {
-        document.addField("id", getIdValue(message));
+      if(!document.containsKey("guid")) {
+        document.addField("guid", getIdValue(message));
       }
-      UpdateResponse response = solr.add(document);
+      UpdateResponse response = solr.add(configurations.getIndex(sourceType), document);
+      NamedList<Object> responseList = response.getResponse();
+      LOG.error(responseList.toString());
     }
     if (shouldCommit) {
-      solr.commit(getCollection(configurations));
+      solr.commit(sourceType);
     }
 
     // Solr commits the entire batch or throws an exception for it.  There's no way to get partial failures.
