@@ -42,6 +42,7 @@ before_cache:
   - rm -rf $HOME/.m2/repository/org/apache/metron
 
 cache:
+  yarn: true
   timeout: 1000
   directories:
   - $HOME/.npm-cache
