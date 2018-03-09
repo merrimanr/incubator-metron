@@ -58,7 +58,7 @@
                   <goal>yarn</goal>
                 </goals>
                 <configuration>
-                  <arguments>install --ignore-engines --pure-lockfile</arguments>
+                  <arguments>install --ignore-engines --pure-lockfile --cache-folder /home/travis/.cache/yarn/metron-config</arguments>
                 </configuration>
               </execution>
               <execution>
