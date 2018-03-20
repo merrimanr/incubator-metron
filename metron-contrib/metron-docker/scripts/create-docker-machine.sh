@@ -16,3 +16,6 @@
 #  limitations under the License.
 #
 docker-machine create --driver virtualbox --virtualbox-disk-size "30000" --virtualbox-memory "4096" --virtualbox-cpu-count "2" metron-machine
+
+# Necessary for Elasticsearch Docker image: https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#docker-cli-run-prod-mode
+docker-machine ssh metron-machine sudo sysctl -w vm.max_map_count=262144
