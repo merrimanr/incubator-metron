@@ -43,7 +43,7 @@ grok:
 
 storm:
   ui:
-    url: storm:8080
+    url: storm-ui:8080
   parser:
     script.path: /usr/metron/${metron.version}/bin/start_parser_topology.sh
     topology.options: ${PARSER_TOPOLOGY_OPTIONS}

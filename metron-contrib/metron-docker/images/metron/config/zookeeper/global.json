@@ -4,5 +4,7 @@
   "es.port": "9300",
   "es.date.format": "yyyy.MM.dd.HH",
   "update.hbase.table": "metron_update",
-  "update.hbase.cf": "t"
+  "update.hbase.cf": "t",
+  "user.settings.hbase.table": "user_settings",
+  "user.settings.hbase.cf": "cf"
 }

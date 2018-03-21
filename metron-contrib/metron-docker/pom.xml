@@ -15,7 +15,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>metron-docker-e2e</artifactId>
+  <artifactId>metron-docker</artifactId>
   <packaging>pom</packaging>
   <name>metron-docker</name>
   <parent>
@@ -92,6 +92,25 @@
             </configuration>
           </execution>
           <execution>
+            <id>filter-docker-env-dev</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/compose/dev</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>./conf</directory>
+                  <filtering>true</filtering>
+                  <includes>
+                    <include>.env</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
             <id>copy-elasticsearch</id>
             <phase>prepare-package</phase>
             <goals>
@@ -156,6 +175,24 @@
               <resources>
                 <resource>
                   <directory>${project.parent.parent.basedir}/metron-interface/metron-rest/target/</directory>
+                  <includes>
+                    <include>*.tar.gz</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-performance</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/images/metron/packages</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.parent.parent.basedir}/metron-contrib/metron-performance/target/</directory>
                   <includes>
                     <include>*.tar.gz</include>
                   </includes>

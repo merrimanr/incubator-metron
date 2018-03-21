@@ -18,31 +18,19 @@ FROM centos
 
 RUN yum install -y java-1.8.0-openjdk lsof
 
-ARG METRON_VERSION
-ARG STORM_VERSION
 ARG HBASE_VERSION
 
-ENV METRON_VERSION $METRON_VERSION
-ENV METRON_HOME /usr/metron/$METRON_VERSION
-ENV METRON_REST_PORT 8082
-ENV PATH="/apache-storm-$STORM_VERSION/bin:/hbase/bin:${PATH}"
+ENV HBASE_MANAGES_ZK false
+ENV HBASE_HOME /hbase-$HBASE_VERSION
+ENV PATH "$HBASE_HOME/bin:${PATH}"
 ENV JAVA_HOME /usr/lib/jvm/jre
 
-# Install the storm client
-RUN curl -sL https://archive.apache.org/dist/storm/apache-storm-$STORM_VERSION/apache-storm-$STORM_VERSION.tar.gz | tar -xzC /
-RUN mkdir ~/.storm
-RUN echo nimbus.seeds: ["nimbus"] > ~/.storm/storm.yaml
+# Install hbase
+RUN curl -sL http://archive.apache.org/dist/hbase/$HBASE_VERSION/hbase-$HBASE_VERSION-bin.tar.gz | tar -xzC /
+RUN ln -s /hbase-$HBASE_VERSION /hbase
+ADD ./conf/hbase-site.xml $HBASE_HOME/conf/hbase-site.xml
 
-# Install Metron
-RUN mkdir -p $METRON_HOME
-ADD ./bin $METRON_HOME/bin
-COPY ./packages/* /packages/
-RUN find /packages -type f -name '*.tar.gz' -exec tar -xzf {} -C /usr/metron/$METRON_VERSION/ \;
-ADD ./config $METRON_HOME/config
-ADD ./flux $METRON_HOME/flux
-ADD ./templates $METRON_HOME/templates
+EXPOSE 16010 16010
 
-EXPOSE 8082 8082
-
-WORKDIR $METRON_HOME
-CMD ./bin/start.sh
+WORKDIR $HBASE_HOME
+CMD ./bin/start-hbase.sh && tail -f /dev/null

@@ -1,19 +1,19 @@
 {
   "/api/v1": {
-    "target": "http://node1:8082",
+    "target": "http://192.168.99.100:8082",
     "secure": false
   },
   "/logout": {
-    "target": "http://node1:8082",
+    "target": "http://192.168.99.100:8082",
     "secure": false
   },
   "/search": {
-    "target": "http://node1:9200",
+    "target": "http://192.168.99.100:8082",
     "pathRewrite": {"^/search" : ""},
     "secure": false
   },
   "/_cluster": {
-    "target": "http://node1:9200",
+    "target": "http://192.168.99.100:9210",
     "secure": false
   }
 }
