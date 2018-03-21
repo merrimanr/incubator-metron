@@ -25,7 +25,7 @@ env:
     - TEST_TYPE=default
     - DOCKER_CACHE=~/docker-cache
     - DOCKER_METRON_CENTOS=$DOCKER_CACHE/metron_centos.tar.gz
-    - E2E_COMPOSE_HOME=metron-contrib/metron-docker-e2e/compose
+    - E2E_COMPOSE_HOME=metron-contrib/metron-docker/compose/e2e
     - DOCKER_COMPOSE_VERSION=1.8.0
 
 install: true
