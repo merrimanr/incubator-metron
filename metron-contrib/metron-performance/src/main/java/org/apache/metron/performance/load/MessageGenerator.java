@@ -19,6 +19,8 @@ package org.apache.metron.performance.load;
 
 import org.apache.metron.performance.sampler.Sampler;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,9 +32,19 @@ public class MessageGenerator implements Supplier<String> {
   private static String guidPrefix = "00000000-0000-0000-0000-";
   private List<String> patterns;
   private Sampler sampler;
+  private boolean timeInSeconds;
+  private SimpleDateFormat sdf;
   public MessageGenerator(List<String> patterns, Sampler sampler) {
     this.patterns = patterns;
     this.sampler = sampler;
+  }
+
+  public void setTimeInSeconds() {
+    timeInSeconds = true;
+  }
+
+  public void setDateFormat(String dateFormat) {
+    sdf = new SimpleDateFormat(dateFormat);
   }
 
   @Override
@@ -41,7 +53,16 @@ public class MessageGenerator implements Supplier<String> {
     String pattern = patterns.get(sample);
     long guidId = guidOffset.getAndIncrement();
     String guid = guidPrefix + guidId;
-    String ts = "" + System.currentTimeMillis();
+    String ts;
+    if (timeInSeconds) {
+      ts = "" + System.currentTimeMillis() / 1000;
+    } else {
+      if (sdf != null) {
+        ts = sdf.format(new Date(System.currentTimeMillis()));
+      } else {
+        ts = "" + System.currentTimeMillis();
+      }
+    }
     return pattern.replace("$METRON_TS", ts)
                             .replace("$METRON_GUID", guid);
   }

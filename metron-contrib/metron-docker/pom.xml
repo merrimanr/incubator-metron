@@ -42,6 +42,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.metron</groupId>
+      <artifactId>metron-enrichment</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.metron</groupId>
       <artifactId>metron-indexing</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
@@ -121,6 +126,24 @@
               <resources>
                 <resource>
                   <directory>${project.parent.parent.basedir}/metron-platform/metron-elasticsearch/target/</directory>
+                  <includes>
+                    <include>*.tar.gz</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-enrichment</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/images/metron/packages</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.parent.parent.basedir}/metron-platform/metron-enrichment/target/</directory>
                   <includes>
                     <include>*.tar.gz</include>
                   </includes>

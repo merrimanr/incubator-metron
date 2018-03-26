@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-COMPOSE_DIRECTORY="$SCRIPT_DIRECTORY/.."
+COMPOSE_DIRECTORY="$SCRIPT_DIRECTORY/../.."
 
 echo Starting bro sample sensor
-cd $COMPOSE_DIRECTORY && docker-compose exec metron ./bin/load_tool.sh -z zookeeper:2181 -ot indexing -t templates/data/bro.templates -e 100
+cd $COMPOSE_DIRECTORY && docker-compose exec metron ./bin/load_tool.sh -z zookeeper:2181 -ot bro -t templates/data/bro.templates -e 5 -sd 1000 -p 1 -tts

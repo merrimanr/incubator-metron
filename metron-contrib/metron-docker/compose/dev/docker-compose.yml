@@ -69,12 +69,16 @@ services:
       - zookeeper
       - elasticsearch
       - kafka
+      - hadoop
     links:
       - nimbus
       - zookeeper
       - elasticsearch
       - kafka
     restart: always
+    volumes_from:
+      - hbase
+      - hadoop
   storm-ui:
     image: storm:1.0.3
     container_name: storm-ui
@@ -96,6 +100,13 @@ services:
       - zookeeper
     volumes:
       - "/hbase"
+  hadoop:
+    image: sequenceiq/hadoop-docker:2.7.1
+    container_name: hadoop
+    ports:
+      - "8020:8020"
+    volumes:
+      - "/usr/local/hadoop/etc/hadoop/"
   metron:
     build:
       context: ../../images/metron
@@ -112,3 +123,4 @@ services:
       - elasticsearch
     volumes_from:
       - hbase
+      - hadoop

@@ -107,6 +107,13 @@ public class LoadGenerator
           sampler = new BiasedSampler((List<Map.Entry<Integer, Integer>>) biases.get(), templates.size());
         }
         MessageGenerator generator = new MessageGenerator(templates, sampler);
+        Optional<Object> templateTimeSeconds = evaluatedArgs.get(LoadOptions.TEMPLATE_TIME_SECONDS);
+        if (templateTimeSeconds.isPresent()) {
+          generator.setTimeInSeconds();
+        } else {
+          Optional<Object> templateDateFormat = evaluatedArgs.get(LoadOptions.TEMPLATE_DATE_FORMAT);
+          templateDateFormat.ifPresent(o -> generator.setDateFormat((String) o));
+        }
         Long targetLoad = (Long)eps.get();
         int periodsPerSecond = (int)(1000/sendDelta);
         long messagesPerPeriod = targetLoad/periodsPerSecond;

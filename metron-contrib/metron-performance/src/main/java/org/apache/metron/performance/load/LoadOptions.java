@@ -199,6 +199,51 @@ public enum LoadOptions implements CLIOptions<LoadOptions> {
       return "t";
     }
   })
+  ,TEMPLATE_TIME_SECONDS(new OptionHandler<LoadOptions>() {
+    @Nullable
+    @Override
+    public Option apply(@Nullable String s) {
+      Option o = new Option(s, "template_time_seconds", true, "If set to true $METRON_TS is returned in seconds instead of ms and template data format is ignored.");
+      o.setArgName("TEMPLATE_TIME_SECONDS");
+      o.setRequired(false);
+      o.setOptionalArg(true);
+      return o;
+    }
+
+    @Override
+    public Optional<Object> getValue(LoadOptions option, CommandLine cli) {
+      return option.has(cli) ? Optional.of(true) : Optional.empty();
+    }
+
+    @Override
+    public String getShortCode() {
+      return "tts";
+    }
+  })
+  ,TEMPLATE_DATE_FORMAT(new OptionHandler<LoadOptions>() {
+    @Nullable
+    @Override
+    public Option apply(@Nullable String s) {
+      Option o = new Option(s, "template_date_format", true, "If set $METRON_TS will be returned as a formatted date using the SimpleDateFormat class.  This is ignored if template time in seconds is enabled.");
+      o.setArgName("TEMPLATE_DATE_FORMAT");
+      o.setRequired(false);
+      return o;
+    }
+
+    @Override
+    public Optional<Object> getValue(LoadOptions option, CommandLine cli) {
+      if(option.has(cli)) {
+        return Optional.ofNullable(option.get(cli));
+      }
+      return Optional.empty();
+
+    }
+
+    @Override
+    public String getShortCode() {
+      return "tdf";
+    }
+  })
   ,SUMMARY_LOOKBACK(new OptionHandler<LoadOptions>() {
     @Nullable
     @Override
