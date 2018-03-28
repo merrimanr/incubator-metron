@@ -45,6 +45,7 @@ import org.json.simple.JSONObject;
 import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -60,6 +61,7 @@ public class SensorParserConfigServiceImpl implements SensorParserConfigService 
 
   private Map<String, String> availableParsers;
 
+  @Lazy
   @Autowired
   public SensorParserConfigServiceImpl(ObjectMapper objectMapper, CuratorFramework client,
       GrokService grokService, ConfigurationsCache cache) {

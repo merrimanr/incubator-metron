@@ -29,8 +29,12 @@ import org.apache.metron.common.zookeeper.ZKConfigurationsCache;
 import org.apache.metron.rest.MetronRestConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+
+import java.net.ConnectException;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 
@@ -38,6 +42,7 @@ import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
 @Profile("!" + TEST_PROFILE)
 public class ZookeeperConfig {
 
+  @Lazy
   @Bean(initMethod = "start", destroyMethod="close")
   public ConfigurationsCache cache(CuratorFramework client) {
     return new ZKConfigurationsCache( client
@@ -47,15 +52,23 @@ public class ZookeeperConfig {
                                     );
   }
 
-  @Bean(initMethod = "start", destroyMethod="close")
-  public CuratorFramework client(Environment environment) {
+  @Lazy
+  @Bean(destroyMethod="close")
+  public CuratorFramework client(Environment environment) throws ConnectException, InterruptedException {
     int sleepTime = Integer.parseInt(environment.getProperty(MetronRestConstants.CURATOR_SLEEP_TIME));
     int maxRetries = Integer.parseInt(environment.getProperty(MetronRestConstants.CURATOR_MAX_RETRIES));
     RetryPolicy retryPolicy = new ExponentialBackoffRetry(sleepTime, maxRetries);
     CuratorFramework ret = CuratorFrameworkFactory.newClient(environment.getProperty(MetronRestConstants.ZK_URL_SPRING_PROPERTY), retryPolicy);
-    return ret;
+    ret.start();
+    if (ret.blockUntilConnected(10, TimeUnit.SECONDS)) {
+      return ret;
+    } else {
+      ret.close();
+      throw new ConnectException("Could not connect to Zookeeper");
+    }
   }
 
+  @Lazy
   @Bean(destroyMethod="close")
   public ZkClient zkClient(Environment environment) {
     int sessionTimeout = Integer.parseInt(environment.getProperty(MetronRestConstants.ZK_CLIENT_SESSION_TIMEOUT));

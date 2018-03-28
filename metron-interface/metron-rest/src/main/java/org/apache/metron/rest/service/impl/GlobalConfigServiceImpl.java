@@ -27,6 +27,7 @@ import org.apache.metron.rest.service.GlobalConfigService;
 import org.apache.metron.common.zookeeper.ZKConfigurationsCache;
 import org.apache.zookeeper.KeeperException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -37,6 +38,7 @@ public class GlobalConfigServiceImpl implements GlobalConfigService {
 
     private ConfigurationsCache cache;
 
+    @Lazy
     @Autowired
     public GlobalConfigServiceImpl(CuratorFramework client, ConfigurationsCache cache) {
       this.client = client;

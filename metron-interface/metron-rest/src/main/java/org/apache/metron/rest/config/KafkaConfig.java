@@ -28,6 +28,7 @@ import org.apache.metron.rest.MetronRestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -53,15 +54,16 @@ public class KafkaConfig {
    * Construvtor used to inject {@link Environment}.
    * @param environment Spring environment to inject.
    */
+  @Lazy
   @Autowired
-  public KafkaConfig(final Environment environment) {
+  public KafkaConfig(final Environment environment, ZkClient zkClient) {
     this.environment = environment;
+    this.zkClient = zkClient;
   }
 
   /**
    * The client used for ZooKeeper.
    */
-  @Autowired
   private ZkClient zkClient;
 
   /**

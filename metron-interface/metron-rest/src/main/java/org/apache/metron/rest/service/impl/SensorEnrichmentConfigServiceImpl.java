@@ -30,6 +30,7 @@ import org.apache.metron.rest.service.SensorEnrichmentConfigService;
 import org.apache.metron.common.zookeeper.ZKConfigurationsCache;
 import org.apache.zookeeper.KeeperException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class SensorEnrichmentConfigServiceImpl implements SensorEnrichmentConfig
 
     private ConfigurationsCache cache;
 
+    @Lazy
     @Autowired
     public SensorEnrichmentConfigServiceImpl(ObjectMapper objectMapper, CuratorFramework client, ConfigurationsCache cache) {
       this.objectMapper = objectMapper;

@@ -26,6 +26,7 @@ import org.apache.metron.rest.service.UpdateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.lang.invoke.MethodHandles;
@@ -35,6 +36,8 @@ import java.util.Optional;
 public class UpdateServiceImpl implements UpdateService {
   private IndexDao dao;
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  @Lazy
   @Autowired
   public UpdateServiceImpl(IndexDao dao) {
     this.dao = dao;

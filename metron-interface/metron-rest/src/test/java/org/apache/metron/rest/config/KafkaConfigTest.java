@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+
+import org.I0Itec.zkclient.ZkClient;
 import org.apache.metron.rest.MetronRestConstants;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,12 +33,14 @@ import org.springframework.core.env.Environment;
 public class KafkaConfigTest {
 
   private Environment environment;
+
   private KafkaConfig kafkaConfig;
+  private ZkClient zkClient;
 
   @Before
   public void setUp() throws Exception {
     environment = mock(Environment.class);
-    kafkaConfig = new KafkaConfig(environment);
+    kafkaConfig = new KafkaConfig(environment, zkClient);
   }
 
   @Test

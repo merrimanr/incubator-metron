@@ -41,6 +41,7 @@ import org.apache.metron.rest.service.SensorIndexingConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +60,7 @@ public class SearchServiceImpl implements SearchService {
   private SensorIndexingConfigService sensorIndexingConfigService;
   private AlertsUIService alertsUIService;
 
+  @Lazy
   @Autowired
   public SearchServiceImpl(IndexDao dao, Environment environment,
       SensorIndexingConfigService sensorIndexingConfigService, AlertsUIService alertsUIService) {

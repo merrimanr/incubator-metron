@@ -36,6 +36,7 @@ import org.apache.metron.rest.security.SecurityUtils;
 import org.apache.metron.rest.service.AlertsUIService;
 import org.apache.metron.rest.service.KafkaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +56,7 @@ public class AlertsUIServiceImpl implements AlertsUIService {
   private final KafkaService kafkaService;
   private UserSettingsClient userSettingsClient;
 
+  @Lazy
   @Autowired
   public AlertsUIServiceImpl(final KafkaService kafkaService,
                              final Environment environment,

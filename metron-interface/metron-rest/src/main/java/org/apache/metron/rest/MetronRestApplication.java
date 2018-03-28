@@ -21,11 +21,16 @@ import org.apache.metron.rest.util.ParserIndex;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 @SpringBootApplication
 public class MetronRestApplication {
 
   public static void main(String[] args) {
-    ParserIndex.reload();
-    SpringApplication.run(MetronRestApplication.class, args);
+    SpringApplication springApplication = new SpringApplication();
+    springApplication.setSources(new HashSet<>(Arrays.asList(MetronRestApplication.class)));
+    springApplication.addListeners(new MetronApplicationListener());
+    springApplication.run(args);
   }
 }

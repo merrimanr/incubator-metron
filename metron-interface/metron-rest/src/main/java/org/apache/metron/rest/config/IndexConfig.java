@@ -32,6 +32,7 @@ import org.apache.metron.rest.service.GlobalConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
@@ -52,6 +53,7 @@ public class IndexConfig {
     this.environment = environment;
   }
 
+  @Lazy
   @Bean
   public IndexDao indexDao() {
     try {

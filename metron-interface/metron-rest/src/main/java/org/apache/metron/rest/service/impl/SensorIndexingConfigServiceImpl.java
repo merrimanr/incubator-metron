@@ -30,6 +30,7 @@ import org.apache.metron.rest.RestException;
 import org.apache.metron.rest.service.SensorIndexingConfigService;
 import org.apache.zookeeper.KeeperException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -48,6 +49,7 @@ public class SensorIndexingConfigServiceImpl implements SensorIndexingConfigServ
 
   private ConfigurationsCache cache;
 
+  @Lazy
   @Autowired
   public SensorIndexingConfigServiceImpl(ObjectMapper objectMapper, CuratorFramework client, ConfigurationsCache cache) {
     this.objectMapper = objectMapper;

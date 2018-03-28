@@ -30,6 +30,7 @@ import org.apache.metron.rest.model.SensorParserContext;
 import org.apache.metron.rest.service.StellarService;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -42,19 +43,17 @@ import java.util.stream.Collectors;
 public class StellarServiceImpl implements StellarService {
 
   private CuratorFramework client;
+  private boolean stellarInitialized = false;
 
+  @Lazy
   @Autowired
   public StellarServiceImpl(CuratorFramework client) {
     this.client = client;
-    try {
-      ConfigurationsUtils.setupStellarStatically(this.client);
-    } catch (Exception e) {
-      throw new IllegalStateException("Unable to setup stellar statically: " + e.getMessage(), e);
-    }
   }
 
   @Override
   public Map<String, Boolean> validateRules(List<String> rules) {
+    setup();
     Map<String, Boolean> results = new HashMap<>();
     StellarProcessor stellarProcessor = new StellarProcessor();
     for(String rule: rules) {
@@ -70,6 +69,7 @@ public class StellarServiceImpl implements StellarService {
 
   @Override
   public Map<String, Object> applyTransformations(SensorParserContext sensorParserContext) {
+    setup();
     JSONObject sampleJson = new JSONObject(sensorParserContext.getSampleData());
     sensorParserContext.getSensorParserConfig().getFieldTransformations().forEach(fieldTransformer -> {
               fieldTransformer.transformAndUpdate(sampleJson, Context.EMPTY_CONTEXT(), sensorParserContext.getSensorParserConfig().getParserConfig());
@@ -85,6 +85,7 @@ public class StellarServiceImpl implements StellarService {
 
   @Override
   public List<StellarFunctionDescription> getStellarFunctions() {
+    setup();
     List<StellarFunctionDescription> stellarFunctionDescriptions = new ArrayList<>();
     Iterable<StellarFunctionInfo> stellarFunctionsInfo = StellarFunctions.FUNCTION_RESOLVER().getFunctionInfo();
     stellarFunctionsInfo.forEach(stellarFunctionInfo -> {
@@ -99,9 +100,21 @@ public class StellarServiceImpl implements StellarService {
 
   @Override
   public List<StellarFunctionDescription> getSimpleStellarFunctions() {
+    setup();
     List<StellarFunctionDescription> stellarFunctionDescriptions = getStellarFunctions();
     return stellarFunctionDescriptions.stream().filter(stellarFunctionDescription ->
             stellarFunctionDescription.getParams().length == 1).sorted((o1, o2) -> o1.getName().compareTo(o2.getName())).collect(Collectors.toList());
+  }
+
+  private void setup() {
+    if (!stellarInitialized) {
+      try {
+        ConfigurationsUtils.setupStellarStatically(this.client);
+      } catch (Exception e) {
+        throw new IllegalStateException("Unable to setup stellar statically: " + e.getMessage(), e);
+      }
+      stellarInitialized = true;
+    }
   }
 
 }

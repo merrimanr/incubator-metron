@@ -24,6 +24,7 @@ import org.apache.metron.rest.service.GlobalConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import static org.apache.metron.rest.MetronRestConstants.TEST_PROFILE;
@@ -40,6 +41,7 @@ public class HBaseConfig {
         this.globalConfigService = globalConfigService;
     }
 
+    @Lazy
     @Bean()
     public UserSettingsClient userSettingsClient() {
       UserSettingsClient userSettingsClient = new UserSettingsClient();

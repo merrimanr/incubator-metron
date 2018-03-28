@@ -33,6 +33,7 @@ import org.apache.metron.indexing.dao.search.SearchResponse;
 import org.apache.metron.rest.RestException;
 import org.apache.metron.rest.service.MetaAlertService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -41,10 +42,13 @@ public class MetaAlertServiceImpl implements MetaAlertService {
   private MetaAlertDao dao;
   private Environment environment;
 
+  @Lazy
   @Autowired
   public MetaAlertServiceImpl(IndexDao indexDao, Environment environment) {
     // By construction this is always a meta alert dao
-    this.dao = (MetaAlertDao) indexDao;
+    if (indexDao instanceof MetaAlertDao) {
+      this.dao = (MetaAlertDao) indexDao;
+    }
     this.environment = environment;
   }
 
