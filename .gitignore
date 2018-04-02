@@ -10,7 +10,7 @@ target/
 *.classpath
 *.settings
 *.metadata
-*hbase-site.xml
+**/test/resources/hbase-site.xml
 *.log
 *.swp
 *.tmp
