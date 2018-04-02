@@ -17,14 +17,16 @@ limitations under the License.
 -->
 # Metron Docker
 
-Metron Docker Dev is a [Docker Compose](https://docs.docker.com/compose/overview/) application that serves as a Metron development environment.
+Metron Docker Dev is a [Docker Compose](https://docs.docker.com/compose/overview/) application that serves as a light-weight alternative to full dev for Metron development.
 
 Metron Docker Dev includes these images that have been customized for Metron:
 
   - Kafka
   - Zookeeper
   - HBase
+  - Hadoop
   - Elasticsearch
+  - Storm
   - Metron including REST and Storm topologies
 
 Setup
@@ -77,14 +79,15 @@ $ docker-compose ps
 
     Name                   Command               State                       Ports                     
 -------------------------------------------------------------------------------------------------------
-elasticsearch   /bin/bash bin/es-docker          Up      0.0.0.0:9210->9200/tcp, 0.0.0.0:9310->9300/tcp
-hbase           /bin/sh -c ./bin/start-hba ...   Up      0.0.0.0:16010->16010/tcp                      
-kafka           start-kafka.sh                   Up      0.0.0.0:9092->9092/tcp                        
-metron          /bin/sh -c ./bin/start.sh        Up      0.0.0.0:8082->8082/tcp                        
-nimbus          /docker-entrypoint.sh stor ...   Up      0.0.0.0:6627->6627/tcp                        
-storm-ui        /docker-entrypoint.sh storm ui   Up      0.0.0.0:8000->8000/tcp, 0.0.0.0:8080->8080/tcp
-supervisor      /docker-entrypoint.sh stor ...   Up                                                    
-zookeeper       /docker-entrypoint.sh zkSe ...   Up      0.0.0.0:2181->2181/tcp, 2888/tcp, 3888/tcp      
+elasticsearch   /bin/bash bin/es-docker          Up      0.0.0.0:9210->9200/tcp, 0.0.0.0:9310->9300/tcp                                                                                                                                     
+hadoop          /etc/bootstrap.sh -d             Up      19888/tcp, 2122/tcp, 49707/tcp, 50010/tcp, 50020/tcp, 50070/tcp, 50075/tcp, 50090/tcp, 0.0.0.0:8020->8020/tcp, 8030/tcp, 8031/tcp, 8032/tcp, 8033/tcp, 8040/tcp, 8042/tcp, 8088/tcp
+hbase           /bin/sh -c ./bin/start-hba ...   Up      0.0.0.0:16010->16010/tcp                                                                                                                                                           
+kafka           start-kafka.sh                   Up      0.0.0.0:9092->9092/tcp                                                                                                                                                             
+metron          /bin/sh -c ./bin/start.sh        Up      0.0.0.0:8082->8082/tcp                                                                                                                                                             
+nimbus          /docker-entrypoint.sh stor ...   Up      0.0.0.0:6627->6627/tcp                                                                                                                                                             
+storm-ui        /docker-entrypoint.sh storm ui   Up      0.0.0.0:8000->8000/tcp, 0.0.0.0:8080->8080/tcp                                                                                                                                     
+supervisor      /docker-entrypoint.sh stor ...   Up                                                                                                                                                                                         
+zookeeper       /docker-entrypoint.sh zkSe ...   Up      0.0.0.0:2181->2181/tcp, 2888/tcp, 3888/tcp     
 ```
 
 Various services are exposed through http on the Docker host.  Use the docker-machine CLI to get the host ip:
@@ -157,5 +160,27 @@ $ curl -X POST --header 'Content-Type: application/json' --header 'Accept: appli
 {"total":63720,"results":[{"id":"00000000-0000-0000-0000-85","source":{"ip_src_addr":"127.0.0.1"},"score":1.0,"index":"bro_index_2018.03.21.22"}],"facetCounts":null}
 ```
 
+Deploying Code Changes
+-----
+
+Code changes can be deployed by rebuilding Metron and the Docker Dev environment:
+```
+$ cd $METRON_HOME
+$ mvn clean install -DskipTests
+$ export METRON_DOCKER_HOME=$METRON_HOME/metron-contrib/metron-docker
+$ export METRON_DOCKER_DEV_HOME=$METRON_DOCKER_HOME/compose/dev
+$ cd $METRON_DOCKER_DEV_HOME
+$ eval "$(docker-machine env metron-machine)"
+$ docker-compose down
+$ docker-compose build metron
+$ docker-compose up -d
+```
+
+If changes are limited to a single module, that module can be deployed without rebuilding all of Metron.  When building Metron source, just include the module with changes and the metron-docker module:
+```
+$ cd $METRON_HOME
+$ mvn clean install -DskipTests --projects=metron-interface/metron-rest,metron-contrib/metron-docker
+// continue with the same steps above, after mvn clean install -DskipTests
+```
 
 
