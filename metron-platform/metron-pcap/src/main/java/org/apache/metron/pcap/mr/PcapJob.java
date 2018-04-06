@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -213,6 +214,45 @@ public class PcapJob {
     } else {
       throw new RuntimeException("Unable to complete query due to errors.  Please check logs for full errors.");
     }
+  }
+
+  public <T> String queryAsync(Path basePath
+          , Path baseOutputPath
+          , long beginNS
+          , long endNS
+          , int numReducers
+          , T fields
+          , Configuration conf
+          , FileSystem fs
+          , PcapFilterConfigurator<T> filterImpl
+  ) throws IOException, ClassNotFoundException, InterruptedException {
+    String fileName = Joiner.on("_").join(beginNS, endNS, filterImpl.queryToString(fields), UUID.randomUUID().toString());
+    if(LOG.isDebugEnabled()) {
+      DateFormat format = SimpleDateFormat.getDateTimeInstance( SimpleDateFormat.LONG
+              , SimpleDateFormat.LONG
+      );
+      String from = format.format(new Date(Long.divideUnsigned(beginNS, 1000000)));
+      String to = format.format(new Date(Long.divideUnsigned(endNS, 1000000)));
+      LOG.debug("Executing query {} on timerange from {} to {}", filterImpl.queryToString(fields), from, to);
+    }
+    Path outputPath =  new Path(baseOutputPath, fileName);
+    Job job = createJob( basePath
+            , outputPath
+            , beginNS
+            , endNS
+            , numReducers
+            , fields
+            , conf
+            , fs
+            , filterImpl
+    );
+    if (job == null) {
+      LOG.info("No files to process with specified date range.");
+      return null;
+    }
+    job.submit();
+    JobStatus jobStatus = job.getStatus();
+    return jobStatus.getJobID().toString();
   }
 
   public static long findWidth(long start, long end, int numReducers) {
