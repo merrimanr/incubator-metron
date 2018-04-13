@@ -72,7 +72,7 @@ public class PcapQueryController {
     @ApiResponses({
         @ApiResponse(message = "Return the status of the query running on the backend", code = 200)
     })
-    @RequestMapping(value = "/pcapqueryfilterasync/status", method = RequestMethod.POST)
+    @RequestMapping(value = "/pcapqueryfilterasync/status", method = RequestMethod.GET)
     public ResponseEntity<String> getAsyncPcapQueryStatus(@RequestParam(value = "idQuery") String idQuery
     ) throws RestException, IOException {
 
@@ -88,7 +88,7 @@ public class PcapQueryController {
     @ApiResponses({
         @ApiResponse(message = "Return the result of the query running on the backend", code = 200)
     })
-    @RequestMapping(value = "/pcapqueryfilterasync/result", method = RequestMethod.POST)
+    @RequestMapping(value = "/pcapqueryfilterasync/result", method = RequestMethod.GET)
     public ResponseEntity<PcapsResponse> getAsyncPcapQueryResult(@RequestParam(value = "idQuery") String idQuery
     ) throws RestException, IOException {
 
@@ -110,7 +110,7 @@ public class PcapQueryController {
     @ApiResponses({
         @ApiResponse(message = "Return the result of the query running on the backend in a JSON format", code = 200)
     })
-    @RequestMapping(value = "/pcapqueryfilterasync/resultJson", method = RequestMethod.POST)
+    @RequestMapping(value = "/pcapqueryfilterasync/resultJson", method = RequestMethod.GET)
     public ResponseEntity<String> getAsyncPcapQueryResultInJson(@RequestParam(value = "idQuery") String idQuery
     ) throws RestException, IOException {
 

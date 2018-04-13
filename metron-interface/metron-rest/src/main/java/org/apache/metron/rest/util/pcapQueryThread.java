@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.collect.Lists;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import org.apache.hadoop.fs.Path;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.apache.metron.common.Constants;
 import org.apache.metron.pcap.PcapHelper;
 import org.apache.metron.rest.RestException;
 import org.apache.metron.rest.config.PcapConfig;
+import org.apache.metron.rest.jackson.Pdml;
 import org.apache.metron.rest.model.PcapRequest;
 import org.apache.metron.rest.service.impl.PcapQueryServiceAsyncImpl;
 import org.apache.metron.rest.util.PcapsResponse;
@@ -188,7 +190,7 @@ public class pcapQueryThread extends Thread {
             File f = new File("/tmp/"+this.idQuery+"/"+idQuery+".pdml");
             XmlMapper xmlMapper = new XmlMapper();
 
-            JsonNode node = xmlMapper.readTree(f);
+            Pdml node = xmlMapper.readValue(new FileInputStream(f), Pdml.class);
             ObjectMapper jsonMapper = new ObjectMapper();
             String json = jsonMapper.writeValueAsString(node);
             return json;

@@ -25,7 +25,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class MetronRestApplication {
 
   public static void main(String[] args) {
-    ParserIndex.reload();
+    //ParserIndex.reload();
     SpringApplication.run(MetronRestApplication.class, args);
   }
 }
