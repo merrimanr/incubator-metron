@@ -18,21 +18,25 @@
 
 package org.apache.metron.elasticsearch.integration;
 
+import static org.apache.metron.common.Constants.SENSOR_TYPE;
+import static org.apache.metron.common.Constants.SENSOR_TYPE_FIELD_PROPERTY;
 import static org.apache.metron.indexing.dao.MetaAlertDao.ALERT_FIELD;
+import static org.apache.metron.indexing.dao.MetaAlertDao.METAALERTS_INDEX;
 import static org.apache.metron.indexing.dao.MetaAlertDao.METAALERT_FIELD;
 import static org.apache.metron.indexing.dao.MetaAlertDao.METAALERT_TYPE;
 import static org.apache.metron.indexing.dao.MetaAlertDao.STATUS_FIELD;
-import static org.apache.metron.indexing.dao.MetaAlertDao.THREAT_FIELD_DEFAULT;
-import static org.apache.metron.indexing.dao.MetaAlertDao.THREAT_SORT_DEFAULT;
+import static org.apache.metron.indexing.dao.MetaAlertDao.THREAT_FIELD_PROPERTY;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
-
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +49,7 @@ import org.apache.metron.common.Constants;
 import org.apache.metron.common.utils.JSONUtils;
 import org.apache.metron.elasticsearch.dao.ElasticsearchDao;
 import org.apache.metron.elasticsearch.dao.ElasticsearchMetaAlertDao;
-import org.apache.metron.elasticsearch.integration.utils.ElasticsearchTestUtils;
-import org.apache.metron.elasticsearch.utils.ElasticsearchUtils;
+import org.apache.metron.elasticsearch.integration.components.ElasticSearchComponent;
 import org.apache.metron.indexing.dao.AccessConfig;
 import org.apache.metron.indexing.dao.IndexDao;
 import org.apache.metron.indexing.dao.MetaAlertDao;
@@ -66,7 +69,6 @@ import org.apache.metron.indexing.dao.search.SortField;
 import org.apache.metron.indexing.dao.update.Document;
 import org.apache.metron.indexing.dao.update.OriginalNotFoundException;
 import org.apache.metron.indexing.dao.update.PatchRequest;
-import org.elasticsearch.client.Client;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -75,22 +77,25 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ElasticsearchMetaAlertIntegrationTest {
-  private static final String namespace = ElasticsearchMetaAlertIntegrationTest.class.getSimpleName().toLowerCase();
-  protected static final String METAALERT_INDEX = namespace + "_metaalert_index";
+
   private static final int MAX_RETRIES = 10;
   private static final int SLEEP_MS = 500;
   private static final String SENSOR_NAME = "test";
-  private static final String INDEX = namespace + "_" + SENSOR_NAME + "_index";
+  private static final String INDEX_DIR = "target/elasticsearch_meta";
+  private static final String DATE_FORMAT = "yyyy.MM.dd.HH";
+  private static final String INDEX =
+      SENSOR_NAME + "_index_" + new SimpleDateFormat(DATE_FORMAT).format(new Date());
   private static final String NEW_FIELD = "new-field";
   private static final String NAME_FIELD = "name";
 
-  private static IndexDao esDao;
+  private static ElasticsearchDao esDao;
   private static MetaAlertDao metaDao;
+  private static ElasticSearchComponent es;
 
   /**
    {
      "properties": {
-       "alert": {
+       "metron_alert": {
          "type": "nested"
        }
      }
@@ -102,7 +107,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
   /**
    {
      "guid": "meta_alert",
-     "index": "elasticsearchmetaalertintegrationtest_metaalert_index",
+     "index": "metaalert_index",
      "patch": [
        {
          "op": "add",
@@ -119,7 +124,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
   /**
    {
      "guid": "meta_alert",
-     "index": "elasticsearchmetaalertintegrationtest_metaalert_index",
+     "index": "metaalert_index",
      "patch": [
        {
          "op": "add",
@@ -141,7 +146,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
   /**
    {
      "guid": "meta_alert",
-     "index": "elasticsearchmetaalertintegrationtest_metaalert_index",
+     "index": "metaalert_index",
      "patch": [
        {
          "op": "add",
@@ -173,14 +178,8 @@ public class ElasticsearchMetaAlertIntegrationTest {
            "score" : {
              "type" : "integer"
            },
-           "alert" : {
+           "metron_alert" : {
              "type" : "nested"
-           },
-           "threat:triage:score": {
-             "type": "float"
-           },
-           "count" : {
-             "type" : "integer"
            }
          }
        }
@@ -189,40 +188,51 @@ public class ElasticsearchMetaAlertIntegrationTest {
   @Multiline
   public static String template;
 
-  private static Client client;
-
   @BeforeClass
   public static void setupBefore() throws Exception {
-    client = ElasticsearchUtils.getClient(ElasticsearchTestUtils.getGlobalConfig(), null);
-    ElasticsearchTestUtils.clearIndices(client, METAALERT_INDEX, INDEX);
-
-    AccessConfig accessConfig = new AccessConfig();
-    accessConfig.setMaxSearchResults(1000);
-    accessConfig.setGlobalConfigSupplier(ElasticsearchTestUtils::getGlobalConfig);
-    accessConfig.setMaxSearchGroups(100);
-
-    esDao = new ElasticsearchDao();
-    esDao.init(accessConfig);
-    metaDao = new ElasticsearchMetaAlertDao(esDao, METAALERT_INDEX, THREAT_FIELD_DEFAULT, THREAT_SORT_DEFAULT);
+    // setup the client
+    es = new ElasticSearchComponent.Builder()
+        .withHttpPort(9211)
+        .withIndexDir(new File(INDEX_DIR))
+        .build();
+    es.start();
   }
 
   @Before
   public void setup() throws IOException {
-    client.admin().indices().prepareCreate(METAALERT_INDEX)
-            .addMapping(METAALERT_TYPE + "_doc", template.replace("%MAPPING_NAME%", METAALERT_TYPE)).get();
-    client.admin().indices().prepareCreate(INDEX)
-            .addMapping("index_doc", template.replace("%MAPPING_NAME%", "index")).get();
+    es.createIndexWithMapping(METAALERTS_INDEX, MetaAlertDao.METAALERT_DOC, template.replace("%MAPPING_NAME%", "metaalert"));
+    es.createIndexWithMapping(INDEX, "index_doc", template.replace("%MAPPING_NAME%", "index"));
+
+    AccessConfig accessConfig = new AccessConfig();
+    Map<String, Object> globalConfig = new HashMap<String, Object>() {
+      {
+        put("es.clustername", "metron");
+        put("es.port", "9300");
+        put("es.ip", "localhost");
+        put("es.date.format", DATE_FORMAT);
+      }
+    };
+    accessConfig.setMaxSearchResults(1000);
+    accessConfig.setGlobalConfigSupplier(() -> globalConfig);
+    accessConfig.setMaxSearchGroups(100);
+
+    esDao = new ElasticsearchDao();
+    esDao.init(accessConfig);
+    metaDao = new ElasticsearchMetaAlertDao(esDao);
   }
 
   @AfterClass
   public static void teardown() {
-    ElasticsearchTestUtils.clearIndices(client, METAALERT_INDEX, INDEX);
+    if (es != null) {
+      es.stop();
+    }
   }
 
   @After
   public void reset() {
-    ElasticsearchTestUtils.clearIndices(client, METAALERT_INDEX, INDEX);
+    es.reset();
   }
+
 
   @Test
   public void shouldGetAllMetaAlertsForAlert() throws Exception {
@@ -238,7 +248,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     metaAlerts.add(buildMetaAlert("meta_inactive", MetaAlertStatus.INACTIVE,
         Optional.of(Arrays.asList(alerts.get(0), alerts.get(2)))));
     // We pass MetaAlertDao.METAALERT_TYPE, because the "_doc" gets appended automatically.
-    elasticsearchAdd(metaAlerts, METAALERT_INDEX, MetaAlertDao.METAALERT_TYPE);
+    elasticsearchAdd(metaAlerts, METAALERTS_INDEX, MetaAlertDao.METAALERT_TYPE);
 
     // Verify load was successful
     List<GetRequest> createdDocs = metaAlerts.stream().map(metaAlert ->
@@ -313,6 +323,12 @@ public class ElasticsearchMetaAlertIntegrationTest {
         findCreatedDoc(metaAlertCreateResponse.getGuid(), MetaAlertDao.METAALERT_TYPE);
       }
       {
+        // Verify metaalert has the default field names
+        Document metaAlert = metaDao.getLatest(metaAlertCreateResponse.getGuid(), MetaAlertDao.METAALERT_TYPE);
+        Assert.assertTrue(metaAlert.getDocument().containsKey(ElasticsearchMetaAlertDao.SOURCE_TYPE));
+        Assert.assertTrue(metaAlert.getDocument().containsKey(ElasticsearchMetaAlertDao.THREAT_TRIAGE_FIELD));
+      }
+      {
         // Verify alert 0 was not updated with metaalert field
         Document alert = metaDao.getLatest("message_0", SENSOR_NAME);
         Assert.assertEquals(4, alert.getDocument().size());
@@ -336,6 +352,45 @@ public class ElasticsearchMetaAlertIntegrationTest {
   }
 
   @Test
+  public void shouldCreateMetaAlertWithConfiguredFieldNames() throws Exception {
+    // Configure field names
+    AccessConfig accessConfig = esDao.getAccessConfig();
+    accessConfig.setGlobalConfigSupplier(() -> new HashMap<String, Object>() {{
+      put("es.date.format", DATE_FORMAT);
+      put(SENSOR_TYPE_FIELD_PROPERTY, SENSOR_TYPE);
+      put(THREAT_FIELD_PROPERTY, MetaAlertDao.THREAT_FIELD_DEFAULT);
+    }});
+
+    // Load alerts
+    List<Map<String, Object>> alerts = buildAlerts(1);
+    elasticsearchAdd(alerts, INDEX, SENSOR_NAME);
+
+    // Verify load was successful
+    findCreatedDocs(Collections.singletonList(
+            new GetRequest("message_0", SENSOR_NAME)));
+
+    {
+      MetaAlertCreateRequest metaAlertCreateRequest = new MetaAlertCreateRequest() {{
+        setAlerts(new ArrayList<GetRequest>() {{
+          add(new GetRequest("message_0", SENSOR_NAME));
+        }});
+        setGroups(Collections.singletonList("group"));
+      }};
+      MetaAlertCreateResponse metaAlertCreateResponse = metaDao.createMetaAlert(metaAlertCreateRequest);
+      {
+        // Verify metaAlert was created
+        findCreatedDoc(metaAlertCreateResponse.getGuid(), MetaAlertDao.METAALERT_TYPE);
+      }
+      {
+        // Verify alert 0 was not updated with metaalert field
+        Document metaAlert = metaDao.getLatest(metaAlertCreateResponse.getGuid(), MetaAlertDao.METAALERT_TYPE);
+        Assert.assertTrue(metaAlert.getDocument().containsKey(SENSOR_TYPE));
+        Assert.assertTrue(metaAlert.getDocument().containsKey(MetaAlertDao.THREAT_FIELD_DEFAULT));
+      }
+    }
+  }
+
+  @Test
   public void shouldAddAlertsToMetaAlert() throws Exception {
     // Load alerts
     List<Map<String, Object>> alerts = buildAlerts(4);
@@ -345,7 +400,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     // Load metaAlert
     Map<String, Object> metaAlert = buildMetaAlert("meta_alert", MetaAlertStatus.ACTIVE,
         Optional.of(Collections.singletonList(alerts.get(0))));
-    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERT_INDEX, METAALERT_TYPE);
+    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERTS_INDEX, METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -425,7 +480,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     // Load metaAlert
     Map<String, Object> metaAlert = buildMetaAlert("meta_alert", MetaAlertStatus.ACTIVE,
         Optional.of(Arrays.asList(alerts.get(0), alerts.get(1), alerts.get(2), alerts.get(3))));
-    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERT_INDEX, METAALERT_TYPE);
+    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERTS_INDEX, METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -515,7 +570,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     // Load metaAlert
     Map<String, Object> metaAlert = buildMetaAlert("meta_alert", MetaAlertStatus.INACTIVE,
         Optional.of(Collections.singletonList(alerts.get(0))));
-    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERT_INDEX, METAALERT_TYPE);
+    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERTS_INDEX, METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -565,7 +620,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     Map<String, Object> metaAlert = buildMetaAlert("meta_alert", MetaAlertStatus.ACTIVE,
         Optional.of(childAlerts));
     // We pass MetaAlertDao.METAALERT_TYPE, because the "_doc" gets appended automatically.
-    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERT_INDEX,
+    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERTS_INDEX,
         MetaAlertDao.METAALERT_TYPE);
 
     List<GetRequest> requests = new ArrayList<>();
@@ -601,7 +656,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     }
 
     {
-      // Verify status changed to active and child alerts are updated
+      // Verify status changed to active and metaalerts fields on child alerts are updated
       Assert.assertTrue(metaDao.updateMetaAlertStatus("meta_alert", MetaAlertStatus.ACTIVE));
 
       Map<String, Object> expectedMetaAlert = new HashMap<>(metaAlert);
@@ -642,6 +697,37 @@ public class ElasticsearchMetaAlertIntegrationTest {
         }
       }
     }
+
+    {
+      // Verify status changed to active and meta alert child alerts are refreshed
+      Assert.assertTrue(metaDao.updateMetaAlertStatus("meta_alert", MetaAlertStatus.INACTIVE));
+
+      Map<String, Object> expectedMetaAlert = new HashMap<>(metaAlert);
+      expectedMetaAlert.put(STATUS_FIELD, MetaAlertStatus.INACTIVE.getStatusString());
+
+      findUpdatedDoc(expectedMetaAlert, "meta_alert", METAALERT_TYPE);
+
+      {
+        // Update a child alert by adding a field
+        Document alert0 = esDao.getLatest("message_0", SENSOR_NAME);
+        alert0.getDocument().put("field", "value");
+        esDao.update(alert0, Optional.empty());
+
+        findUpdatedDoc(alert0.getDocument(), "message_0", SENSOR_NAME);
+
+        // Change the status to active
+        Assert.assertTrue(metaDao.updateMetaAlertStatus("meta_alert", MetaAlertStatus.ACTIVE));
+
+        // Expect the first child alert to also contain the update
+        expectedMetaAlert.put(STATUS_FIELD, MetaAlertStatus.ACTIVE.getStatusString());
+        List<Map<String, Object>> expectedAlerts = (List<Map<String, Object>>) expectedMetaAlert.get(ALERT_FIELD);
+        expectedAlerts.get(0).put("field", "value");
+
+        // Verify the metaalert child alerts were refreshed and the new field is present
+        findUpdatedDoc(expectedMetaAlert, "meta_alert", METAALERT_TYPE);
+      }
+
+    }
   }
 
   @Test
@@ -654,7 +740,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
 
 
     // We pass MetaAlertDao.METAALERT_TYPE, because the "_doc" gets appended automatically.
-    elasticsearchAdd(Arrays.asList(activeMetaAlert, inactiveMetaAlert), METAALERT_INDEX, MetaAlertDao.METAALERT_TYPE);
+    elasticsearchAdd(Arrays.asList(activeMetaAlert, inactiveMetaAlert), METAALERTS_INDEX, MetaAlertDao.METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -664,7 +750,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     SearchResponse searchResponse = metaDao.search(new SearchRequest() {
       {
         setQuery("*");
-        setIndices(Collections.singletonList(namespace + "_metaalert"));
+        setIndices(Collections.singletonList(MetaAlertDao.METAALERT_TYPE));
         setFrom(0);
         setSize(5);
         setSort(Collections.singletonList(new SortField() {{
@@ -708,7 +794,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     Map<String, Object> inactiveMetaAlert = buildMetaAlert("meta_inactive", MetaAlertStatus.INACTIVE,
         Optional.of(Arrays.asList(alerts.get(2), alerts.get(3))));
     // We pass MetaAlertDao.METAALERT_TYPE, because the "_doc" gets appended automatically.
-    elasticsearchAdd(Arrays.asList(activeMetaAlert, inactiveMetaAlert), METAALERT_INDEX, MetaAlertDao.METAALERT_TYPE);
+    elasticsearchAdd(Arrays.asList(activeMetaAlert, inactiveMetaAlert), METAALERTS_INDEX, MetaAlertDao.METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -723,7 +809,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     SearchResponse searchResponse = metaDao.search(new SearchRequest() {
       {
         setQuery(
-            "(ip_src_addr:192.168.1.1 AND ip_src_port:8009) OR (alert.ip_src_addr:192.168.1.1 AND alert.ip_src_port:8009)");
+            "(ip_src_addr:192.168.1.1 AND ip_src_port:8009) OR (metron_alert.ip_src_addr:192.168.1.1 AND metron_alert.ip_src_port:8009)");
         setIndices(Collections.singletonList(MetaAlertDao.METAALERT_TYPE));
         setFrom(0);
         setSize(5);
@@ -743,7 +829,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
       {
         setQuery(
             "(ip_src_addr:192.168.1.1 AND ip_src_port:8010)"
-                + " OR (alert.ip_src_addr:192.168.1.1 AND alert.ip_src_port:8010)");
+                + " OR (metron_alert.ip_src_addr:192.168.1.1 AND metron_alert.ip_src_port:8010)");
         setIndices(Collections.singletonList("*"));
         setFrom(0);
         setSize(5);
@@ -766,7 +852,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
       {
         setQuery(
             "(ip_src_addr:192.168.1.3 AND ip_src_port:8008)"
-                + " OR (alert.ip_src_addr:192.168.1.3 AND alert.ip_src_port:8008)");
+                + " OR (metron_alert.ip_src_addr:192.168.1.3 AND metron_alert.ip_src_port:8008)");
         setIndices(Collections.singletonList("*"));
         setFrom(0);
         setSize(1);
@@ -844,7 +930,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     Map<String, Object> inactiveMetaAlert = buildMetaAlert("meta_inactive", MetaAlertStatus.INACTIVE,
         Optional.of(Collections.singletonList(alerts.get(0))));
     // We pass MetaAlertDao.METAALERT_TYPE, because the "_doc" gets appended automatically.
-    elasticsearchAdd(Arrays.asList(activeMetaAlert, inactiveMetaAlert), METAALERT_INDEX, METAALERT_TYPE);
+    elasticsearchAdd(Arrays.asList(activeMetaAlert, inactiveMetaAlert), METAALERTS_INDEX, METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -858,7 +944,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
       Map<String, Object> message0 = new HashMap<String, Object>(alerts.get(0)) {
         {
           put(NEW_FIELD, "metron");
-          put(THREAT_FIELD_DEFAULT, "10");
+          put(MetaAlertDao.THREAT_FIELD_DEFAULT, "10");
         }
       };
       String guid = "" + message0.get(Constants.GUID);
@@ -913,6 +999,45 @@ public class ElasticsearchMetaAlertIntegrationTest {
         }
       }
     }
+    //modify the same message and modify the new field with the patch method
+    {
+      Map<String, Object> message0 = new HashMap<String, Object>(alerts.get(0)) {
+        {
+          put(NEW_FIELD, "metron3");
+        }
+      };
+      String guid = "" + message0.get(Constants.GUID);
+      PatchRequest patchRequest = new PatchRequest();
+      patchRequest.setGuid(guid);
+      patchRequest.setIndex(INDEX);
+      patchRequest.setSensorType(SENSOR_NAME);
+      patchRequest.setPatch(Collections.singletonList(new HashMap<String, Object>() {{
+        put("op", "replace");
+        put("path", "/" + NEW_FIELD);
+        put("value", "metron3");
+      }}));
+
+      metaDao.patch(patchRequest, Optional.empty());
+
+      {
+        // Verify ES is up-to-date
+        findUpdatedDoc(message0, guid, SENSOR_NAME);
+        long cnt = getMatchingAlertCount(NEW_FIELD, message0.get(NEW_FIELD));
+        if (cnt == 0) {
+          Assert.fail("Elasticsearch alert not updated!");
+        }
+      }
+      {
+        // Verify meta alerts in ES are up-to-date
+        long cnt = getMatchingMetaAlertCount(NEW_FIELD, "metron3");
+        if (cnt == 0) {
+          Assert.fail("Active metaalert was not updated!");
+        }
+        if (cnt != 1) {
+          Assert.fail("Elasticsearch metaalerts not updated correctly!");
+        }
+      }
+    }
   }
 
   @Test
@@ -944,7 +1069,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
     Map<String, Object> metaAlert = buildMetaAlert("meta_alert", MetaAlertStatus.ACTIVE,
         Optional.of(Arrays.asList(alerts.get(0), alerts.get(1))));
     // We pass MetaAlertDao.METAALERT_TYPE, because the "_doc" gets appended automatically.
-    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERT_INDEX, MetaAlertDao.METAALERT_TYPE);
+    elasticsearchAdd(Collections.singletonList(metaAlert), METAALERTS_INDEX, MetaAlertDao.METAALERT_TYPE);
 
     // Verify load was successful
     findCreatedDocs(Arrays.asList(
@@ -998,7 +1123,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
   protected long getMatchingAlertCount(String fieldName, Object fieldValue) throws IOException, InterruptedException {
     long cnt = 0;
     for (int t = 0; t < MAX_RETRIES && cnt == 0; ++t, Thread.sleep(SLEEP_MS)) {
-      List<Map<String, Object>> docs = ElasticsearchTestUtils.getAllIndexedDocs(client, INDEX, SENSOR_NAME + "_doc");
+      List<Map<String, Object>> docs = es.getAllIndexedDocs(INDEX, SENSOR_NAME + "_doc");
       cnt = docs
           .stream()
           .filter(d -> {
@@ -1012,7 +1137,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
   protected long getMatchingMetaAlertCount(String fieldName, String fieldValue) throws IOException, InterruptedException {
     long cnt = 0;
     for (int t = 0; t < MAX_RETRIES && cnt == 0; ++t, Thread.sleep(SLEEP_MS)) {
-      List<Map<String, Object>> docs = ElasticsearchTestUtils.getAllIndexedDocs(client, METAALERT_INDEX, MetaAlertDao.METAALERT_DOC);
+      List<Map<String, Object>> docs = es.getAllIndexedDocs(METAALERTS_INDEX, MetaAlertDao.METAALERT_DOC);
       cnt = docs
           .stream()
           .filter(d -> {
@@ -1036,11 +1161,29 @@ public class ElasticsearchMetaAlertIntegrationTest {
       throws InterruptedException, IOException, OriginalNotFoundException {
     for (int t = 0; t < MAX_RETRIES; ++t, Thread.sleep(SLEEP_MS)) {
       Document doc = metaDao.getLatest(guid, sensorType);
-      if (doc != null && message0.equals(doc.getDocument())) {
+      if (doc != null && compareDocs(message0, doc.getDocument())) {
         return;
       }
     }
     throw new OriginalNotFoundException("Count not find " + guid + " after " + MAX_RETRIES + " tries");
+  }
+
+  private boolean compareDocs(Map<String, Object> expected, Map<String, Object> actual) {
+    if (expected.size() != actual.size()) {
+      return false;
+    }
+    for(String key: expected.keySet()) {
+      if (ALERT_FIELD.equals(key)) {
+        List<Map<String, Object>> expectedAlerts = (List<Map<String, Object>>) expected.get(MetaAlertDao.ALERT_FIELD);
+        ArrayList<Map<String, Object>> actualAlerts = (ArrayList<Map<String, Object>>) actual.get(MetaAlertDao.ALERT_FIELD);
+        if (!expectedAlerts.containsAll(actualAlerts) || !actualAlerts.containsAll(expectedAlerts)) {
+          return false;
+        }
+      } else if (!expected.get(key).equals(actual.get(key))){
+        return false;
+      }
+    }
+    return true;
   }
 
   protected boolean findCreatedDoc(String guid, String sensorType)
@@ -1078,7 +1221,7 @@ public class ElasticsearchMetaAlertIntegrationTest {
       Map<String, Object> alerts = new HashMap<>();
       alerts.put(Constants.GUID, guid);
       alerts.put("source:type", SENSOR_NAME);
-      alerts.put(THREAT_FIELD_DEFAULT, i);
+      alerts.put(ElasticsearchMetaAlertDao.THREAT_TRIAGE_FIELD, i);
       alerts.put("timestamp", System.currentTimeMillis());
       inputData.add(alerts);
     }
@@ -1106,9 +1249,9 @@ public class ElasticsearchMetaAlertIntegrationTest {
     return metaAlert;
   }
 
-  protected void elasticsearchAdd(List<Map<String, Object>> inputData, String index, String sensorType)
+  protected void elasticsearchAdd(List<Map<String, Object>> inputData, String index, String docType)
       throws IOException {
-    ElasticsearchTestUtils.add(client, index, sensorType + "_doc", inputData.stream().map(m -> {
+    es.add(index, docType, inputData.stream().map(m -> {
           try {
             return JSONUtils.INSTANCE.toJSON(m, true);
           } catch (JsonProcessingException e) {

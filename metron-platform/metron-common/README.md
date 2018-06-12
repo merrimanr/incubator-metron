@@ -23,19 +23,20 @@ limitations under the License.
 * [Management Utility](#management-utility)
 * [Topology Errors](topology-errors)
 * [Performance Logging](#performance-logging)
+* [Metron Debugging](#metron-debugging)
 
 # Stellar Language
 
 For a variety of components (threat intelligence triage and field
 transformations) we have the need to do simple computation and
-transformation using the data from messages as variables.  
-For those purposes, there exists a simple, scaled down DSL 
+transformation using the data from messages as variables.
+For those purposes, there exists a simple, scaled down DSL
 created to do simple computation and transformation.
 
 The query language supports the following:
 * Referencing fields in the enriched JSON
 * String literals are quoted with either `'` or `"`, and
-support escaping for `'`, `"`, `\t`, `\r`, `\n`, and backslash 
+support escaping for `'`, `"`, `\t`, `\r`, `\n`, and backslash
 * Simple boolean operations: `and`, `not`, `or`
   * Boolean expressions are short-circuited (e.g. `true or FUNC()` would never execute `FUNC`)
 * Simple arithmetic operations: `*`, `/`, `+`, `-` on real numbers or integers
@@ -45,7 +46,7 @@ support escaping for `'`, `"`, `\t`, `\r`, `\n`, and backslash
 * Determining whether a field exists (via `exists`)
 * An `in` operator that works like the `in` in Python
 * The ability to have parenthesis to make order of operations explicit
-* User defined functions, including Lambda expressions 
+* User defined functions, including Lambda expressions
 
 For documentation of Stellar, please see the [Stellar README](../../metron-stellar/stellar-common/README.md).
 
@@ -70,7 +71,7 @@ This configuration is stored in zookeeper, but looks something like
                 "config" : {
                     "type" : "IPV4"
                            }
-              } 
+              }
                        ]
 }
 ```
@@ -91,9 +92,15 @@ but a convenient index is provided here:
 | [`stellar.function.resolver.excludes`](../../metron-stellar/stellar-common#stellarfunctionresolverincludesexcludes) | Stellar       | CSV String | N/A                        |
 | [`profiler.period.duration`](../../metron-analytics/metron-profiler#profilerperiodduration)                         | Profiler      | Integer    | `profiler_period_duration` |
 | [`profiler.period.duration.units`](../../metron-analytics/metron-profiler#profilerperioddurationunits)              | Profiler      | String     | `profiler_period_units`    |
+| [`profiler.writer.batchSize`](../../metron-analytics/metron-profiler/#profilerwriterbatchsize)                      | Profiler      | Integer    |  N/A                       |
+| [`profiler.writer.batchTimeout`](../../metron-analytics/metron-profiler/#profilerwriterbatchtimeout)                | Profiler      | Integer    |  N/A                       |
 | [`update.hbase.table`](../metron-indexing#updatehbasetable)                                                         | REST/Indexing | String     | `update_hbase_table`       |
 | [`update.hbase.cf`](../metron-indexing#updatehbasecf)                                                               | REST/Indexing | String     | `update_hbase_cf`          |
 | [`geo.hdfs.file`](../metron-enrichment#geohdfsfile)                                                                 | Enrichment    | String     | `geo_hdfs_file`            |
+| [`enrichment.writer.batchSize`](../metron-enrichment#enrichmentwriterbatchsize)                                     | Enrichment    | Integer    |  N/A                       |
+| [`enrichment.writer.batchTimeout`](../metron-enrichment#enrichmentwriterbatchtimeout)                               | Enrichment    | Integer    |  N/A                       |
+| [`geo.hdfs.file`](../metron-enrichment#geohdfsfile)                                                                 | Enrichment    | String     | `geo_hdfs_file`            |
+| [`source.type.field`](../../metron-interface/metron-alerts#sourcetypefield)                                         | UI            | String     |  N/A                       |
 
 ## Note Configs in Ambari
 If a field is managed via ambari, you should change the field via
@@ -105,7 +112,7 @@ overwritten.
 Inside of the global configuration, there is a validation framework in
 place that enables the validation that messages coming from all parsers
 are valid.  This is done in the form of validation plugins where
-assertions about fields or whole messages can be made. 
+assertions about fields or whole messages can be made.
 
 The format for this is a `fieldValidations` field inside of global
 config.  This is associated with an array of field validation objects
@@ -343,7 +350,7 @@ Each topology can be configured to send error messages to a specific Kafka topic
 ```
 
 Error topics for enrichment and threat intel errors are passed into the enrichment topology as flux properties named `enrichment.error.topic` and `threat.intel.error.topic`.  These properties can be found in `$METRON_HOME/config/enrichment.properties`.
-  
+
 The error topic for indexing errors is passed into the indexing topology as a flux property named `index.error.topic`.  This property can be found in either `$METRON_HOME/config/elasticsearch.properties` or `$METRON_HOME/config/solr.properties` depending on the search engine selected.
 
 By default all error messages are sent to the `indexing` topic so that they are indexed and archived, just like other messages.  The indexing config for error messages can be found at `$METRON_HOME/config/zookeeper/indexing/error.json`.
@@ -400,3 +407,34 @@ __Side Effects__
 Calling the mark() method multiple times simply resets the start time to the current nano time. Calling log() with a non-existent mark name will log 0 ns elapsed time with a warning indicating that log has been invoked for a mark name that does not exist.
 The class is not thread-safe and makes no attempt at keeping multiple threads from modifying the same markers.
 
+# Metron Debugging
+
+A Python script is provided for gathering information useful in debugging your Metron cluster. Run from the node that has Metron installed on it. All options listed below are required.
+
+_Note:_ Be aware that no anonymization/scrubbing is performed on the captured configuration details.
+
+```
+# $METRON_HOME/bin/cluster_info.py -h
+Usage: cluster_info.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -a HOST:PORT, --ambari-host=HOST:PORT
+                        Connect to Ambari via the supplied host:port
+  -c NAME, --cluster-name=NAME
+                        Name of cluster in Ambari to retrieve info for
+  -o DIRECTORY, --out-dir=DIRECTORY
+                        Write debugging data to specified root directory
+  -s HOST:PORT, --storm-host=HOST:PORT
+                        Connect to Storm via the supplied host:port
+  -b HOST1:PORT,HOST2:PORT, --broker_list=HOST1:PORT,HOST2:PORT
+                        Connect to Kafka via the supplied comma-delimited
+                        host:port list
+  -z HOST1:PORT,HOST2:PORT, --zookeeper_quorum=HOST1:PORT,HOST2:PORT
+                        Connect to Zookeeper via the supplied comma-delimited
+                        host:port quorum list
+  -m DIRECTORY, --metron_home=DIRECTORY
+                        Metron home directory
+  -p DIRECTORY, --hdp_home=DIRECTORY
+                        HDP home directory
+```

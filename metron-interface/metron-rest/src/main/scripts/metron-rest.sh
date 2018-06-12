@@ -36,6 +36,7 @@ METRON_SYSCONFIG="${METRON_SYSCONFIG:-/etc/default/metron}"
 METRON_LOG_DIR="${METRON_LOG_DIR:-/var/log/metron}"
 METRON_PID_FILE="${METRON_PID_FILE:-/var/run/metron/metron-rest.pid}"
 PARSER_CONTRIB=${PARSER_CONTRIB:-$METRON_HOME/parser_contrib}
+INDEXING_CONTRIB=${INDEXING_CONTRIB:-$METRON_HOME/indexing_contrib}
 PARSER_LIB=$(find $METRON_HOME/lib/ -name metron-parsers*.jar)
 
 echo "METRON_VERSION=${METRON_VERSION}"
@@ -48,7 +49,10 @@ if [ -f "$METRON_SYSCONFIG" ]; then
     . "$METRON_SYSCONFIG"
 fi
 
-METRON_REST_CLASSPATH="${METRON_REST_CLASSPATH:-$HADOOP_CONF_DIR:${HBASE_HOME}/conf}"
+if [ ${METRON_REST_CLASSPATH} ]; then
+    METRON_REST_CLASSPATH+=":"
+fi
+METRON_REST_CLASSPATH+="$HADOOP_CONF_DIR:${HBASE_HOME}/conf"
 
 # Use a custom REST jar if provided, else pull the metron-rest jar
 rest_jar_pattern="${METRON_HOME}/lib/metron-rest*.jar"
@@ -65,11 +69,19 @@ if [ -d "$PARSER_CONTRIB" ]; then
   METRON_REST_CLASSPATH+=":${contrib_classpath}"
 fi
 
+if [ -d "$INDEXING_CONTRIB" ]; then
+  contrib_jar_pattern="${INDEXING_CONTRIB}/*.jar"
+  contrib_list=( $contrib_jar_pattern ) # expand the glob to a list
+  contrib_classpath=$(join_by : "${contrib_list[@]}") #join the list by a colon
+  echo "Indexing Contrib jars are: $contrib_classpath"
+  METRON_REST_CLASSPATH+=":${contrib_classpath}"
+fi
+
 echo "METRON_SPRING_PROFILES_ACTIVE=${METRON_SPRING_PROFILES_ACTIVE}"
 
 # the vagrant Spring profile provides configuration values, otherwise configuration is provided by rest_application.yml
 if [[ !(${METRON_SPRING_PROFILES_ACTIVE} == *"vagrant"*) ]]; then
-    METRON_CONFIG_LOCATION=" --spring.config.location=$METRON_HOME/config/rest_application.yml"
+    METRON_CONFIG_LOCATION=" --spring.config.location=$METRON_HOME/config/rest_application.yml,classpath:/application.yml"
     echo "METRON_CONFIG_LOCATION=${METRON_CONFIG_LOCATION}"
     METRON_SPRING_OPTIONS+=${METRON_CONFIG_LOCATION}
 fi
