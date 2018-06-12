@@ -167,7 +167,7 @@ public class ElasticsearchSearchIntegrationTest extends SearchIntegrationTest {
 
   @BeforeClass
   public static void start() {
-    client = ElasticsearchUtils.getClient(ElasticsearchTestUtils.getGlobalConfig(), null);
+    client = ElasticsearchUtils.getClient(ElasticsearchTestUtils.getGlobalConfig());
     ElasticsearchTestUtils.clearIndices(client, broIndex, snortIndex);
   }
 

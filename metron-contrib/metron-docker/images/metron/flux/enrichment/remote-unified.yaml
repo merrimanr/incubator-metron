@@ -14,6 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This is a drop-in replacement for the existing split/join enrichment topology.
+# Instead of a fan-out/fan-in architecture, this adopts a data-parallelism strategy
+# whereby a message is fully enriched inside of a UnifiedEnrichmentBolt.  This simplifies
+# the architecture greatly and cuts down on network hops.  It has unknown performance
+# characteristics, so caveat emptor.
+
 name: "enrichment"
 config:
     topology.workers: ${enrichment.workers}
@@ -21,11 +27,12 @@ config:
     topology.worker.childopts: ${topology.worker.childopts}
     topology.auto-credentials: ${topology.auto-credentials}
     topology.max.spout.pending: ${topology.max.spout.pending}
-    topology.classpath: "/hbase/conf:/usr/local/hadoop/etc/hadoop/"
+    metron.threadpool.size: ${enrichment.threadpool.size} # Either a number (e.g. 5) or multiple of cores (e.g. 5C = 5 times the number of cores)
+    metron.threadpool.type: ${enrichment.threadpool.type} # FIXED or WORK_STEALING
 
 components:
 
-# Enrichment
+    # enrichment
     -   id: "stellarEnrichmentAdapter"
         className: "org.apache.metron.enrichment.adapters.stellar.StellarAdapter"
         configMethods:
@@ -33,7 +40,7 @@ components:
                 args:
                     - "ENRICHMENT"
 
-    # Any kafka props for the producer go here.
+    # any kafka props for the producer go here.
     -   id: "kafkaWriterProps"
         className: "java.util.HashMap"
         configMethods:
@@ -50,15 +57,18 @@ components:
 
     -   id: "geoEnrichmentAdapter"
         className: "org.apache.metron.enrichment.adapters.geo.GeoAdapter"
+
     -   id: "geoEnrichment"
         className: "org.apache.metron.enrichment.configuration.Enrichment"
         constructorArgs:
             -   "geo"
             -   ref: "geoEnrichmentAdapter"
+
     -   id: "hostEnrichmentAdapter"
         className: "org.apache.metron.enrichment.adapters.host.HostFromJSONListAdapter"
         constructorArgs:
             - '${enrichment.host.known_hosts}'
+
     -   id: "hostEnrichment"
         className: "org.apache.metron.enrichment.configuration.Enrichment"
         constructorArgs:
@@ -77,17 +87,20 @@ components:
             -   name: "withHBaseCF"
                 args:
                     - "${enrichment.simple.hbase.cf}"
+
     -   id: "simpleHBaseEnrichmentAdapter"
         className: "org.apache.metron.enrichment.adapters.simplehbase.SimpleHBaseAdapter"
         configMethods:
            -    name: "withConfig"
                 args:
                     - ref: "simpleHBaseEnrichmentConfig"
+
     -   id: "simpleHBaseEnrichment"
         className: "org.apache.metron.enrichment.configuration.Enrichment"
         constructorArgs:
           -   "hbaseEnrichment"
           -   ref: "simpleHBaseEnrichmentAdapter"
+
     -   id: "enrichments"
         className: "java.util.ArrayList"
         configMethods:
@@ -104,7 +117,7 @@ components:
                 args:
                     - ref: "stellarEnrichment"
 
-    #enrichment error
+    # enrichment error
     -   id: "enrichmentErrorKafkaWriter"
         className: "org.apache.metron.writer.kafka.KafkaWriter"
         configMethods:
@@ -115,21 +128,23 @@ components:
                 args:
                     - "${kafka.zk}"
             -   name: "withProducerConfigs"
-                args: 
+                args:
                     - ref: "kafkaWriterProps"
 
-# Threat Intel
+    # threat Intel
     -   id: "stellarThreatIntelAdapter"
         className: "org.apache.metron.enrichment.adapters.stellar.StellarAdapter"
         configMethods:
             -   name: "ofType"
                 args:
                     - "THREAT_INTEL"
+
     -   id: "stellarThreatIntelEnrichment"
         className: "org.apache.metron.enrichment.configuration.Enrichment"
         constructorArgs:
             -   "stellar"
             -   ref: "stellarThreatIntelAdapter"
+
     -   id: "simpleHBaseThreatIntelConfig"
         className: "org.apache.metron.enrichment.adapters.threatintel.ThreatIntelConfig"
         configMethods:
@@ -148,12 +163,14 @@ components:
             -   name: "withHBaseCF"
                 args:
                     - "${threat.intel.simple.hbase.cf}"
+
     -   id: "simpleHBaseThreatIntelAdapter"
         className: "org.apache.metron.enrichment.adapters.threatintel.ThreatIntelAdapter"
         configMethods:
            -    name: "withConfig"
                 args:
                     - ref: "simpleHBaseThreatIntelConfig"
+
     -   id: "simpleHBaseThreatIntelEnrichment"
         className: "org.apache.metron.enrichment.configuration.Enrichment"
         constructorArgs:
@@ -170,7 +187,7 @@ components:
                 args:
                     - ref: "stellarThreatIntelEnrichment"
 
-    #threatintel error
+    # threatintel error
     -   id: "threatIntelErrorKafkaWriter"
         className: "org.apache.metron.writer.kafka.KafkaWriter"
         configMethods:
@@ -181,9 +198,9 @@ components:
                 args:
                     - "${kafka.zk}"
             -   name: "withProducerConfigs"
-                args: 
+                args:
                     - ref: "kafkaWriterProps"
-#indexing
+    # indexing
     -   id: "kafkaWriter"
         className: "org.apache.metron.writer.kafka.KafkaWriter"
         configMethods:
@@ -194,11 +211,11 @@ components:
                 args:
                     - "${kafka.zk}"
             -   name: "withProducerConfigs"
-                args: 
+                args:
                     - ref: "kafkaWriterProps"
 
-#kafka/zookeeper
-    # Any kafka props for the consumer go here.
+    # kafka/zookeeper
+    # any kafka props for the consumer go here.
     -   id: "kafkaProps"
         className: "java.util.HashMap"
         configMethods:
@@ -220,7 +237,7 @@ components:
                   - "${kafka.security.protocol}"
 
 
-  # The fields to pull out of the kafka messages
+    # the fields to pull out of the kafka messages
     -   id: "fields"
         className: "java.util.ArrayList"
         configMethods:
@@ -243,6 +260,7 @@ components:
 
 
 spouts:
+
     -   id: "kafkaSpout"
         className: "org.apache.metron.storm.kafka.flux.StormKafkaSpout"
         constructorArgs:
@@ -250,342 +268,123 @@ spouts:
         parallelism: ${kafka.spout.parallelism}
 
 bolts:
-# Enrichment Bolts
-    -   id: "enrichmentSplitBolt"
-        className: "org.apache.metron.enrichment.bolt.EnrichmentSplitterBolt"
+
+    # enrichment bolt
+    -   id: "enrichmentBolt"
+        className: "org.apache.metron.enrichment.bolt.UnifiedEnrichmentBolt"
         constructorArgs:
             - "${kafka.zk}"
         configMethods:
             -   name: "withEnrichments"
                 args:
                     - ref: "enrichments"
-        parallelism: ${enrichment.split.parallelism}
-
-    -   id: "geoEnrichmentBolt"
-        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withEnrichment"
+            -   name: "withMaxCacheSize"
+                args: [${enrichment.cache.size}]
+            -   name: "withMaxTimeRetain"
+                args: [10]
+            -   name: "withCaptureCacheStats"
+                args: [true]
+            -   name: "withStrategy"
                 args:
-                    - ref: "geoEnrichment"
-            -   name: "withMaxCacheSize"
-                args: [10000]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-
-    -   id: "stellarEnrichmentBolt"
-        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withEnrichment"
-                args:
-                    - ref: "stellarEnrichment"
-            -   name: "withMaxCacheSize"
-                args: [10000]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-        parallelism: ${enrichment.stellar.parallelism}
-
-    -   id: "hostEnrichmentBolt"
-        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withEnrichment"
-                args:
-                    - ref: "hostEnrichment"
-            -   name: "withMaxCacheSize"
-                args: [10000]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-
-    -   id: "simpleHBaseEnrichmentBolt"
-        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withEnrichment"
-                args:
-                    - ref: "simpleHBaseEnrichment"
-            -   name: "withMaxCacheSize"
-                args: [10000]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-
-    -   id: "enrichmentJoinBolt"
-        className: "org.apache.metron.enrichment.bolt.EnrichmentJoinBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withMaxCacheSize"
-                args: [${enrichment.join.cache.size}]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-        parallelism: ${enrichment.join.parallelism}
+                    - "ENRICHMENT"
+            -   name: "withMessageGetter"
+                args: ["JSON_FROM_POSITION"]
+        parallelism: ${enrichment.parallelism}
 
     -   id: "enrichmentErrorOutputBolt"
         className: "org.apache.metron.writer.bolt.BulkMessageWriterBolt"
         constructorArgs:
             - "${kafka.zk}"
+            - "ENRICHMENT"
         configMethods:
-            -   name: "withMessageWriter"
+            -   name: "withBulkMessageWriter"
                 args:
                     - ref: "enrichmentErrorKafkaWriter"
 
 
-# Threat Intel Bolts
-    -   id: "threatIntelSplitBolt"
-        className: "org.apache.metron.enrichment.bolt.ThreatIntelSplitterBolt"
+    # threat intel bolts
+    -   id: "threatIntelBolt"
+        className: "org.apache.metron.enrichment.bolt.UnifiedEnrichmentBolt"
         constructorArgs:
             - "${kafka.zk}"
         configMethods:
             -   name: "withEnrichments"
                 args:
                     - ref: "threatIntels"
+            -   name: "withMaxCacheSize"
+                args: [${threat.intel.cache.size}]
+            -   name: "withMaxTimeRetain"
+                args: [10]
+            -   name: "withCaptureCacheStats"
+                args: [true]
+            -   name: "withStrategy"
+                args:
+                    - "THREAT_INTEL"
             -   name: "withMessageFieldName"
                 args: ["message"]
-        parallelism: ${threat.intel.split.parallelism}
-
-    -   id: "simpleHBaseThreatIntelBolt"
-        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withEnrichment"
-                args:
-                    - ref: "simpleHBaseThreatIntelEnrichment"
-            -   name: "withMaxCacheSize"
-                args: [10000]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-    -   id: "stellarThreatIntelBolt"
-        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withEnrichment"
-                args:
-                    - ref: "stellarThreatIntelEnrichment"
-            -   name: "withMaxCacheSize"
-                args: [10000]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-        parallelism: ${threat.intel.stellar.parallelism}
-
-    -   id: "threatIntelJoinBolt"
-        className: "org.apache.metron.enrichment.bolt.ThreatIntelJoinBolt"
-        constructorArgs:
-            - "${kafka.zk}"
-        configMethods:
-            -   name: "withMaxCacheSize"
-                args: [${threat.intel.join.cache.size}]
-            -   name: "withMaxTimeRetain"
-                args: [10]
-        parallelism: ${threat.intel.join.parallelism}
+            -   name: "withMessageGetter"
+                args: ["JSON_FROM_FIELD_BY_REFERENCE"]
+        parallelism: ${threat.intel.parallelism}
 
     -   id: "threatIntelErrorOutputBolt"
         className: "org.apache.metron.writer.bolt.BulkMessageWriterBolt"
         constructorArgs:
             - "${kafka.zk}"
+            - "ENRICHMENT"
         configMethods:
-            -   name: "withMessageWriter"
+            -   name: "withBulkMessageWriter"
                 args:
                     - ref: "threatIntelErrorKafkaWriter"
 
-# Indexing Bolts
+    # output bolt
     -   id: "outputBolt"
         className: "org.apache.metron.writer.bolt.BulkMessageWriterBolt"
         constructorArgs:
             - "${kafka.zk}"
+            - "ENRICHMENT"
         configMethods:
-            -   name: "withMessageWriter"
+            -   name: "withBulkMessageWriter"
                 args:
                     - ref: "kafkaWriter"
         parallelism: ${kafka.writer.parallelism}
 
-
 streams:
-#parser
-    -   name: "spout -> enrichmentSplit"
+
+    # parser
+    -   name: "spout -> enrichmentBolt"
         from: "kafkaSpout"
-        to: "enrichmentSplitBolt"
+        to: "enrichmentBolt"
         grouping:
             type: LOCAL_OR_SHUFFLE
 
-#enrichment
-    -   name: "enrichmentSplit -> host"
-        from: "enrichmentSplitBolt"
-        to: "hostEnrichmentBolt"
+    # error output
+    -   name: "enrichmentBolt -> enrichmentErrorOutputBolt"
+        from: "enrichmentBolt"
+        to: "enrichmentErrorOutputBolt"
         grouping:
-            streamId: "host"
-            type: FIELDS
-            args: ["message"]
+            streamId: "error"
+            type: LOCAL_OR_SHUFFLE
 
-    -   name: "enrichmentSplit -> geo"
-        from: "enrichmentSplitBolt"
-        to: "geoEnrichmentBolt"
-        grouping:
-            streamId: "geo"
-            type: FIELDS
-            args: ["message"]
-
-    -   name: "enrichmentSplit -> stellar"
-        from: "enrichmentSplitBolt"
-        to: "stellarEnrichmentBolt"
-        grouping:
-            streamId: "stellar"
-            type: FIELDS
-            args: ["message"]
-
-
-    -   name: "enrichmentSplit -> simpleHBaseEnrichmentBolt"
-        from: "enrichmentSplitBolt"
-        to: "simpleHBaseEnrichmentBolt"
-        grouping:
-            streamId: "hbaseEnrichment"
-            type: FIELDS
-            args: ["message"]
-
-    -   name: "splitter -> join"
-        from: "enrichmentSplitBolt"
-        to: "enrichmentJoinBolt"
+    # threat intel
+    -   name: "enrichmentBolt -> threatIntelBolt"
+        from: "enrichmentBolt"
+        to: "threatIntelBolt"
         grouping:
             streamId: "message"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "geo -> join"
-        from: "geoEnrichmentBolt"
-        to: "enrichmentJoinBolt"
-        grouping:
-            streamId: "geo"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "stellar -> join"
-        from: "stellarEnrichmentBolt"
-        to: "enrichmentJoinBolt"
-        grouping:
-            streamId: "stellar"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "simpleHBaseEnrichmentBolt -> join"
-        from: "simpleHBaseEnrichmentBolt"
-        to: "enrichmentJoinBolt"
-        grouping:
-            streamId: "hbaseEnrichment"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "host -> join"
-        from: "hostEnrichmentBolt"
-        to: "enrichmentJoinBolt"
-        grouping:
-            streamId: "host"
-            type: FIELDS
-            args: ["key"]
-
-    # Error output
-    -   name: "geoEnrichmentBolt -> enrichmentErrorOutputBolt"
-        from: "geoEnrichmentBolt"
-        to: "enrichmentErrorOutputBolt"
-        grouping:
-            streamId: "error"
             type: LOCAL_OR_SHUFFLE
 
-    -   name: "stellarEnrichmentBolt -> enrichmentErrorOutputBolt"
-        from: "stellarEnrichmentBolt"
-        to: "enrichmentErrorOutputBolt"
-        grouping:
-            streamId: "error"
-            type: LOCAL_OR_SHUFFLE
-
-    -   name: "hostEnrichmentBolt -> enrichmentErrorOutputBolt"
-        from: "hostEnrichmentBolt"
-        to: "enrichmentErrorOutputBolt"
-        grouping:
-            streamId: "error"
-            type: LOCAL_OR_SHUFFLE
-
-    -   name: "simpleHBaseEnrichmentBolt -> enrichmentErrorOutputBolt"
-        from: "simpleHBaseEnrichmentBolt"
-        to: "enrichmentErrorOutputBolt"
-        grouping:
-            streamId: "error"
-            type: LOCAL_OR_SHUFFLE
-
-#threat intel
-    -   name: "enrichmentJoin -> threatSplit"
-        from: "enrichmentJoinBolt"
-        to: "threatIntelSplitBolt"
-        grouping:
-            streamId: "message"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "threatSplit -> simpleHBaseThreatIntel"
-        from: "threatIntelSplitBolt"
-        to: "simpleHBaseThreatIntelBolt"
-        grouping:
-            streamId: "hbaseThreatIntel"
-            type: FIELDS
-            args: ["message"]
-
-    -   name: "threatSplit -> stellarThreatIntel"
-        from: "threatIntelSplitBolt"
-        to: "stellarThreatIntelBolt"
-        grouping:
-            streamId: "stellar"
-            type: FIELDS
-            args: ["message"]
-
-
-    -   name: "simpleHBaseThreatIntel -> join"
-        from: "simpleHBaseThreatIntelBolt"
-        to: "threatIntelJoinBolt"
-        grouping:
-            streamId: "hbaseThreatIntel"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "stellarThreatIntel -> join"
-        from: "stellarThreatIntelBolt"
-        to: "threatIntelJoinBolt"
-        grouping:
-            streamId: "stellar"
-            type: FIELDS
-            args: ["key"]
-
-    -   name: "threatIntelSplit -> threatIntelJoin"
-        from: "threatIntelSplitBolt"
-        to: "threatIntelJoinBolt"
-        grouping:
-            streamId: "message"
-            type: FIELDS
-            args: ["key"]
-#output
-    -   name: "threatIntelJoin -> output"
-        from: "threatIntelJoinBolt"
+    # output
+    -   name: "threatIntelBolt -> output"
+        from: "threatIntelBolt"
         to: "outputBolt"
         grouping:
             streamId: "message"
             type: LOCAL_OR_SHUFFLE
 
-    # Error output
-    -   name: "simpleHBaseThreatIntelBolt -> threatIntelErrorOutputBolt"
-        from: "simpleHBaseThreatIntelBolt"
+    # error output
+    -   name: "threatIntelBolt -> threatIntelErrorOutputBolt"
+        from: "threatIntelBolt"
         to: "threatIntelErrorOutputBolt"
         grouping:
             streamId: "error"
             type: LOCAL_OR_SHUFFLE
-
-    -   name: "stellarThreatIntelBolt -> threatIntelErrorOutputBolt"
-        from: "stellarThreatIntelBolt"
-        to: "threatIntelErrorOutputBolt"
-        grouping:
-            streamId: "error"
-            type: LOCAL_OR_SHUFFLE
-

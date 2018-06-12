@@ -87,7 +87,7 @@ public class ElasticsearchUpdateIntegrationTest {
     tableProvider.addToCache(TABLE_NAME, CF);
     table = (MockHTable)tableProvider.getTable(config, TABLE_NAME);
     // setup the client
-    client = ElasticsearchUtils.getClient(ElasticsearchTestUtils.getGlobalConfig(), null);
+    client = ElasticsearchUtils.getClient(ElasticsearchTestUtils.getGlobalConfig());
     client.admin().indices().prepareCreate(index).addMapping("test_doc", testTypeMappings).get();
 
     hbaseDao = new HBaseDao();

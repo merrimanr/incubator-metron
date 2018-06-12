@@ -20,4 +20,4 @@ $METRON_HOME/bin/zk_load_configs.sh -z zookeeper:2181 -m PUSH -i $METRON_HOME/co
 
 METRON_REST_CLASSPATH="$METRON_HOME/lib/metron-rest-$METRON_VERSION.jar:$METRON_HOME/lib/metron-parsers-$METRON_VERSION-uber.jar:$METRON_HOME/lib/metron-elasticsearch-$METRON_VERSION-uber.jar:/hbase/conf:/usr/local/hadoop/etc/hadoop/"
 
-java -cp $METRON_REST_CLASSPATH org.apache.metron.rest.MetronRestApplication --spring.config.location=$METRON_HOME/config/application-docker.yml --spring.profiles.active=dev --server.port=8082
+java -cp $METRON_REST_CLASSPATH org.apache.metron.rest.MetronRestApplication --spring.config.location=$METRON_HOME/config/application-docker.yml,classpath:/application.yml --spring.profiles.active=dev --server.port=8082
