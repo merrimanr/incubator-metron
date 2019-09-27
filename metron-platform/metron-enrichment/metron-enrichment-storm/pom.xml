@@ -33,9 +33,23 @@
         <guava.version>${global_hbase_guava_version}</guava.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-api</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-core</artifactId>
+            <version>0.27.0</version>
+        </dependency>
 
         <!-- Metron -->
-
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${global_guava_version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.metron</groupId>
             <artifactId>metron-enrichment-common</artifactId>
@@ -168,7 +182,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.11</artifactId>
+            <artifactId>kafka-clients</artifactId>
             <version>${global_kafka_version}</version>
             <exclusions>
                 <exclusion>
@@ -218,17 +232,12 @@
             <artifactId>jackson-annotations</artifactId>
             <version>${global_jackson_version}</version>
         </dependency>
-        <dependency>
+        <!--dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${global_hbase_guava_version}</version>
-        </dependency>
+        </dependency-->
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>

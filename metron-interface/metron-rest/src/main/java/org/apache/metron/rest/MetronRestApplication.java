@@ -29,7 +29,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 public class MetronRestApplication {
 
   public static void main(String[] args) {
-    ParserIndex.reload();
+    //ParserIndex.reload();
     SpringApplication.run(MetronRestApplication.class, args);
   }
 }

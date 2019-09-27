@@ -19,6 +19,8 @@ package org.apache.metron.enrichment.bolt;
 
 import static org.apache.metron.common.Constants.STELLAR_CONTEXT_CONF;
 
+import io.opentracing.Span;
+import io.opentracing.util.GlobalTracer;
 import org.apache.metron.common.Constants;
 import org.apache.metron.storm.common.bolt.ConfiguredEnrichmentBolt;
 import org.apache.metron.common.configuration.ConfigurationType;
@@ -41,6 +43,7 @@ import org.apache.metron.enrichment.parallel.WorkerPoolStrategies;
 import org.apache.metron.stellar.dsl.Context;
 import org.apache.metron.stellar.dsl.StellarFunctions;
 import org.apache.metron.storm.common.utils.StormErrorUtils;
+import org.apache.metron.storm.common.utils.TraceUtils;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -52,10 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This bolt is a unified enrichment/threat intel bolt.  In contrast to the split/enrich/join
@@ -255,52 +255,70 @@ public class UnifiedEnrichmentBolt extends ConfiguredEnrichmentBolt {
    */
   @Override
   public void execute(Tuple input) {
-    JSONObject message = generateMessage(input);
-    try {
-      String sourceType = MessageUtils.getSensorType(message);
-      SensorEnrichmentConfig config = getConfigurations().getSensorEnrichmentConfig(sourceType);
-      if(config == null) {
-        LOG.debug("Unable to find SensorEnrichmentConfig for sourceType: {}", sourceType);
-        config = new SensorEnrichmentConfig();
-      }
-      //This is an existing kludge for the stellar adapter to pass information along.
-      //We should figure out if this can be rearchitected a bit.  This smells.
-      config.getConfiguration().putIfAbsent(STELLAR_CONTEXT_CONF, stellarContext);
-      String guid = getGUID(input, message);
+      JSONObject message = generateMessage(input);
+      try {
+        Optional<Span> span;
+//        if ("enrichmentBolt".equals(spanName)) {
+////          span = Optional.of(TraceUtils.createSpan("enrichment execute " + input.hashCode()));
+////        } else {
+////          span = TraceUtils.getSpan("threat intel execute " +  + input.hashCode(), message);
+////        }
+        if ("enrichmentBolt".equals(spanName)) {
+          span = TraceUtils.getSpan("enrichment execute " +  + input.hashCode(), message);
+        } else {
+          span = TraceUtils.getSpan("threat intel execute " +  + input.hashCode(), message);
+        }
 
-      // enrich the message
-      ParallelEnricher.EnrichmentResult result = enricher.apply(message, strategy, config, perfLog);
-      JSONObject enriched = result.getResult();
-      enriched = strategy.postProcess(enriched, config, enrichmentContext);
+        String sourceType = MessageUtils.getSensorType(message);
+        SensorEnrichmentConfig config = getConfigurations().getSensorEnrichmentConfig(sourceType);
+        if (config == null) {
+          LOG.debug("Unable to find SensorEnrichmentConfig for sourceType: {}", sourceType);
+          config = new SensorEnrichmentConfig();
+        }
+        //This is an existing kludge for the stellar adapter to pass information along.
+        //We should figure out if this can be rearchitected a bit.  This smells.
+        config.getConfiguration().putIfAbsent(STELLAR_CONTEXT_CONF, stellarContext);
+        String guid = getGUID(input, message);
 
-      //we can emit the message now
-      collector.emit("message",
-              input,
-              new Values(guid, enriched));
-      //and handle each of the errors in turn.  If any adapter errored out, we will have one message per.
-      for(Map.Entry<Object, Throwable> t : result.getEnrichmentErrors()) {
-        LOG.error("[Metron] Unable to enrich message: {}", message, t);
+        // enrich the message
+        ParallelEnricher.EnrichmentResult result = enricher.apply(message, strategy, config, perfLog);
+        JSONObject enriched = result.getResult();
+        enriched = strategy.postProcess(enriched, config, enrichmentContext);
+
+        if (span.isPresent()) {
+          span.get().finish();
+          TraceUtils.attachTraceInfo(span.get(), enriched);
+        }
+
+        //we can emit the message now
+        collector.emit("message",
+                input,
+                new Values(guid, enriched));
+        //and handle each of the errors in turn.  If any adapter errored out, we will have one message per.
+        for (Map.Entry<Object, Throwable> t : result.getEnrichmentErrors()) {
+          LOG.error("[Metron] Unable to enrich message: {}", message, t);
+          MetronError error = new MetronError()
+                  .withErrorType(strategy.getErrorType())
+                  .withMessage(t.getValue().getMessage())
+                  .withThrowable(t.getValue())
+                  .addRawMessage(t.getKey());
+          StormErrorUtils.handleError(collector, error);
+        }
+      } catch (Exception e) {
+        //If something terrible and unexpected happens then we want to send an error along, but this
+        //really shouldn't be happening.
+        LOG.error("[Metron] Unable to enrich message: {}", message, e);
         MetronError error = new MetronError()
                 .withErrorType(strategy.getErrorType())
-                .withMessage(t.getValue().getMessage())
-                .withThrowable(t.getValue())
-                .addRawMessage(t.getKey());
+                .withMessage(e.getMessage())
+                .withThrowable(e)
+                .addRawMessage(message);
         StormErrorUtils.handleError(collector, error);
+      } finally {
+        collector.ack(input);
       }
-    } catch (Exception e) {
-      //If something terrible and unexpected happens then we want to send an error along, but this
-      //really shouldn't be happening.
-      LOG.error("[Metron] Unable to enrich message: {}", message, e);
-      MetronError error = new MetronError()
-              .withErrorType(strategy.getErrorType())
-              .withMessage(e.getMessage())
-              .withThrowable(e)
-              .addRawMessage(message);
-      StormErrorUtils.handleError(collector, error);
-    }
-    finally {
-      collector.ack(input);
-    }
+
+
   }
 
   /**
@@ -321,6 +339,8 @@ public class UnifiedEnrichmentBolt extends ConfiguredEnrichmentBolt {
   public JSONObject generateMessage(Tuple tuple) {
     return (JSONObject) messageGetter.get(tuple);
   }
+
+  private String spanName;
 
   @Override
   public final void prepare(Map map, TopologyContext topologyContext,
@@ -364,6 +384,11 @@ public class UnifiedEnrichmentBolt extends ConfiguredEnrichmentBolt {
         GeoLiteAsnDatabase.ASN_HDFS_FILE));
     initializeStellar();
     enrichmentContext = new EnrichmentContext(StellarFunctions.FUNCTION_RESOLVER(), stellarContext);
+
+    spanName = topologyContext.getThisComponentId();
+    if ("enrichmentBolt".equals(spanName)) {
+      TraceUtils.createTracer("tuple trace", getConfigurations().getGlobalConfig());
+    }
   }
 
 

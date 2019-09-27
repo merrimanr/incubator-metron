@@ -17,6 +17,8 @@
  */
 package org.apache.metron.rest.controller;
 
+import io.opentracing.Span;
+import io.opentracing.Tracer;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -38,6 +40,9 @@ import java.util.Map;
 public class GlobalConfigController {
 
     @Autowired
+    private Tracer tracer;
+
+    @Autowired
     private GlobalConfigService globalConfigService;
 
     @ApiOperation(value = "Creates or updates the Global Config in Zookeeper")
@@ -57,7 +62,17 @@ public class GlobalConfigController {
             @ApiResponse(message = "Global Config JSON was not found in Zookeeper", code = 404) })
     @RequestMapping(method = RequestMethod.GET)
     ResponseEntity<Map<String, Object>> get() throws RestException {
+        Span serverSpan = tracer.activeSpan();
+
+        Span span = tracer.buildSpan("localSpan")
+                .asChildOf(serverSpan.context())
+                .start();
+
+        tracer.inject();
+
         Map<String, Object> globalConfig = globalConfigService.get();
+
+        span.finish();
         if (globalConfig != null) {
             return new ResponseEntity<>(globalConfig, HttpStatus.OK);
         } else {

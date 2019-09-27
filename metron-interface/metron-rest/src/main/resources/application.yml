@@ -16,9 +16,16 @@
 metron:
   version: 0.7.2
 
+spring.application.name: metron-rest
+
 logging:
   level:
     root: ERROR
+    org.apache.metron.rest: INFO
+    io.opentracing: DEBUG
+    io.jaegertracing: DEBUG
+
+opentracing.jaeger.udp-sender.port: 5775
 
 spring:
   jackson:
@@ -56,7 +63,7 @@ search:
 index:
   dao:
   # By default, we use the ElasticsearchDao and HBaseDao for backing updates.
-     impl: org.apache.metron.elasticsearch.dao.ElasticsearchDao,org.apache.metron.indexing.dao.HBaseDao
+     impl: org.apache.metron.elasticsearch.dao.ElasticsearchDao
   writer:
   # Used to retrieve the index names from the sensor index configurations.  Should be either 'elasticsearch' or 'solr'.
     name: elasticsearch

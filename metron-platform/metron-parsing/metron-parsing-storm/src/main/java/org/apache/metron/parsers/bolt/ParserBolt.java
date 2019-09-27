@@ -21,14 +21,12 @@ package org.apache.metron.parsers.bolt;
 import com.github.benmanes.caffeine.cache.Cache;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.opentracing.Span;
 import org.apache.metron.common.Constants;
 import org.apache.metron.storm.common.bolt.ConfiguredParserBolt;
 import org.apache.metron.common.configuration.ParserConfigurations;
@@ -42,6 +40,7 @@ import org.apache.metron.storm.common.message.metadata.RawMessageUtil;
 import org.apache.metron.common.utils.MessageUtils;
 import org.apache.metron.common.writer.BulkMessage;
 import org.apache.metron.storm.common.utils.StormErrorUtils;
+import org.apache.metron.storm.common.utils.TraceUtils;
 import org.apache.metron.writer.AckTuplesPolicy;
 import org.apache.metron.parsers.ParserRunner;
 import org.apache.metron.parsers.ParserRunnerResults;
@@ -232,6 +231,7 @@ public class ParserBolt extends ConfiguredParserBolt implements Serializable {
 
       writer.init(stormConf, context, collector, getConfigurations(), ackTuplesPolicy, maxBatchTimeout);
     }
+    TraceUtils.createTracer("tuple trace", getConfigurations().getGlobalConfig());
   }
 
 
@@ -246,6 +246,7 @@ public class ParserBolt extends ConfiguredParserBolt implements Serializable {
     String topic = tuple.getStringByField(FieldsConfiguration.TOPIC.getFieldName());
     String sensorType = topicToSensorMap.get(topic);
     try {
+      Span span = TraceUtils.createSpan("parser execute " + Arrays.hashCode(originalMessage));
       ParserConfigurations parserConfigurations = getConfigurations();
       SensorParserConfig sensorParserConfig = parserConfigurations.getSensorParserConfig(sensorType);
       RawMessage rawMessage = RawMessageUtil.INSTANCE.getRawMessage( sensorParserConfig.getRawMessageStrategy()
@@ -265,6 +266,7 @@ public class ParserBolt extends ConfiguredParserBolt implements Serializable {
       for(int i = 0; i < messages.size(); i++) {
         String messageId = messageIds.get(i);
         JSONObject message = messages.get(i);
+        TraceUtils.attachTraceInfo(span, message);
         try {
           writer.write(sensorType, new BulkMessage<>(messageId, message), getConfigurations());
           numWritten++;
@@ -276,7 +278,7 @@ public class ParserBolt extends ConfiguredParserBolt implements Serializable {
       if (numWritten == 0) {
         collector.ack(tuple);
       }
-
+      span.finish();
     } catch (Throwable ex) {
       handleError(sensorType, originalMessage, tuple, ex, collector);
       collector.ack(tuple);

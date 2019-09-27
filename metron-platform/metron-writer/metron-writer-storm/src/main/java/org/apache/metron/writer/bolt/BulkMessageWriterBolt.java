@@ -25,9 +25,12 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Iterables;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
 import org.apache.metron.common.Constants;
 import org.apache.metron.storm.common.bolt.ConfiguredBolt;
 import org.apache.metron.common.configuration.Configurations;
@@ -41,6 +44,7 @@ import org.apache.metron.common.writer.BulkMessageWriter;
 import org.apache.metron.common.writer.BulkMessage;
 import org.apache.metron.common.writer.MessageWriter;
 import org.apache.metron.storm.common.utils.StormErrorUtils;
+import org.apache.metron.storm.common.utils.TraceUtils;
 import org.apache.metron.writer.AckTuplesPolicy;
 import org.apache.metron.writer.BulkWriterComponent;
 import org.apache.metron.writer.WriterToBulkWriter;
@@ -243,6 +247,8 @@ public class BulkMessageWriterBolt<CONFIG_T extends Configurations> extends Conf
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+
+    TraceUtils.createTracer("tuple trace", getConfigurations().getGlobalConfig());
   }
 
   /**
@@ -279,6 +285,8 @@ public class BulkMessageWriterBolt<CONFIG_T extends Configurations> extends Conf
     try
     {
       JSONObject message = getMessage(tuple);
+      Optional<Span> span = TraceUtils.getSpan("writer execute", message);
+
       if(message == null) {
         handleMissingMessage(tuple);
         return;
@@ -300,11 +308,14 @@ public class BulkMessageWriterBolt<CONFIG_T extends Configurations> extends Conf
       }
       String messagesId = MessageUtils.getGuid(message);
       ackTuplesPolicy.addTupleMessageIds(tuple, Collections.singleton(messagesId));
+      span.ifPresent(span1 -> TraceUtils.attachTraceInfo(span1, message));
       getWriterComponent().write(sensorType
               , new BulkMessage<>(messagesId, message)
               , bulkMessageWriter
               , writerConfiguration
       );
+
+      span.ifPresent(Span::finish);
     }
     catch(Exception e) {
       throw new RuntimeException("This should have been caught in the writerComponent.  If you see this, file a JIRA", e);
